@@ -105,8 +105,8 @@ function Field({ label, id, type, placeholder, error, reg }: {
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "0.25rem" }}>
       <label htmlFor={id} style={labelStyle}>{label}</label>
-      <input id={id} type={type} placeholder={placeholder} autoComplete={type === "email" ? "email" : "current-password"}
-        style={{ ...inputStyle, borderColor: error ? "#ef4444" : "#d1d5db" }} {...reg} />
+      <input id={id} type={type} placeholder={placeholder}
+        style={{ ...inputStyle, borderColor: error ? "#ef4444" : "#d1d5db" }} autoComplete="off" {...reg} />
       {error && <span style={errorStyle}>{error}</span>}
     </div>
   );
