@@ -1,8 +1,6 @@
 export type Hall = {
   id: string;
   name: string;
-  capacity: number;
-  location: string | null;
-  is_active: boolean;
+  address: string | null;
   created_at: string;
 };

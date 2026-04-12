@@ -15,7 +15,7 @@ export async function createSession(
   deviceId: string,
   userId: string
 ): Promise<ServiceResult<Session>> {
-  const supabase = getServerClient();
+  const supabase = await getServerClient();
 
   const { data, error } = await supabase
     .from("sessions")
@@ -35,7 +35,7 @@ export async function createSession(
 export async function getActiveSession(
   sessionId: string
 ): Promise<ServiceResult<Session>> {
-  const supabase = getServerClient();
+  const supabase = await getServerClient();
 
   const { data, error } = await supabase
     .from("sessions")
@@ -52,7 +52,7 @@ export async function endSession(
   sessionId: string,
   endedAt: string
 ): Promise<ServiceResult<true>> {
-  const supabase = getServerClient();
+  const supabase = await getServerClient();
 
   const { error } = await supabase
     .from("sessions")

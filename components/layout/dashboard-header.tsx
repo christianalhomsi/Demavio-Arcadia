@@ -2,38 +2,17 @@ import Link from "next/link";
 
 export default function DashboardHeader({ hallName }: { hallName: string }) {
   return (
-    <header style={header}>
-      <Link href="/halls" style={logo}>
-        Gaming Hub
+    <header className="flex items-center gap-3 px-6 h-14 shrink-0 border-b"
+      style={{ background: "var(--color-surface)", borderColor: "var(--color-border)" }}>
+      <Link href="/halls"
+        className="text-sm font-bold tracking-tight shrink-0 transition-opacity hover:opacity-80"
+        style={{ color: "var(--color-primary)" }}>
+        Gaming<span style={{ color: "var(--color-accent)" }}>Hub</span>
       </Link>
-      <span style={title}>{hallName}</span>
+      <span style={{ color: "var(--color-border)" }}>/</span>
+      <span className="text-sm truncate" style={{ color: "var(--color-muted)" }}>
+        {hallName}
+      </span>
     </header>
   );
 }
-
-const header: React.CSSProperties = {
-  display: "flex",
-  alignItems: "center",
-  gap: "1rem",
-  padding: "0 1.5rem",
-  height: "56px",
-  borderBottom: "1px solid #e5e7eb",
-  background: "#fff",
-  fontFamily: "system-ui, sans-serif",
-};
-
-const logo: React.CSSProperties = {
-  fontSize: "0.9375rem",
-  fontWeight: 700,
-  color: "#111827",
-  textDecoration: "none",
-  flexShrink: 0,
-};
-
-const title: React.CSSProperties = {
-  fontSize: "0.875rem",
-  color: "#6b7280",
-  overflow: "hidden",
-  textOverflow: "ellipsis",
-  whiteSpace: "nowrap",
-};

@@ -2,12 +2,11 @@ import { getServerClient } from "@/lib/supabase/server";
 import type { Hall } from "@/types/hall";
 
 export async function getHalls(): Promise<Hall[]> {
-  const supabase = getServerClient();
+  const supabase = await getServerClient();
 
   const { data, error } = await supabase
     .from("halls")
-    .select("id, name, capacity, location, is_active, created_at")
-    .eq("is_active", true)
+    .select("id, name, address, created_at")
     .order("name", { ascending: true });
 
   if (error) throw new Error(error.message);

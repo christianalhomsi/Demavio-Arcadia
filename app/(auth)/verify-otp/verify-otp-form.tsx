@@ -10,96 +10,52 @@ import { getBrowserClient } from "@/lib/supabase/client";
 export default function VerifyOtpForm() {
   const router = useRouter();
   const [serverError, setServerError] = useState<string | null>(null);
-
-  const {
-    register,
-    handleSubmit,
-    formState: { errors, isSubmitting },
-  } = useForm<OtpVerifyInput>({
+  const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<OtpVerifyInput>({
     resolver: zodResolver(otpVerifySchema),
   });
 
   async function onSubmit(data: OtpVerifyInput) {
     setServerError(null);
-
     const res = await fetch("/api/auth/verify-otp", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(data),
     });
-
     const json = await res.json().catch(() => ({}));
-
-    if (!res.ok) {
-      setServerError(json?.error ?? "Verification failed. Please try again.");
-      return;
-    }
-
+    if (!res.ok) { setServerError(json?.error ?? "Verification failed. Please try again."); return; }
     const { token_hash } = json as { token_hash: string };
-
     const supabase = getBrowserClient();
-    const { error } = await supabase.auth.verifyOtp({
-      token_hash,
-      type: "magiclink",
-    });
-
-    if (error) {
-      setServerError(error.message);
-      return;
-    }
-
+    const { error } = await supabase.auth.verifyOtp({ token_hash, type: "magiclink" });
+    if (error) { setServerError(error.message); return; }
     router.replace("/");
   }
 
   return (
-    <div style={card}>
-      <h1 style={{ margin: "0 0 0.5rem", fontSize: "1.25rem", fontWeight: 600 }}>
-        Enter your code
-      </h1>
-      <p style={{ margin: "0 0 1.5rem", fontSize: "0.875rem", color: "#6b7280" }}>
-        We sent a 6-digit code to your email.
-      </p>
+    <div className="rounded-xl p-6 border"
+      style={{ background: "var(--color-surface)", borderColor: "var(--color-border)" }}>
+      <div className="mb-6">
+        <h1 className="text-lg font-bold mb-1" style={{ color: "var(--color-text)" }}>
+          Enter your code
+        </h1>
+        <p className="text-sm" style={{ color: "var(--color-muted)" }}>
+          We sent a 6-digit code to your email.
+        </p>
+      </div>
 
-      <form
-        onSubmit={handleSubmit(onSubmit)}
-        noValidate
-        style={{ display: "flex", flexDirection: "column", gap: "1rem" }}
-      >
-        <div style={fieldWrap}>
-          <label htmlFor="email" style={labelStyle}>
-            Email
-          </label>
-          <input
-            id="email"
-            type="email"
-            autoComplete="email"
-            placeholder="you@example.com"
-            style={{ ...inputStyle, borderColor: errors.email ? "#ef4444" : "#d1d5db" }}
-            {...register("email")}
-          />
-          {errors.email && <span style={errorStyle}>{errors.email.message}</span>}
-        </div>
-
-        <div style={fieldWrap}>
-          <label htmlFor="otp" style={labelStyle}>
-            One-time password
-          </label>
-          <input
-            id="otp"
-            type="text"
-            inputMode="numeric"
-            autoComplete="one-time-code"
-            maxLength={6}
-            placeholder="123456"
-            style={{ ...inputStyle, borderColor: errors.otp ? "#ef4444" : "#d1d5db", letterSpacing: "0.2em" }}
-            {...register("otp")}
-          />
-          {errors.otp && <span style={errorStyle}>{errors.otp.message}</span>}
-        </div>
-
-        {serverError && <span style={errorStyle}>{serverError}</span>}
-
-        <button type="submit" disabled={isSubmitting} style={btnStyle(isSubmitting)}>
+      <form onSubmit={handleSubmit(onSubmit)} noValidate className="flex flex-col gap-4">
+        <Field label="Email" id="email" type="email" placeholder="you@example.com"
+          error={errors.email?.message} reg={register("email")} autoComplete="email" />
+        <Field label="One-time password" id="otp" type="text" placeholder="123456"
+          error={errors.otp?.message} reg={register("otp")} autoComplete="one-time-code"
+          extraStyle={{ letterSpacing: "0.25em" }} maxLength={6} inputMode="numeric" />
+        {serverError && <span className="text-xs" style={{ color: "var(--color-danger)" }}>{serverError}</span>}
+        <button type="submit" disabled={isSubmitting}
+          className="w-full py-2.5 rounded-lg text-sm font-semibold transition-all duration-150 mt-1"
+          style={{
+            background: isSubmitting ? "var(--color-border)" : "var(--color-primary)",
+            color: isSubmitting ? "var(--color-muted)" : "#fff",
+            cursor: isSubmitting ? "not-allowed" : "pointer",
+          }}>
           {isSubmitting ? "Verifying…" : "Verify"}
         </button>
       </form>
@@ -107,49 +63,28 @@ export default function VerifyOtpForm() {
   );
 }
 
-const card: React.CSSProperties = {
-  background: "#fff",
-  borderRadius: "0.75rem",
-  boxShadow: "0 1px 4px rgba(0,0,0,0.08)",
-  padding: "2rem",
-  width: "100%",
-  maxWidth: "400px",
-};
-
-const fieldWrap: React.CSSProperties = {
-  display: "flex",
-  flexDirection: "column",
-  gap: "0.25rem",
-};
-
-const labelStyle: React.CSSProperties = {
-  fontSize: "0.875rem",
-  fontWeight: 500,
-  color: "#374151",
-};
-
-const inputStyle: React.CSSProperties = {
-  padding: "0.5rem 0.75rem",
-  borderRadius: "0.375rem",
-  border: "1px solid",
-  fontSize: "0.875rem",
-  outline: "none",
-  width: "100%",
-  boxSizing: "border-box",
-};
-
-const errorStyle: React.CSSProperties = {
-  fontSize: "0.75rem",
-  color: "#ef4444",
-};
-
-const btnStyle = (disabled: boolean): React.CSSProperties => ({
-  padding: "0.625rem",
-  borderRadius: "0.375rem",
-  border: "none",
-  background: disabled ? "#9ca3af" : "#111827",
-  color: "#fff",
-  fontWeight: 500,
-  fontSize: "0.875rem",
-  cursor: disabled ? "not-allowed" : "pointer",
-});
+function Field({ label, id, type, placeholder, error, reg, autoComplete, extraStyle, maxLength, inputMode }: {
+  label: string; id: string; type: string; placeholder: string;
+  error?: string; reg: object; autoComplete?: string;
+  extraStyle?: React.CSSProperties; maxLength?: number; inputMode?: React.HTMLAttributes<HTMLInputElement>["inputMode"];
+}) {
+  return (
+    <div className="flex flex-col gap-1.5">
+      <label htmlFor={id} className="text-xs font-medium uppercase tracking-wide"
+        style={{ color: "var(--color-muted)" }}>
+        {label}
+      </label>
+      <input id={id} type={type} placeholder={placeholder} autoComplete={autoComplete}
+        maxLength={maxLength} inputMode={inputMode}
+        className="w-full px-3 py-2.5 rounded-lg text-sm transition-colors"
+        style={{
+          background: "var(--color-surface-2)",
+          border: `1px solid ${error ? "var(--color-danger)" : "var(--color-border)"}`,
+          color: "var(--color-text)",
+          ...extraStyle,
+        }}
+        {...reg} />
+      {error && <span className="text-xs" style={{ color: "var(--color-danger)" }}>{error}</span>}
+    </div>
+  );
+}

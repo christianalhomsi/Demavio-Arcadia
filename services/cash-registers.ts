@@ -14,7 +14,7 @@ import {
 export async function openCashRegister(
   input: OpenCashRegisterInput
 ): Promise<ServiceResult<CashRegister>> {
-  const supabase = getServerClient();
+  const supabase = await getServerClient();
 
   const { data, error } = await supabase
     .from("cash_registers")
@@ -35,7 +35,7 @@ export async function openCashRegister(
 export async function getCashRegister(
   registerId: string
 ): Promise<ServiceResult<CashRegister>> {
-  const supabase = getServerClient();
+  const supabase = await getServerClient();
 
   const { data, error } = await supabase
     .from("cash_registers")
@@ -63,7 +63,7 @@ export async function closeCashRegister(
   const variance = calculateVariance(input.actual_balance, expectedBalance);
   const closedAt = new Date().toISOString();
 
-  const supabase = getServerClient();
+  const supabase = await getServerClient();
 
   const { data, error } = await supabase
     .from("cash_registers")

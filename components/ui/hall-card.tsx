@@ -3,52 +3,21 @@ import type { Hall } from "@/types/hall";
 
 export default function HallCard({ hall }: { hall: Hall }) {
   return (
-    <div style={card}>
-      <div style={{ flex: 1 }}>
-        <p style={name}>{hall.name}</p>
-        <p style={location}>{hall.location ?? "No address provided"}</p>
-        <p style={capacity}>{hall.capacity} seats</p>
+    <div className="flex flex-col gap-4 p-5 rounded-xl border transition-colors"
+      style={{ background: "var(--color-surface)", borderColor: "var(--color-border)" }}>
+      <div className="flex-1">
+        <p className="text-base font-semibold mb-1" style={{ color: "var(--color-text)" }}>
+          {hall.name}
+        </p>
+        <p className="text-sm" style={{ color: "var(--color-muted)" }}>
+          {hall.address ?? "No address provided"}
+        </p>
       </div>
-      <Link href={`/halls/${hall.id}`} style={link}>
+      <Link href={`/halls/${hall.id}`}
+        className="inline-flex items-center gap-1 text-sm font-medium transition-opacity hover:opacity-80"
+        style={{ color: "var(--color-primary)" }}>
         View details →
       </Link>
     </div>
   );
 }
-
-const card: React.CSSProperties = {
-  background: "#fff",
-  borderRadius: "0.75rem",
-  boxShadow: "0 1px 4px rgba(0,0,0,0.08)",
-  padding: "1.5rem",
-  display: "flex",
-  flexDirection: "column",
-  gap: "1rem",
-};
-
-const name: React.CSSProperties = {
-  margin: "0 0 0.25rem",
-  fontSize: "1rem",
-  fontWeight: 600,
-  color: "#111827",
-};
-
-const location: React.CSSProperties = {
-  margin: "0 0 0.25rem",
-  fontSize: "0.875rem",
-  color: "#6b7280",
-};
-
-const capacity: React.CSSProperties = {
-  margin: 0,
-  fontSize: "0.8rem",
-  color: "#9ca3af",
-};
-
-const link: React.CSSProperties = {
-  fontSize: "0.875rem",
-  fontWeight: 500,
-  color: "#111827",
-  textDecoration: "none",
-  alignSelf: "flex-start",
-};

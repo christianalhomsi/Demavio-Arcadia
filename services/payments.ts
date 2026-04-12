@@ -24,7 +24,7 @@ export async function createPayment(
   amount: number,
   durationHours: number
 ): Promise<ServiceResult<Payment>> {
-  const supabase = getServerClient();
+  const supabase = await getServerClient();
 
   const { data, error } = await supabase
     .from("payments")
@@ -45,7 +45,7 @@ export async function createLedgerEntry(
   paymentId: string,
   amount: number
 ): Promise<ServiceResult<LedgerEntry>> {
-  const supabase = getServerClient();
+  const supabase = await getServerClient();
 
   const { data, error } = await supabase
     .from("ledger")

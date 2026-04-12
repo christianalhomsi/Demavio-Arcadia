@@ -5,7 +5,7 @@ import type { FinancialTransaction, InsertTransactionInput } from "@/types/trans
 export async function insertTransaction(
   input: InsertTransactionInput
 ): Promise<ServiceResult<FinancialTransaction>> {
-  const supabase = getServerClient();
+  const supabase = await getServerClient();
 
   const { data, error } = await supabase
     .from("financial_transactions")

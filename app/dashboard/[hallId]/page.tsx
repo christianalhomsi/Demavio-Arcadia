@@ -5,10 +5,8 @@ import type { Device, DeviceStatus } from "@/services/devices";
 
 export const metadata: Metadata = { title: "Overview | Gaming Hub" };
 
-// ─── data ────────────────────────────────────────────────────────────────────
-
 async function getHallDevices(hallId: string): Promise<Device[]> {
-  const supabase = getServerClient();
+  const supabase = await getServerClient();
   const { data } = await supabase
     .from("devices")
     .select("id, hall_id, name, status, last_heartbeat")
@@ -17,15 +15,12 @@ async function getHallDevices(hallId: string): Promise<Device[]> {
 }
 
 type RecentRow = {
-  id: string;
-  start_time: string;
-  end_time: string;
-  status: string;
+  id: string; start_time: string; end_time: string; status: string;
   devices: { name: string } | null;
 };
 
 async function getRecentReservations(hallId: string): Promise<RecentRow[]> {
-  const supabase = getServerClient();
+  const supabase = await getServerClient();
   const { data } = await supabase
     .from("reservations")
     .select("id, start_time, end_time, status, devices!inner(name, hall_id)")
@@ -35,43 +30,36 @@ async function getRecentReservations(hallId: string): Promise<RecentRow[]> {
   return (data ?? []) as RecentRow[];
 }
 
-// ─── helpers ─────────────────────────────────────────────────────────────────
-
 function fmt(iso: string) {
-  return new Date(iso).toLocaleString(undefined, {
-    dateStyle: "medium",
-    timeStyle: "short",
-  });
+  return new Date(iso).toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" });
 }
 
-const RESERVATION_STATUS_STYLE: Record<string, React.CSSProperties> = {
-  confirmed: { background: "#dcfce7", color: "#15803d" },
-  active:    { background: "#dbeafe", color: "#1d4ed8" },
-  cancelled: { background: "#fee2e2", color: "#b91c1c" },
-  completed: { background: "#f3f4f6", color: "#6b7280" },
+const RES_STATUS: Record<string, { bg: string; color: string }> = {
+  confirmed: { bg: "#14532d33", color: "#22c55e" },
+  active:    { bg: "#1e3a5f33", color: "#60a5fa" },
+  cancelled: { bg: "#7f1d1d33", color: "#f87171" },
+  completed: { bg: "#1f212833", color: "#6b7280" },
 };
-
-// ─── stat cards ──────────────────────────────────────────────────────────────
 
 async function OverviewStats({ hallId }: { hallId: string }) {
   const devices = await getHallDevices(hallId);
-
   const count = (s: DeviceStatus) => devices.filter((d) => d.status === s).length;
 
   const stats = [
-    { label: "Total devices",     value: devices.length,       accent: "#111827" },
-    { label: "Available",         value: count("available"),   accent: "#15803d" },
-    { label: "Active",            value: count("active"),      accent: "#1d4ed8" },
-    { label: "Reserved",          value: count("idle"),        accent: "#a16207" },
-    { label: "Offline",           value: count("offline"),     accent: "#6b7280" },
+    { label: "Total",     value: devices.length,    color: "var(--color-text)" },
+    { label: "Available", value: count("available"), color: "#22c55e" },
+    { label: "Active",    value: count("active"),    color: "#60a5fa" },
+    { label: "Reserved",  value: count("idle"),      color: "#f59e0b" },
+    { label: "Offline",   value: count("offline"),   color: "var(--color-muted)" },
   ];
 
   return (
-    <div style={statsGrid}>
-      {stats.map(({ label, value, accent }) => (
-        <div key={label} style={statCard}>
-          <span style={{ ...statValue, color: accent }}>{value}</span>
-          <span style={statLabel}>{label}</span>
+    <div className="grid gap-3" style={{ gridTemplateColumns: "repeat(auto-fill, minmax(130px, 1fr))" }}>
+      {stats.map(({ label, value, color }) => (
+        <div key={label} className="flex flex-col gap-1 p-4 rounded-xl border"
+          style={{ background: "var(--color-surface)", borderColor: "var(--color-border)" }}>
+          <span className="text-3xl font-bold leading-none" style={{ color }}>{value}</span>
+          <span className="text-xs" style={{ color: "var(--color-muted)" }}>{label}</span>
         </div>
       ))}
     </div>
@@ -80,49 +68,47 @@ async function OverviewStats({ hallId }: { hallId: string }) {
 
 function StatsSkeleton() {
   return (
-    <div style={statsGrid}>
+    <div className="grid gap-3" style={{ gridTemplateColumns: "repeat(auto-fill, minmax(130px, 1fr))" }}>
       {Array.from({ length: 5 }).map((_, i) => (
-        <div key={i} style={{ ...statCard, gap: "0.5rem" }}>
-          <div style={{ ...skel, height: "2rem", width: "3rem" }} />
-          <div style={{ ...skel, height: "0.875rem", width: "5rem" }} />
-        </div>
+        <div key={i} className="skeleton h-24 rounded-xl" style={{ background: "var(--color-surface)" }} />
       ))}
     </div>
   );
 }
 
-// ─── recent reservations ─────────────────────────────────────────────────────
-
 async function RecentReservations({ hallId }: { hallId: string }) {
   const rows = await getRecentReservations(hallId);
 
   return (
-    <div style={section}>
-      <p style={sectionHeading}>Recent reservations</p>
+    <div className="rounded-xl border overflow-hidden"
+      style={{ background: "var(--color-surface)", borderColor: "var(--color-border)" }}>
+      <div className="px-5 py-4 border-b" style={{ borderColor: "var(--color-border)" }}>
+        <p className="text-sm font-semibold" style={{ color: "var(--color-text)" }}>Recent reservations</p>
+      </div>
       {rows.length === 0 ? (
-        <p style={empty}>No reservations yet.</p>
+        <p className="px-5 py-6 text-sm" style={{ color: "var(--color-muted)" }}>No reservations yet.</p>
       ) : (
-        <div style={{ overflowX: "auto" }}>
-          <table style={table}>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm border-collapse">
             <thead>
-              <tr>
+              <tr style={{ borderBottom: "1px solid var(--color-border)" }}>
                 {["Device", "Start", "End", "Status"].map((h) => (
-                  <th key={h} style={th}>{h}</th>
+                  <th key={h} className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide"
+                    style={{ color: "var(--color-muted)" }}>{h}</th>
                 ))}
               </tr>
             </thead>
             <tbody>
               {rows.map((r) => {
-                const badge =
-                  RESERVATION_STATUS_STYLE[r.status] ??
-                  RESERVATION_STATUS_STYLE.completed;
+                const s = RES_STATUS[r.status] ?? RES_STATUS.completed;
                 return (
-                  <tr key={r.id} style={tableRow}>
-                    <td style={td}>{r.devices?.name ?? "—"}</td>
-                    <td style={{ ...td, whiteSpace: "nowrap" }}>{fmt(r.start_time)}</td>
-                    <td style={{ ...td, whiteSpace: "nowrap" }}>{fmt(r.end_time)}</td>
-                    <td style={td}>
-                      <span style={{ ...badgeBase, ...badge }}>
+                  <tr key={r.id} style={{ borderBottom: "1px solid var(--color-border)" }}>
+                    <td className="px-4 py-3" style={{ color: "var(--color-text)" }}>{r.devices?.name ?? "—"}</td>
+                    <td className="px-4 py-3 whitespace-nowrap" style={{ color: "var(--color-muted)" }}>{fmt(r.start_time)}</td>
+                    <td className="px-4 py-3 whitespace-nowrap" style={{ color: "var(--color-muted)" }}>{fmt(r.end_time)}</td>
+                    <td className="px-4 py-3">
+                      <span className="text-xs font-medium px-2.5 py-0.5 rounded-full"
+                        style={{ background: s.bg, color: s.color }}>
                         {r.status.charAt(0).toUpperCase() + r.status.slice(1)}
                       </span>
                     </td>
@@ -137,140 +123,29 @@ async function RecentReservations({ hallId }: { hallId: string }) {
   );
 }
 
-function RecentReservationsSkeleton() {
+function RecentSkeleton() {
   return (
-    <div style={section}>
-      <div style={{ ...skel, height: "1rem", width: "160px", marginBottom: "1rem" }} />
-      <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
-        {Array.from({ length: 4 }).map((_, i) => (
-          <div key={i} style={{ ...skel, height: "44px" }} />
-        ))}
-      </div>
+    <div className="rounded-xl border p-5 flex flex-col gap-3"
+      style={{ background: "var(--color-surface)", borderColor: "var(--color-border)" }}>
+      <div className="skeleton h-4 w-40 rounded" style={{ background: "var(--color-surface-2)" }} />
+      {Array.from({ length: 4 }).map((_, i) => (
+        <div key={i} className="skeleton h-11 rounded-lg" style={{ background: "var(--color-surface-2)" }} />
+      ))}
     </div>
   );
 }
 
-// ─── page ─────────────────────────────────────────────────────────────────────
-
-export default function OverviewPage({
-  params,
-}: {
-  params: { hallId: string };
-}) {
+export default function OverviewPage({ params }: { params: { hallId: string } }) {
   const { hallId } = params;
-
   return (
-    <div style={page}>
-      <p style={pageHeading}>Overview</p>
-
+    <div className="flex flex-col gap-6 max-w-4xl">
+      <h1 className="text-xl font-bold" style={{ color: "var(--color-text)" }}>Overview</h1>
       <Suspense fallback={<StatsSkeleton />}>
         <OverviewStats hallId={hallId} />
       </Suspense>
-
-      <Suspense fallback={<RecentReservationsSkeleton />}>
+      <Suspense fallback={<RecentSkeleton />}>
         <RecentReservations hallId={hallId} />
       </Suspense>
     </div>
   );
 }
-
-// ─── styles ──────────────────────────────────────────────────────────────────
-
-const page: React.CSSProperties = {
-  display: "flex",
-  flexDirection: "column",
-  gap: "2rem",
-  maxWidth: "900px",
-};
-
-const pageHeading: React.CSSProperties = {
-  margin: 0,
-  fontSize: "1.25rem",
-  fontWeight: 700,
-  color: "#111827",
-};
-
-const statsGrid: React.CSSProperties = {
-  display: "grid",
-  gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))",
-  gap: "1rem",
-};
-
-const statCard: React.CSSProperties = {
-  background: "#fff",
-  borderRadius: "0.75rem",
-  boxShadow: "0 1px 4px rgba(0,0,0,0.07)",
-  padding: "1.25rem 1rem",
-  display: "flex",
-  flexDirection: "column",
-  gap: "0.375rem",
-};
-
-const statValue: React.CSSProperties = {
-  fontSize: "1.75rem",
-  fontWeight: 700,
-  lineHeight: 1,
-};
-
-const statLabel: React.CSSProperties = {
-  fontSize: "0.8125rem",
-  color: "#6b7280",
-};
-
-const section: React.CSSProperties = {
-  background: "#fff",
-  borderRadius: "0.75rem",
-  boxShadow: "0 1px 4px rgba(0,0,0,0.07)",
-  padding: "1.5rem",
-};
-
-const sectionHeading: React.CSSProperties = {
-  margin: "0 0 1rem",
-  fontSize: "0.9375rem",
-  fontWeight: 600,
-  color: "#111827",
-};
-
-const empty: React.CSSProperties = {
-  margin: 0,
-  fontSize: "0.875rem",
-  color: "#6b7280",
-};
-
-const table: React.CSSProperties = {
-  width: "100%",
-  borderCollapse: "collapse",
-  fontSize: "0.875rem",
-};
-
-const th: React.CSSProperties = {
-  padding: "0.5rem 0.75rem",
-  textAlign: "left",
-  fontWeight: 600,
-  color: "#374151",
-  borderBottom: "1px solid #e5e7eb",
-  whiteSpace: "nowrap",
-};
-
-const tableRow: React.CSSProperties = {
-  borderBottom: "1px solid #f3f4f6",
-};
-
-const td: React.CSSProperties = {
-  padding: "0.625rem 0.75rem",
-  color: "#111827",
-  verticalAlign: "middle",
-};
-
-const badgeBase: React.CSSProperties = {
-  display: "inline-block",
-  fontSize: "0.75rem",
-  fontWeight: 500,
-  padding: "0.2rem 0.6rem",
-  borderRadius: "9999px",
-};
-
-const skel: React.CSSProperties = {
-  borderRadius: "0.375rem",
-  background: "#e5e7eb",
-};

@@ -5,7 +5,7 @@ export async function verifyStaffHallAccess(
   userId: string,
   hallId: string
 ): Promise<ServiceResult<true>> {
-  const supabase = getServerClient();
+  const supabase = await getServerClient();
 
   const { data, error } = await supabase
     .from("staff_hall_access")

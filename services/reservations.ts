@@ -7,7 +7,7 @@ const EXCLUSION_VIOLATION = "23P01";
 export async function getReservation(
   reservationId: string
 ): Promise<ServiceResult<Reservation>> {
-  const supabase = getServerClient();
+  const supabase = await getServerClient();
 
   const { data, error } = await supabase
     .from("reservations")
@@ -22,7 +22,7 @@ export async function getReservation(
 export async function setReservationActive(
   reservationId: string
 ): Promise<ServiceResult<true>> {
-  const supabase = getServerClient();
+  const supabase = await getServerClient();
 
   const { error } = await supabase
     .from("reservations")
@@ -38,7 +38,7 @@ export async function createReservation(
   input: BookingInput,
   userId: string
 ): Promise<ServiceResult<Reservation>> {
-  const supabase = getServerClient();
+  const supabase = await getServerClient();
 
   const { data, error } = await supabase
     .from("reservations")

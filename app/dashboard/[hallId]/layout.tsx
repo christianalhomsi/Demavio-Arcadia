@@ -12,7 +12,7 @@ export default async function DashboardLayout({
   params: { hallId: string };
 }) {
   const { hallId } = params;
-  const supabase = getServerClient();
+  const supabase = await getServerClient();
 
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/login");
@@ -24,48 +24,22 @@ export default async function DashboardLayout({
     .from("halls")
     .select("name")
     .eq("id", hallId)
-    .eq("is_active", true)
     .single();
 
   if (!hall) notFound();
 
   return (
-    <div style={root}>
+    <div className="flex flex-col min-h-screen" style={{ background: "var(--color-bg)" }}>
       <DashboardHeader hallName={hall.name} />
-      <div style={body}>
-        <aside style={sidebar}>
+      <div className="flex flex-1 overflow-hidden">
+        <aside className="w-48 shrink-0 border-r overflow-y-auto"
+          style={{ background: "var(--color-surface)", borderColor: "var(--color-border)" }}>
           <DashboardSidebar hallId={hallId} />
         </aside>
-        <main style={main}>{children}</main>
+        <main className="flex-1 p-6 overflow-y-auto">
+          {children}
+        </main>
       </div>
     </div>
   );
 }
-
-const root: React.CSSProperties = {
-  display: "flex",
-  flexDirection: "column",
-  minHeight: "100vh",
-  fontFamily: "system-ui, sans-serif",
-  background: "#f9fafb",
-};
-
-const body: React.CSSProperties = {
-  display: "flex",
-  flex: 1,
-  overflow: "hidden",
-};
-
-const sidebar: React.CSSProperties = {
-  width: "200px",
-  flexShrink: 0,
-  borderRight: "1px solid #e5e7eb",
-  background: "#fff",
-  overflowY: "auto",
-};
-
-const main: React.CSSProperties = {
-  flex: 1,
-  padding: "2rem",
-  overflowY: "auto",
-};

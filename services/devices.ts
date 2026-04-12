@@ -12,7 +12,7 @@ export type Device = {
 };
 
 export async function getDevice(deviceId: string): Promise<ServiceResult<Device>> {
-  const supabase = getServerClient();
+  const supabase = await getServerClient();
 
   const { data, error } = await supabase
     .from("devices")
@@ -28,7 +28,7 @@ export async function getDevice(deviceId: string): Promise<ServiceResult<Device>
 export async function setDeviceActive(
   deviceId: string
 ): Promise<ServiceResult<true>> {
-  const supabase = getServerClient();
+  const supabase = await getServerClient();
 
   const { error } = await supabase
     .from("devices")
@@ -42,7 +42,7 @@ export async function setDeviceActive(
 export async function setDeviceAvailable(
   deviceId: string
 ): Promise<ServiceResult<true>> {
-  const supabase = getServerClient();
+  const supabase = await getServerClient();
 
   const { error } = await supabase
     .from("devices")

@@ -18,10 +18,21 @@ export default function AuthForm() {
   const [tab, setTab] = useState<"login" | "signup">("login");
 
   return (
-    <div style={card}>
-      <div style={tabBar}>
-        <button style={tabBtn(tab === "login")} onClick={() => setTab("login")}>Sign In</button>
-        <button style={tabBtn(tab === "signup")} onClick={() => setTab("signup")}>Sign Up</button>
+    <div className="rounded-xl p-6 border"
+      style={{ background: "var(--color-surface)", borderColor: "var(--color-border)" }}>
+      {/* tabs */}
+      <div className="flex mb-6 rounded-lg p-1 gap-1"
+        style={{ background: "var(--color-surface-2)" }}>
+        {(["login", "signup"] as const).map((t) => (
+          <button key={t} onClick={() => setTab(t)}
+            className="flex-1 py-2 rounded-md text-sm font-medium transition-all duration-150 cursor-pointer"
+            style={{
+              background: tab === t ? "var(--color-primary)" : "transparent",
+              color: tab === t ? "#fff" : "var(--color-muted)",
+            }}>
+            {t === "login" ? "Sign In" : "Sign Up"}
+          </button>
+        ))}
       </div>
       {tab === "login" ? <LoginForm /> : <SignUpForm />}
     </div>
@@ -31,7 +42,6 @@ export default function AuthForm() {
 function LoginForm() {
   const router = useRouter();
   const [serverError, setServerError] = useState<string | null>(null);
-
   const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<LoginInput>({
     resolver: zodResolver(loginSchema),
   });
@@ -45,15 +55,13 @@ function LoginForm() {
   }
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} noValidate style={formStyle}>
+    <form onSubmit={handleSubmit(onSubmit)} noValidate className="flex flex-col gap-4">
       <Field label="Email" id="email" type="email" placeholder="you@example.com"
         error={errors.email?.message} reg={register("email")} />
       <Field label="Password" id="password" type="password" placeholder="••••••••"
         error={errors.password?.message} reg={register("password")} />
-      {serverError && <span style={errorStyle}>{serverError}</span>}
-      <button type="submit" disabled={isSubmitting} style={btnStyle(isSubmitting)}>
-        {isSubmitting ? "Signing in…" : "Sign In"}
-      </button>
+      {serverError && <ErrorMsg>{serverError}</ErrorMsg>}
+      <SubmitBtn disabled={isSubmitting}>{isSubmitting ? "Signing in…" : "Sign In"}</SubmitBtn>
     </form>
   );
 }
@@ -61,7 +69,6 @@ function LoginForm() {
 function SignUpForm() {
   const [serverError, setServerError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
-
   const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<OtpRequestInput>({
     resolver: zodResolver(otpRequestSchema),
   });
@@ -80,20 +87,21 @@ function SignUpForm() {
 
   if (success) {
     return (
-      <p style={{ color: "#16a34a", textAlign: "center", margin: "1.5rem 0 0" }}>
-        ✓ Check your email for a one-time password.
-      </p>
+      <div className="text-center py-4">
+        <div className="text-3xl mb-3">📬</div>
+        <p className="text-sm font-medium" style={{ color: "var(--color-success)" }}>
+          Check your email for a one-time password.
+        </p>
+      </div>
     );
   }
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} noValidate style={formStyle}>
+    <form onSubmit={handleSubmit(onSubmit)} noValidate className="flex flex-col gap-4">
       <Field label="Email" id="signup-email" type="email" placeholder="you@example.com"
         error={errors.email?.message} reg={register("email")} />
-      {serverError && <span style={errorStyle}>{serverError}</span>}
-      <button type="submit" disabled={isSubmitting} style={btnStyle(isSubmitting)}>
-        {isSubmitting ? "Sending…" : "Send OTP"}
-      </button>
+      {serverError && <ErrorMsg>{serverError}</ErrorMsg>}
+      <SubmitBtn disabled={isSubmitting}>{isSubmitting ? "Sending…" : "Send OTP"}</SubmitBtn>
     </form>
   );
 }
@@ -103,40 +111,38 @@ function Field({ label, id, type, placeholder, error, reg }: {
   error?: string; reg: object;
 }) {
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: "0.25rem" }}>
-      <label htmlFor={id} style={labelStyle}>{label}</label>
-      <input id={id} type={type} placeholder={placeholder}
-        style={{ ...inputStyle, borderColor: error ? "#ef4444" : "#d1d5db" }} autoComplete="off" {...reg} />
-      {error && <span style={errorStyle}>{error}</span>}
+    <div className="flex flex-col gap-1.5">
+      <label htmlFor={id} className="text-xs font-medium uppercase tracking-wide"
+        style={{ color: "var(--color-muted)" }}>
+        {label}
+      </label>
+      <input id={id} type={type} placeholder={placeholder} autoComplete="off"
+        className="w-full px-3 py-2.5 rounded-lg text-sm transition-colors"
+        style={{
+          background: "var(--color-surface-2)",
+          border: `1px solid ${error ? "var(--color-danger)" : "var(--color-border)"}`,
+          color: "var(--color-text)",
+        }}
+        {...reg} />
+      {error && <ErrorMsg>{error}</ErrorMsg>}
     </div>
   );
 }
 
-const card: React.CSSProperties = {
-  background: "#fff", borderRadius: "0.75rem",
-  boxShadow: "0 1px 4px rgba(0,0,0,0.08)", padding: "2rem",
-  width: "100%", maxWidth: "400px",
-};
-const tabBar: React.CSSProperties = {
-  display: "flex", marginBottom: "1.5rem",
-  borderBottom: "1px solid #e5e7eb",
-};
-const tabBtn = (active: boolean): React.CSSProperties => ({
-  flex: 1, padding: "0.5rem", border: "none", background: "none",
-  fontWeight: active ? 600 : 400, fontSize: "0.875rem",
-  color: active ? "#111827" : "#6b7280", cursor: "pointer",
-  borderBottom: active ? "2px solid #111827" : "2px solid transparent",
-  marginBottom: "-1px",
-});
-const formStyle: React.CSSProperties = { display: "flex", flexDirection: "column", gap: "1rem" };
-const labelStyle: React.CSSProperties = { fontSize: "0.875rem", fontWeight: 500, color: "#374151" };
-const inputStyle: React.CSSProperties = {
-  padding: "0.5rem 0.75rem", borderRadius: "0.375rem", border: "1px solid",
-  fontSize: "0.875rem", outline: "none", width: "100%", boxSizing: "border-box",
-};
-const errorStyle: React.CSSProperties = { fontSize: "0.75rem", color: "#ef4444" };
-const btnStyle = (disabled: boolean): React.CSSProperties => ({
-  padding: "0.625rem", borderRadius: "0.375rem", border: "none",
-  background: disabled ? "#9ca3af" : "#111827", color: "#fff",
-  fontWeight: 500, fontSize: "0.875rem", cursor: disabled ? "not-allowed" : "pointer",
-});
+function ErrorMsg({ children }: { children: React.ReactNode }) {
+  return <span className="text-xs" style={{ color: "var(--color-danger)" }}>{children}</span>;
+}
+
+function SubmitBtn({ disabled, children }: { disabled: boolean; children: React.ReactNode }) {
+  return (
+    <button type="submit" disabled={disabled}
+      className="w-full py-2.5 rounded-lg text-sm font-semibold transition-all duration-150 mt-1 cursor-pointer"
+      style={{
+        background: disabled ? "var(--color-border)" : "var(--color-primary)",
+        color: disabled ? "var(--color-muted)" : "#fff",
+        cursor: disabled ? "not-allowed" : "pointer",
+      }}>
+      {children}
+    </button>
+  );
+}

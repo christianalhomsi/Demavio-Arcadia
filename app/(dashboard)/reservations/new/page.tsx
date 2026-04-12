@@ -13,66 +13,31 @@ async function BookingFormLoader() {
 
 function BookingFormSkeleton() {
   return (
-    <div
-      style={{
-        background: "#fff",
-        borderRadius: "0.75rem",
-        boxShadow: "0 1px 4px rgba(0,0,0,0.08)",
-        padding: "2rem",
-        width: "100%",
-        maxWidth: "480px",
-        display: "flex",
-        flexDirection: "column",
-        gap: "1.25rem",
-      }}
-    >
+    <div className="rounded-xl border p-6 w-full max-w-md flex flex-col gap-5"
+      style={{ background: "var(--color-surface)", borderColor: "var(--color-border)" }}>
       {Array.from({ length: 4 }).map((_, i) => (
-        <div key={i} style={{ display: "flex", flexDirection: "column", gap: "0.25rem" }}>
-          <div style={{ ...skel, height: "14px", width: "80px" }} />
-          <div style={{ ...skel, height: "38px" }} />
+        <div key={i} className="flex flex-col gap-1.5">
+          <div className="skeleton h-3 w-20 rounded" style={{ background: "var(--color-surface-2)" }} />
+          <div className="skeleton h-10 rounded-lg" style={{ background: "var(--color-surface-2)" }} />
         </div>
       ))}
-      <div style={{ ...skel, height: "38px" }} />
+      <div className="skeleton h-10 rounded-lg" style={{ background: "var(--color-surface-2)" }} />
     </div>
   );
 }
 
 export default function NewReservationPage() {
   return (
-    <div style={page}>
-      <Link href="/halls" style={backLink}>← Back to halls</Link>
-      <h1 style={heading}>New reservation</h1>
+    <div className="p-6 max-w-xl mx-auto">
+      <Link href="/halls"
+        className="inline-flex items-center gap-1 text-sm mb-6 transition-opacity hover:opacity-80"
+        style={{ color: "var(--color-muted)" }}>
+        ← Back to halls
+      </Link>
+      <h1 className="text-2xl font-bold mb-6" style={{ color: "var(--color-text)" }}>New reservation</h1>
       <Suspense fallback={<BookingFormSkeleton />}>
         <BookingFormLoader />
       </Suspense>
     </div>
   );
 }
-
-const page: React.CSSProperties = {
-  padding: "2rem",
-  maxWidth: "600px",
-  margin: "0 auto",
-  fontFamily: "system-ui, sans-serif",
-};
-
-const backLink: React.CSSProperties = {
-  display: "inline-block",
-  marginBottom: "1.5rem",
-  fontSize: "0.875rem",
-  color: "#6b7280",
-  textDecoration: "none",
-};
-
-const heading: React.CSSProperties = {
-  margin: "0 0 1.5rem",
-  fontSize: "1.5rem",
-  fontWeight: 700,
-  color: "#111827",
-};
-
-const skel: React.CSSProperties = {
-  borderRadius: "0.375rem",
-  background: "#e5e7eb",
-  width: "100%",
-};

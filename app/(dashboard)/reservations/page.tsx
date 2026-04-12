@@ -11,29 +11,22 @@ type ReservationRow = {
   start_time: string;
   end_time: string;
   status: string;
-  devices: {
-    name: string;
-    halls: { name: string } | null;
-  } | null;
+  devices: { name: string; halls: { name: string } | null } | null;
 };
 
-const STATUS_STYLE: Record<string, React.CSSProperties> = {
-  confirmed: { background: "#dcfce7", color: "#15803d" },
-  active:    { background: "#dbeafe", color: "#1d4ed8" },
-  cancelled: { background: "#fee2e2", color: "#b91c1c" },
-  completed: { background: "#f3f4f6", color: "#6b7280" },
+const STATUS: Record<string, { bg: string; color: string }> = {
+  confirmed: { bg: "#14532d33", color: "#22c55e" },
+  active:    { bg: "#1e3a5f33", color: "#60a5fa" },
+  cancelled: { bg: "#7f1d1d33", color: "#f87171" },
+  completed: { bg: "#1f212833", color: "#6b7280" },
 };
 
 function fmt(iso: string) {
-  return new Date(iso).toLocaleString(undefined, {
-    dateStyle: "medium",
-    timeStyle: "short",
-  });
+  return new Date(iso).toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" });
 }
 
 async function ReservationsList() {
-  const supabase = getServerClient();
-
+  const supabase = await getServerClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
@@ -44,22 +37,20 @@ async function ReservationsList() {
     .order("start_time", { ascending: false });
 
   if (error) {
-    return (
-      <p style={{ color: "#b91c1c", fontSize: "0.875rem" }}>
-        Failed to load reservations. Please try again.
-      </p>
-    );
+    return <p className="text-sm" style={{ color: "var(--color-danger)" }}>Failed to load reservations.</p>;
   }
 
   const rows = (data ?? []) as ReservationRow[];
 
   if (rows.length === 0) {
     return (
-      <div style={emptyWrap}>
-        <p style={{ margin: "0 0 1rem", color: "#6b7280", fontSize: "0.875rem" }}>
-          You have no reservations yet.
-        </p>
-        <Link href="/reservations/new" style={newBtn}>
+      <div className="text-center py-16 rounded-xl border"
+        style={{ background: "var(--color-surface)", borderColor: "var(--color-border)" }}>
+        <div className="text-4xl mb-3">📅</div>
+        <p className="text-sm mb-4" style={{ color: "var(--color-muted)" }}>You have no reservations yet.</p>
+        <Link href="/reservations/new"
+          className="inline-flex px-4 py-2 rounded-lg text-sm font-semibold"
+          style={{ background: "var(--color-primary)", color: "#fff" }}>
           Book a device
         </Link>
       </div>
@@ -67,26 +58,30 @@ async function ReservationsList() {
   }
 
   return (
-    <div style={{ overflowX: "auto" }}>
-      <table style={table}>
+    <div className="overflow-x-auto rounded-xl border"
+      style={{ background: "var(--color-surface)", borderColor: "var(--color-border)" }}>
+      <table className="w-full text-sm border-collapse">
         <thead>
-          <tr>
+          <tr style={{ borderBottom: "1px solid var(--color-border)" }}>
             {["Hall", "Device", "Start", "End", "Status"].map((h) => (
-              <th key={h} style={th}>{h}</th>
+              <th key={h} className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide"
+                style={{ color: "var(--color-muted)" }}>{h}</th>
             ))}
           </tr>
         </thead>
         <tbody>
           {rows.map((r) => {
-            const badge = STATUS_STYLE[r.status] ?? STATUS_STYLE.completed;
+            const s = STATUS[r.status] ?? STATUS.completed;
             return (
-              <tr key={r.id} style={tr}>
-                <td style={td}>{r.devices?.halls?.name ?? "—"}</td>
-                <td style={td}>{r.devices?.name ?? "—"}</td>
-                <td style={{ ...td, whiteSpace: "nowrap" }}>{fmt(r.start_time)}</td>
-                <td style={{ ...td, whiteSpace: "nowrap" }}>{fmt(r.end_time)}</td>
-                <td style={td}>
-                  <span style={{ ...badgeBase, ...badge }}>
+              <tr key={r.id} className="transition-colors"
+                style={{ borderBottom: "1px solid var(--color-border)" }}>
+                <td className="px-4 py-3" style={{ color: "var(--color-text)" }}>{r.devices?.halls?.name ?? "—"}</td>
+                <td className="px-4 py-3" style={{ color: "var(--color-text)" }}>{r.devices?.name ?? "—"}</td>
+                <td className="px-4 py-3 whitespace-nowrap" style={{ color: "var(--color-muted)" }}>{fmt(r.start_time)}</td>
+                <td className="px-4 py-3 whitespace-nowrap" style={{ color: "var(--color-muted)" }}>{fmt(r.end_time)}</td>
+                <td className="px-4 py-3">
+                  <span className="text-xs font-medium px-2.5 py-0.5 rounded-full"
+                    style={{ background: s.bg, color: s.color }}>
                     {r.status.charAt(0).toUpperCase() + r.status.slice(1)}
                   </span>
                 </td>
@@ -99,11 +94,12 @@ async function ReservationsList() {
   );
 }
 
-function ReservationsListSkeleton() {
+function Skeleton() {
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: "0.625rem" }}>
+    <div className="flex flex-col gap-2">
       {Array.from({ length: 5 }).map((_, i) => (
-        <div key={i} style={skelRow} />
+        <div key={i} className="skeleton h-12 rounded-lg"
+          style={{ background: "var(--color-surface)" }} />
       ))}
     </div>
   );
@@ -111,97 +107,18 @@ function ReservationsListSkeleton() {
 
 export default function ReservationsPage() {
   return (
-    <div style={page}>
-      <div style={pageHeader}>
-        <h1 style={heading}>My reservations</h1>
-        <Link href="/reservations/new" style={newBtn}>+ New</Link>
+    <div className="p-6 max-w-4xl mx-auto">
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-2xl font-bold" style={{ color: "var(--color-text)" }}>My Reservations</h1>
+        <Link href="/reservations/new"
+          className="px-4 py-2 rounded-lg text-sm font-semibold transition-opacity hover:opacity-80"
+          style={{ background: "var(--color-primary)", color: "#fff" }}>
+          + New
+        </Link>
       </div>
-      <Suspense fallback={<ReservationsListSkeleton />}>
+      <Suspense fallback={<Skeleton />}>
         <ReservationsList />
       </Suspense>
     </div>
   );
 }
-
-const page: React.CSSProperties = {
-  padding: "2rem",
-  maxWidth: "900px",
-  margin: "0 auto",
-  fontFamily: "system-ui, sans-serif",
-};
-
-const pageHeader: React.CSSProperties = {
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "space-between",
-  marginBottom: "1.5rem",
-};
-
-const heading: React.CSSProperties = {
-  margin: 0,
-  fontSize: "1.5rem",
-  fontWeight: 700,
-  color: "#111827",
-};
-
-const newBtn: React.CSSProperties = {
-  padding: "0.4rem 0.875rem",
-  borderRadius: "0.375rem",
-  background: "#111827",
-  color: "#fff",
-  fontSize: "0.875rem",
-  fontWeight: 500,
-  textDecoration: "none",
-};
-
-const emptyWrap: React.CSSProperties = {
-  padding: "2rem",
-  textAlign: "center",
-  background: "#fff",
-  borderRadius: "0.75rem",
-  boxShadow: "0 1px 4px rgba(0,0,0,0.08)",
-};
-
-const table: React.CSSProperties = {
-  width: "100%",
-  borderCollapse: "collapse",
-  fontSize: "0.875rem",
-  background: "#fff",
-  borderRadius: "0.75rem",
-  boxShadow: "0 1px 4px rgba(0,0,0,0.08)",
-  overflow: "hidden",
-};
-
-const th: React.CSSProperties = {
-  padding: "0.75rem 1rem",
-  textAlign: "left",
-  fontWeight: 600,
-  color: "#374151",
-  background: "#f9fafb",
-  borderBottom: "1px solid #e5e7eb",
-  whiteSpace: "nowrap",
-};
-
-const tr: React.CSSProperties = {
-  borderBottom: "1px solid #f3f4f6",
-};
-
-const td: React.CSSProperties = {
-  padding: "0.75rem 1rem",
-  color: "#111827",
-  verticalAlign: "middle",
-};
-
-const badgeBase: React.CSSProperties = {
-  display: "inline-block",
-  fontSize: "0.75rem",
-  fontWeight: 500,
-  padding: "0.2rem 0.6rem",
-  borderRadius: "9999px",
-};
-
-const skelRow: React.CSSProperties = {
-  height: "48px",
-  borderRadius: "0.5rem",
-  background: "#e5e7eb",
-};
