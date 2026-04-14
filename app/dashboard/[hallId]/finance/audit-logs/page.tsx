@@ -10,7 +10,7 @@ export const metadata: Metadata = { title: "Audit Logs | Gaming Hub" };
 // ─── data fetching ────────────────────────────────────────────────────────────
 
 async function getHallAuditLogs(hallId: string): Promise<AuditLogEntry[]> {
-  const supabase = getServerClient();
+  const supabase = await getServerClient();
 
   // Collect entity IDs relevant to this hall:
   // the hall itself + all its device IDs

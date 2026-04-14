@@ -12,7 +12,7 @@ export const metadata: Metadata = { title: "Cash Register | Gaming Hub" };
 // ─── data ─────────────────────────────────────────────────────────────────────
 
 async function getOpenRegister(hallId: string): Promise<CashRegister | null> {
-  const supabase = getServerClient();
+  const supabase = await getServerClient();
   const { data } = await supabase
     .from("cash_registers")
     .select("id, hall_id, opened_by, opening_balance, status, opened_at, closed_at")
@@ -25,7 +25,7 @@ async function getOpenRegister(hallId: string): Promise<CashRegister | null> {
 }
 
 async function getTotalIncome(hallId: string): Promise<number> {
-  const supabase = getServerClient();
+  const supabase = await getServerClient();
   const { data } = await supabase
     .from("payments")
     .select("amount, sessions!inner(device_id, devices!inner(hall_id))")

@@ -2,29 +2,26 @@ import { Suspense } from "react";
 import type { Metadata } from "next";
 import { getServerClient } from "@/lib/supabase/server";
 import type { TransactionType } from "@/types/transaction";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Separator } from "@/components/ui/separator";
 
-export const metadata: Metadata = { title: "Finance | Gaming Hub" };
+export const metadata: Metadata = { title: "Finance" };
 
-// ─── helpers ──────────────────────────────────────────────────────────────────
-
-function todayRange(): { start: string; end: string } {
+function todayRange() {
   const now = new Date();
   const start = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
   const end   = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1).toISOString();
   return { start, end };
 }
 
-function fmtCurrency(n: number): string {
+function fmtCurrency(n: number) {
   return n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
-function fmtDate(iso: string): string {
+function fmtDate(iso: string) {
   return new Date(iso).toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" });
 }
-
-// ─── types ────────────────────────────────────────────────────────────────────
-
-type PaymentRow = { amount: number };
 
 type TransactionRow = {
   id: string;
@@ -34,52 +31,46 @@ type TransactionRow = {
   created_at: string;
 };
 
-// ─── data fetching ────────────────────────────────────────────────────────────
+const TX_STYLE: Record<TransactionType, string> = {
+  session_income: "bg-green-500/15 text-green-400",
+  expense:        "bg-red-500/15 text-red-400",
+  refund:         "bg-amber-500/15 text-amber-400",
+  adjustment:     "bg-slate-500/15 text-slate-400",
+};
 
-/**
- * Fetch today's payments for this hall by joining:
- * payments → sessions → devices (filtered by hall_id)
- */
-async function getTodayPayments(hallId: string): Promise<PaymentRow[]> {
-  const supabase = getServerClient();
+const TX_LABEL: Record<TransactionType, string> = {
+  session_income: "Income",
+  expense:        "Expense",
+  refund:         "Refund",
+  adjustment:     "Adjustment",
+};
+
+async function getTodayRevenue(hallId: string): Promise<number> {
+  const supabase = await getServerClient();
   const { start, end } = todayRange();
-
   const { data } = await supabase
     .from("payments")
     .select("amount, sessions!inner(device_id, devices!inner(hall_id))")
     .eq("sessions.devices.hall_id", hallId)
     .gte("created_at", start)
     .lt("created_at", end);
-
-  return (data ?? []) as PaymentRow[];
+  return ((data ?? []) as { amount: number }[]).reduce((s, p) => s + p.amount, 0);
 }
 
-/**
- * Fetch total session count for this hall today (same join chain).
- */
 async function getTodaySessionCount(hallId: string): Promise<number> {
-  const supabase = getServerClient();
+  const supabase = await getServerClient();
   const { start, end } = todayRange();
-
   const { count } = await supabase
     .from("sessions")
     .select("id, devices!inner(hall_id)", { count: "exact", head: true })
     .eq("devices.hall_id", hallId)
     .gte("started_at", start)
     .lt("started_at", end);
-
   return count ?? 0;
 }
 
-/**
- * Fetch recent financial_transactions for this hall by joining through
- * payments → sessions → devices. Falls back to all transactions if the
- * reference chain is unavailable (reference_type may vary).
- */
 async function getRecentTransactions(hallId: string): Promise<TransactionRow[]> {
-  const supabase = getServerClient();
-
-  // Get payment ids for this hall to scope transactions
+  const supabase = await getServerClient();
   const { data: paymentData } = await supabase
     .from("payments")
     .select("id, sessions!inner(device_id, devices!inner(hall_id))")
@@ -88,7 +79,6 @@ async function getRecentTransactions(hallId: string): Promise<TransactionRow[]> 
     .limit(100);
 
   const paymentIds = ((paymentData ?? []) as { id: string }[]).map((p) => p.id);
-
   if (paymentIds.length === 0) return [];
 
   const { data } = await supabase
@@ -101,97 +91,69 @@ async function getRecentTransactions(hallId: string): Promise<TransactionRow[]> 
   return (data ?? []) as TransactionRow[];
 }
 
-// ─── TX type badge ────────────────────────────────────────────────────────────
-
-const TX_STYLE: Record<TransactionType, React.CSSProperties> = {
-  session_income: { background: "#dcfce7", color: "#15803d" },
-  expense:        { background: "#fee2e2", color: "#b91c1c" },
-  refund:         { background: "#fef9c3", color: "#a16207" },
-  adjustment:     { background: "#f3f4f6", color: "#6b7280" },
-};
-
-const TX_LABEL: Record<TransactionType, string> = {
-  session_income: "Income",
-  expense:        "Expense",
-  refund:         "Refund",
-  adjustment:     "Adjustment",
-};
-
-// ─── summary cards ────────────────────────────────────────────────────────────
-
 async function FinanceSummary({ hallId }: { hallId: string }) {
-  const [payments, sessionCount] = await Promise.all([
-    getTodayPayments(hallId),
+  const [revenue, sessionCount] = await Promise.all([
+    getTodayRevenue(hallId),
     getTodaySessionCount(hallId),
   ]);
 
-  const totalRevenue = payments.reduce((sum, p) => sum + p.amount, 0);
-
   const stats = [
-    { label: "Today's revenue",  value: `$${fmtCurrency(totalRevenue)}`, accent: "#111827" },
-    { label: "Total sessions",   value: String(sessionCount),            accent: "#1d4ed8" },
+    { label: "Today's Revenue", value: `$${fmtCurrency(revenue)}`,  color: "text-primary" },
+    { label: "Total Sessions",  value: String(sessionCount),         color: "text-cyan-400" },
   ];
 
   return (
-    <div style={statsGrid}>
-      {stats.map(({ label, value, accent }) => (
-        <div key={label} style={statCard}>
-          <span style={{ ...statValue, color: accent }}>{value}</span>
-          <span style={statLabel}>{label}</span>
-        </div>
+    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+      {stats.map(({ label, value, color }) => (
+        <Card key={label} className="border-border/60">
+          <CardContent className="pt-5 pb-4">
+            <p className={`text-3xl font-bold tabular-nums ${color}`}>{value}</p>
+            <p className="text-xs text-muted-foreground mt-1">{label}</p>
+          </CardContent>
+        </Card>
       ))}
     </div>
   );
 }
-
-function SummarySkeleton() {
-  return (
-    <div style={statsGrid}>
-      {Array.from({ length: 2 }).map((_, i) => (
-        <div key={i} style={{ ...statCard, gap: "0.5rem" }}>
-          <div style={{ ...skel, height: "2rem", width: "6rem" }} />
-          <div style={{ ...skel, height: "0.875rem", width: "5rem" }} />
-        </div>
-      ))}
-    </div>
-  );
-}
-
-// ─── transactions table ───────────────────────────────────────────────────────
 
 async function TransactionsTable({ hallId }: { hallId: string }) {
   const rows = await getRecentTransactions(hallId);
 
   return (
-    <div style={section}>
-      <p style={sectionHeading}>Recent transactions</p>
+    <Card className="border-border/60 overflow-hidden">
+      <CardHeader className="pb-3">
+        <CardTitle className="text-sm font-semibold">Recent Transactions</CardTitle>
+      </CardHeader>
+      <Separator className="opacity-40" />
       {rows.length === 0 ? (
-        <p style={empty}>No transactions recorded yet.</p>
+        <CardContent className="py-8 text-center">
+          <p className="text-sm text-muted-foreground">No transactions recorded yet.</p>
+        </CardContent>
       ) : (
-        <div style={{ overflowX: "auto" }}>
-          <table style={table}>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
             <thead>
-              <tr>
+              <tr className="border-b border-border/40">
                 {["Type", "Amount", "Note", "Date"].map((h) => (
-                  <th key={h} style={th}>{h}</th>
+                  <th key={h} className="px-4 py-2.5 text-left section-heading">{h}</th>
                 ))}
               </tr>
             </thead>
             <tbody>
               {rows.map((r) => {
-                const badge = TX_STYLE[r.type] ?? TX_STYLE.adjustment;
-                const label = TX_LABEL[r.type] ?? r.type;
                 const isDebit = r.type === "expense" || r.type === "refund";
                 return (
-                  <tr key={r.id} style={tableRow}>
-                    <td style={td}>
-                      <span style={{ ...badgeBase, ...badge }}>{label}</span>
+                  <tr key={r.id} className="table-row-hover border-b border-border/20 last:border-0">
+                    <td className="px-4 py-3">
+                      <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${TX_STYLE[r.type] ?? TX_STYLE.adjustment}`}>
+                        {TX_LABEL[r.type] ?? r.type}
+                      </span>
                     </td>
-                    <td style={{ ...td, fontVariantNumeric: "tabular-nums", color: isDebit ? "#b91c1c" : "#15803d", whiteSpace: "nowrap" }}>
+                    <td className={`px-4 py-3 tabular-nums font-medium whitespace-nowrap ${isDebit ? "text-red-400" : "text-green-400"}`}>
                       {isDebit ? "−" : "+"}${fmtCurrency(r.amount)}
                     </td>
-                    <td style={{ ...td, color: "#6b7280" }}>{r.note ?? "—"}</td>
-                    <td style={{ ...td, whiteSpace: "nowrap", color: "#6b7280" }}>{fmtDate(r.created_at)}</td>
+                    <td className="px-4 py-3 text-muted-foreground">{r.note ?? "—"}</td>
+                    <td className="px-4 py-3 text-muted-foreground text-xs whitespace-nowrap">{fmtDate(r.created_at)}</td>
                   </tr>
                 );
               })}
@@ -199,145 +161,25 @@ async function TransactionsTable({ hallId }: { hallId: string }) {
           </table>
         </div>
       )}
-    </div>
+    </Card>
   );
 }
 
-function TransactionsSkeleton() {
+export default async function FinancePage({ params }: { params: Promise<{ hallId: string }> }) {
+  const { hallId } = await params;
   return (
-    <div style={section}>
-      <div style={{ ...skel, height: "1rem", width: "160px", marginBottom: "1rem" }} />
-      <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
-        {Array.from({ length: 6 }).map((_, i) => (
-          <div key={i} style={{ ...skel, height: "44px" }} />
-        ))}
+    <div className="page-shell">
+      <div>
+        <h1 className="text-xl font-bold">Finance</h1>
+        <p className="text-sm text-muted-foreground mt-0.5">Revenue & transactions</p>
       </div>
-    </div>
-  );
-}
-
-// ─── page ─────────────────────────────────────────────────────────────────────
-
-export default function FinancePage({
-  params,
-}: {
-  params: { hallId: string };
-}) {
-  const { hallId } = params;
-
-  return (
-    <div style={page}>
-      <p style={pageHeading}>Finance</p>
-
-      <Suspense fallback={<SummarySkeleton />}>
+      <Separator className="opacity-40" />
+      <Suspense fallback={<div className="grid grid-cols-2 sm:grid-cols-4 gap-4">{Array.from({length:2}).map((_,i)=><Skeleton key={i} className="h-24 rounded-xl skeleton-shimmer"/>)}</div>}>
         <FinanceSummary hallId={hallId} />
       </Suspense>
-
-      <Suspense fallback={<TransactionsSkeleton />}>
+      <Suspense fallback={<Skeleton className="h-64 rounded-xl skeleton-shimmer" />}>
         <TransactionsTable hallId={hallId} />
       </Suspense>
     </div>
   );
 }
-
-// ─── styles ───────────────────────────────────────────────────────────────────
-
-const page: React.CSSProperties = {
-  display: "flex",
-  flexDirection: "column",
-  gap: "2rem",
-  maxWidth: "900px",
-};
-
-const pageHeading: React.CSSProperties = {
-  margin: 0,
-  fontSize: "1.25rem",
-  fontWeight: 700,
-  color: "#111827",
-};
-
-const statsGrid: React.CSSProperties = {
-  display: "grid",
-  gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))",
-  gap: "1rem",
-};
-
-const statCard: React.CSSProperties = {
-  background: "#fff",
-  borderRadius: "0.75rem",
-  boxShadow: "0 1px 4px rgba(0,0,0,0.07)",
-  padding: "1.25rem 1rem",
-  display: "flex",
-  flexDirection: "column",
-  gap: "0.375rem",
-};
-
-const statValue: React.CSSProperties = {
-  fontSize: "1.625rem",
-  fontWeight: 700,
-  lineHeight: 1,
-  fontVariantNumeric: "tabular-nums",
-};
-
-const statLabel: React.CSSProperties = {
-  fontSize: "0.8125rem",
-  color: "#6b7280",
-};
-
-const section: React.CSSProperties = {
-  background: "#fff",
-  borderRadius: "0.75rem",
-  boxShadow: "0 1px 4px rgba(0,0,0,0.07)",
-  padding: "1.5rem",
-};
-
-const sectionHeading: React.CSSProperties = {
-  margin: "0 0 1rem",
-  fontSize: "0.9375rem",
-  fontWeight: 600,
-  color: "#111827",
-};
-
-const empty: React.CSSProperties = {
-  margin: 0,
-  fontSize: "0.875rem",
-  color: "#6b7280",
-};
-
-const table: React.CSSProperties = {
-  width: "100%",
-  borderCollapse: "collapse",
-  fontSize: "0.875rem",
-};
-
-const th: React.CSSProperties = {
-  padding: "0.5rem 0.75rem",
-  textAlign: "left",
-  fontWeight: 600,
-  color: "#374151",
-  borderBottom: "1px solid #e5e7eb",
-  whiteSpace: "nowrap",
-};
-
-const tableRow: React.CSSProperties = {
-  borderBottom: "1px solid #f3f4f6",
-};
-
-const td: React.CSSProperties = {
-  padding: "0.625rem 0.75rem",
-  color: "#111827",
-  verticalAlign: "middle",
-};
-
-const badgeBase: React.CSSProperties = {
-  display: "inline-block",
-  fontSize: "0.75rem",
-  fontWeight: 500,
-  padding: "0.2rem 0.6rem",
-  borderRadius: "9999px",
-};
-
-const skel: React.CSSProperties = {
-  borderRadius: "0.375rem",
-  background: "#e5e7eb",
-};

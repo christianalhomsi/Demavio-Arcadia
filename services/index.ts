@@ -6,6 +6,7 @@ export { getHalls } from "./halls";
 export { getDevice, setDeviceActive, setDeviceAvailable } from "./devices";
 export { getReservation, createReservation, setReservationActive } from "./reservations";
 export { verifyStaffHallAccess } from "./staff";
+export { isSuperAdmin, verifyHallManagementAccess } from "./access";
 export { createSession, getActiveSession, endSession } from "./sessions";
 export { createPayment, createLedgerEntry } from "./payments";
 export { insertTransaction } from "./transactions";

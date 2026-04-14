@@ -17,7 +17,7 @@ export async function POST(request: Request) {
   const { hall_id, device_id, start_time, end_time } = parsed.data;
 
   // Resolve authenticated user
-  const supabase = getServerClient();
+  const supabase = await getServerClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -44,7 +44,7 @@ export async function POST(request: Request) {
   if (!result.success) {
     if (result.error === "OVERLAP") {
       return NextResponse.json(
-        { error: "This time slot is already booked" },
+        { error: "This device is not available at the time you want" },
         { status: 409 }
       );
     }
@@ -53,3 +53,4 @@ export async function POST(request: Request) {
 
   return NextResponse.json(result.data, { status: 201 });
 }
+

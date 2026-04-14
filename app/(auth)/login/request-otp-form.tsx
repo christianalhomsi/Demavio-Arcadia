@@ -5,11 +5,17 @@ import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { toast } from "sonner";
 import { otpRequestSchema, type OtpRequestInput } from "@/schemas/otp";
 import { getBrowserClient } from "@/lib/supabase/client";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
 
 const loginSchema = z.object({
-  email: z.string().email(),
+  email: z.string().email("Invalid email address"),
   password: z.string().min(1, "Password is required"),
 });
 type LoginInput = z.infer<typeof loginSchema>;
@@ -18,63 +24,78 @@ export default function AuthForm() {
   const [tab, setTab] = useState<"login" | "signup">("login");
 
   return (
-    <div className="rounded-xl p-6 border"
-      style={{ background: "var(--color-surface)", borderColor: "var(--color-border)" }}>
-      {/* tabs */}
-      <div className="flex mb-6 rounded-lg p-1 gap-1"
-        style={{ background: "var(--color-surface-2)" }}>
+    <Card className="border-border/60 shadow-2xl" style={{ background: "var(--color-card)" }}>
+      {/* tab switcher */}
+      <div className="flex p-1 m-4 mb-0 rounded-lg gap-1" style={{ background: "var(--color-muted)" }}>
         {(["login", "signup"] as const).map((t) => (
           <button key={t} onClick={() => setTab(t)}
             className="flex-1 py-2 rounded-md text-sm font-medium transition-all duration-150 cursor-pointer"
             style={{
-              background: tab === t ? "var(--color-primary)" : "transparent",
-              color: tab === t ? "#fff" : "var(--color-muted)",
+              background: tab === t ? "oklch(0.55 0.26 280)" : "transparent",
+              color: tab === t ? "white" : "var(--color-muted-foreground)",
             }}>
             {t === "login" ? "Sign In" : "Sign Up"}
           </button>
         ))}
       </div>
+
       {tab === "login" ? <LoginForm /> : <SignUpForm />}
-    </div>
+    </Card>
   );
 }
 
 function LoginForm() {
   const router = useRouter();
-  const [serverError, setServerError] = useState<string | null>(null);
   const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<LoginInput>({
     resolver: zodResolver(loginSchema),
   });
 
   async function onSubmit(data: LoginInput) {
-    setServerError(null);
     const supabase = getBrowserClient();
-    const { error } = await supabase.auth.signInWithPassword({ email: data.email, password: data.password });
-    if (error) { setServerError(error.message); return; }
-    router.replace("/");
+    const { data: authData, error } = await supabase.auth.signInWithPassword({ email: data.email, password: data.password });
+    if (error) { toast.error(error.message); return; }
+    toast.success("Welcome back!");
+    await supabase.auth.getSession();
+    const { data: profile } = await supabase.from("profiles").select("role").eq("id", authData.user.id).maybeSingle();
+    console.log("[login] profile:", profile, "user id:", authData.user.id);
+    const role = profile?.role;
+    if (role === "super_admin") { router.replace("/admin"); return; }
+    if (role === "hall_manager" || role === "hall_staff") {
+      const table = role === "hall_manager" ? "hall_managers" : "hall_staff_permissions";
+      const { data: hallData } = await supabase.from(table).select("hall_id").eq("user_id", authData.user.id).maybeSingle();
+      router.replace(hallData?.hall_id ? `/dashboard/${hallData.hall_id}` : "/halls");
+      return;
+    }
+    router.replace("/halls");
   }
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} noValidate className="flex flex-col gap-4">
-      <Field label="Email" id="email" type="email" placeholder="you@example.com"
-        error={errors.email?.message} reg={register("email")} />
-      <Field label="Password" id="password" type="password" placeholder="••••••••"
-        error={errors.password?.message} reg={register("password")} />
-      {serverError && <ErrorMsg>{serverError}</ErrorMsg>}
-      <SubmitBtn disabled={isSubmitting}>{isSubmitting ? "Signing in…" : "Sign In"}</SubmitBtn>
+    <form onSubmit={handleSubmit(onSubmit)} noValidate>
+      <CardHeader className="pb-4">
+        <CardTitle className="text-lg">Welcome back</CardTitle>
+        <CardDescription>Sign in to your account</CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <Field label="Email" id="email" type="email" placeholder="you@example.com"
+          error={errors.email?.message} reg={register("email")} />
+        <Field label="Password" id="password" type="password" placeholder="••••••••"
+          error={errors.password?.message} reg={register("password")} />
+        <Button type="submit" className="w-full mt-2 cursor-pointer" disabled={isSubmitting}
+          style={{ background: "oklch(0.55 0.26 280)", color: "white" }}>
+          {isSubmitting ? "Signing in…" : "Sign In"}
+        </Button>
+      </CardContent>
     </form>
   );
 }
 
 function SignUpForm() {
-  const [serverError, setServerError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<OtpRequestInput>({
     resolver: zodResolver(otpRequestSchema),
   });
 
   async function onSubmit(data: OtpRequestInput) {
-    setServerError(null);
     const res = await fetch("/api/auth/request-otp", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -82,26 +103,34 @@ function SignUpForm() {
     });
     if (res.ok) { setSuccess(true); return; }
     const json = await res.json().catch(() => ({}));
-    setServerError(json?.error ?? "Something went wrong. Please try again.");
+    toast.error(json?.error ?? "Something went wrong.");
   }
 
   if (success) {
     return (
-      <div className="text-center py-4">
-        <div className="text-3xl mb-3">📬</div>
-        <p className="text-sm font-medium" style={{ color: "var(--color-success)" }}>
+      <CardContent className="py-8 text-center space-y-2">
+        <div className="text-4xl">📬</div>
+        <p className="font-semibold text-sm" style={{ color: "oklch(0.64 0.20 145)" }}>
           Check your email for a one-time password.
         </p>
-      </div>
+      </CardContent>
     );
   }
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} noValidate className="flex flex-col gap-4">
-      <Field label="Email" id="signup-email" type="email" placeholder="you@example.com"
-        error={errors.email?.message} reg={register("email")} />
-      {serverError && <ErrorMsg>{serverError}</ErrorMsg>}
-      <SubmitBtn disabled={isSubmitting}>{isSubmitting ? "Sending…" : "Send OTP"}</SubmitBtn>
+    <form onSubmit={handleSubmit(onSubmit)} noValidate>
+      <CardHeader className="pb-4">
+        <CardTitle className="text-lg">Create account</CardTitle>
+        <CardDescription>We'll send you a one-time password</CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <Field label="Email" id="signup-email" type="email" placeholder="you@example.com"
+          error={errors.email?.message} reg={register("email")} />
+        <Button type="submit" className="w-full mt-2 cursor-pointer" disabled={isSubmitting}
+          style={{ background: "oklch(0.55 0.26 280)", color: "white" }}>
+          {isSubmitting ? "Sending…" : "Send OTP"}
+        </Button>
+      </CardContent>
     </form>
   );
 }
@@ -111,38 +140,18 @@ function Field({ label, id, type, placeholder, error, reg }: {
   error?: string; reg: object;
 }) {
   return (
-    <div className="flex flex-col gap-1.5">
-      <label htmlFor={id} className="text-xs font-medium uppercase tracking-wide"
-        style={{ color: "var(--color-muted)" }}>
+    <div className="space-y-1.5">
+      <Label htmlFor={id} className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
         {label}
-      </label>
-      <input id={id} type={type} placeholder={placeholder} autoComplete="off"
-        className="w-full px-3 py-2.5 rounded-lg text-sm transition-colors"
-        style={{
-          background: "var(--color-surface-2)",
-          border: `1px solid ${error ? "var(--color-danger)" : "var(--color-border)"}`,
-          color: "var(--color-text)",
-        }}
+      </Label>
+      <Input id={id} type={type} placeholder={placeholder} autoComplete="new-password"
+        className={error ? "border-destructive focus-visible:ring-destructive/30" : ""}
         {...reg} />
-      {error && <ErrorMsg>{error}</ErrorMsg>}
+      {error && (
+        <p className="text-xs text-destructive flex items-center gap-1">
+          <span>⚠</span> {error}
+        </p>
+      )}
     </div>
-  );
-}
-
-function ErrorMsg({ children }: { children: React.ReactNode }) {
-  return <span className="text-xs" style={{ color: "var(--color-danger)" }}>{children}</span>;
-}
-
-function SubmitBtn({ disabled, children }: { disabled: boolean; children: React.ReactNode }) {
-  return (
-    <button type="submit" disabled={disabled}
-      className="w-full py-2.5 rounded-lg text-sm font-semibold transition-all duration-150 mt-1 cursor-pointer"
-      style={{
-        background: disabled ? "var(--color-border)" : "var(--color-primary)",
-        color: disabled ? "var(--color-muted)" : "#fff",
-        cursor: disabled ? "not-allowed" : "pointer",
-      }}>
-      {children}
-    </button>
   );
 }

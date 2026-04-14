@@ -18,7 +18,7 @@ async function fetchPageData(hallId: string): Promise<{
   sessions: ActiveSession[];
   reservations: PendingReservation[];
 }> {
-  const supabase = getServerClient();
+  const supabase = await getServerClient();
 
   // Fetch devices first to get the id list for this hall
   const { data: deviceData } = await supabase
@@ -106,16 +106,17 @@ function DevicesGridSkeleton() {
 
 // ─── page ─────────────────────────────────────────────────────────────────────
 
-export default function DevicesPage({
+export default async function DevicesPage({
   params,
 }: {
-  params: { hallId: string };
+  params: Promise<{ hallId: string }>;
 }) {
+  const { hallId } = await params;
   return (
     <div style={page}>
       <p style={pageHeading}>Devices</p>
       <Suspense fallback={<DevicesGridSkeleton />}>
-        <DevicesGrid hallId={params.hallId} />
+        <DevicesGrid hallId={hallId} />
       </Suspense>
     </div>
   );

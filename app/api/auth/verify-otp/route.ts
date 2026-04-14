@@ -48,7 +48,7 @@ export async function POST(request: Request) {
       await admin.auth.admin.generateLink({
         type: "magiclink",
         email,
-        options: { shouldCreateUser: true },
+        options: {},
       });
 
     if (linkError || !linkData.properties) {

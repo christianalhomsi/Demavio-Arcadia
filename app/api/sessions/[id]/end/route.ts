@@ -13,7 +13,7 @@ import {
 
 export async function POST(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const body = await request.json().catch(() => null);
 
@@ -26,9 +26,10 @@ export async function POST(
   }
 
   const { hall_id, rate_per_hour } = parsed.data;
+  const { id } = await params;
 
   // Resolve authenticated staff user
-  const supabase = getServerClient();
+  const supabase = await getServerClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -41,7 +42,7 @@ export async function POST(
   }
 
   // Load the active session
-  const sessionResult = await getActiveSession(params.id);
+  const sessionResult = await getActiveSession(id);
   if (!sessionResult.success) {
     return NextResponse.json({ error: "Active session not found" }, { status: 404 });
   }

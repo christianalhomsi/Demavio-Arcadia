@@ -25,7 +25,7 @@ export async function createSession(
       user_id: userId,
       started_at: new Date().toISOString(),
     })
-    .select("id, reservation_id, device_id, user_id, started_at")
+    .select("id, reservation_id, device_id, user_id, started_at, ended_at")
     .single();
 
   if (error) return { success: false, error: error.message };

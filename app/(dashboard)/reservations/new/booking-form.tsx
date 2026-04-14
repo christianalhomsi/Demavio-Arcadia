@@ -3,22 +3,36 @@
 import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { bookingSchema } from "@/schemas/booking";
+import { z } from "zod";
+import { toast } from "sonner";
 import { getBrowserClient } from "@/lib/supabase/client";
 import type { Hall } from "@/types/hall";
 import type { Device } from "@/services/devices";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Separator } from "@/components/ui/separator";
 
-type FormValues = { hall_id: string; device_id: string; start_time: string; end_time: string };
+const formSchema = z.object({
+  hall_id:    z.string().min(1, "Select a hall"),
+  device_id:  z.string().min(1, "Select a device"),
+  start_time: z.string().min(1, "Required"),
+  end_time:   z.string().min(1, "Required"),
+});
+type FormValues = z.infer<typeof formSchema>;
+type E = Record<string, { message?: string } | undefined>;
 
 export default function BookingForm({ halls }: { halls: Hall[] }) {
   const [devices, setDevices] = useState<Device[]>([]);
   const [devicesLoading, setDevicesLoading] = useState(false);
-  const [serverError, setServerError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
 
-  const { register, handleSubmit, watch, setValue, formState: { errors, isSubmitting } } = useForm<FormValues>({
-    resolver: zodResolver(bookingSchema),
+  const { register, handleSubmit, watch, setValue, formState: { errors: rawErrors, isSubmitting } } = useForm<FormValues>({
+    resolver: zodResolver(formSchema),
   });
+  const e = rawErrors as E;
 
   const selectedHallId = watch("hall_id");
 
@@ -27,107 +41,103 @@ export default function BookingForm({ halls }: { halls: Hall[] }) {
     setDevicesLoading(true);
     setValue("device_id", "");
     const supabase = getBrowserClient();
-    supabase.from("devices").select("id, hall_id, name, status, last_heartbeat")
-      .eq("hall_id", selectedHallId).eq("status", "available").order("name", { ascending: true })
-      .then(({ data }) => setDevices(data ?? []))
-      .catch(() => setDevices([]))
-      .finally(() => setDevicesLoading(false));
+    void Promise.resolve(
+      supabase.from("devices").select("id, hall_id, name, status, last_heartbeat")
+        .eq("hall_id", selectedHallId).eq("status", "available").order("name", { ascending: true })
+    ).then(({ data }) => { setDevices(data ?? []); setDevicesLoading(false); })
+      .catch(() => { setDevices([]); setDevicesLoading(false); });
   }, [selectedHallId, setValue]);
 
   async function onSubmit(data: FormValues) {
-    setServerError(null);
     const res = await fetch("/api/reservations", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(data),
     });
-    if (res.status === 201) { setSuccess(true); return; }
-    const json = await res.json().catch(() => ({}));
-    setServerError(json?.error ?? "Something went wrong. Please try again.");
+    if (res.status === 201) { setSuccess(true); toast.success("Reservation confirmed!"); return; }
+    const json = await res.json().catch(() => ({} as { error?: string }));
+    const errMsg = (json?.error as string) ?? "Something went wrong.";
+    if (errMsg === "OVERLAP") toast.error("Time slot already taken.");
+    else toast.error(errMsg);
   }
 
   if (success) {
     return (
-      <div className="rounded-xl border p-8 text-center"
-        style={{ background: "var(--color-surface)", borderColor: "var(--color-border)" }}>
-        <div className="text-4xl mb-3">✅</div>
-        <p className="font-semibold" style={{ color: "var(--color-success)" }}>Reservation confirmed!</p>
-      </div>
+      <Card className="border-border/60 text-center py-12">
+        <CardContent>
+          <div className="text-5xl mb-4">checkmark</div>
+          <p className="text-lg font-bold text-foreground mb-1">Reservation confirmed!</p>
+          <p className="text-sm text-muted-foreground">Your device has been booked successfully.</p>
+        </CardContent>
+      </Card>
     );
   }
 
   return (
-    <div className="rounded-xl border p-6 w-full max-w-md"
-      style={{ background: "var(--color-surface)", borderColor: "var(--color-border)" }}>
-      <form onSubmit={handleSubmit(onSubmit)} noValidate className="flex flex-col gap-5">
-        <SelectField label="Hall" id="hall_id" error={errors.hall_id?.message} reg={register("hall_id")}>
-          <option value="">Select a hall…</option>
-          {halls.map((h) => <option key={h.id} value={h.id}>{h.name}</option>)}
-        </SelectField>
+    <Card className="border-border/60">
+      <CardHeader>
+        <CardTitle className="text-base">Booking details</CardTitle>
+        <CardDescription>Fill in the details to reserve a device</CardDescription>
+      </CardHeader>
+      <Separator className="opacity-40" />
+      <CardContent className="pt-5">
+        <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-5">
 
-        <SelectField label="Device" id="device_id" error={errors.device_id?.message}
-          reg={register("device_id")} disabled={!selectedHallId || devicesLoading}>
-          <option value="">
-            {devicesLoading ? "Loading…" : !selectedHallId ? "Select a hall first" : devices.length === 0 ? "No available devices" : "Select a device…"}
-          </option>
-          {devices.map((d) => <option key={d.id} value={d.id}>{d.name}</option>)}
-        </SelectField>
+          <div className="space-y-1.5">
+            <Label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Hall</Label>
+            <Select onValueChange={(v) => setValue("hall_id", v as string)}>
+              <SelectTrigger className={e.hall_id ? "border-destructive" : ""}>
+                <SelectValue placeholder="Select a hall" />
+              </SelectTrigger>
+              <SelectContent>
+                {halls.map((h) => <SelectItem key={h.id} value={h.id}>{h.name}</SelectItem>)}
+              </SelectContent>
+            </Select>
+            {e.hall_id && <p className="text-xs text-destructive">{e.hall_id.message}</p>}
+          </div>
 
-        <InputField label="Start time" id="start_time" type="datetime-local"
-          error={errors.start_time?.message} reg={register("start_time")} />
-        <InputField label="End time" id="end_time" type="datetime-local"
-          error={typeof errors.end_time?.message === "string" ? errors.end_time.message : undefined}
-          reg={register("end_time")} />
+          <div className="space-y-1.5">
+            <Label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Device</Label>
+            <Select onValueChange={(v) => setValue("device_id", v as string)} disabled={!selectedHallId || devicesLoading}>
+              <SelectTrigger className={e.device_id ? "border-destructive" : ""}>
+                <SelectValue placeholder={
+                  devicesLoading ? "Loading..." :
+                  !selectedHallId ? "Select a hall first" :
+                  devices.length === 0 ? "No available devices" :
+                  "Select a device"
+                } />
+              </SelectTrigger>
+              <SelectContent>
+                {devices.map((d) => <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>)}
+              </SelectContent>
+            </Select>
+            {e.device_id && <p className="text-xs text-destructive">{e.device_id.message}</p>}
+          </div>
 
-        {serverError && <span className="text-xs" style={{ color: "var(--color-danger)" }}>{serverError}</span>}
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <Label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Start time</Label>
+              <Input type="datetime-local"
+                className={e.start_time ? "border-destructive" : ""}
+                {...register("start_time")} />
+              {e.start_time && <p className="text-xs text-destructive">{e.start_time.message}</p>}
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">End time</Label>
+              <Input type="datetime-local"
+                className={e.end_time ? "border-destructive" : ""}
+                {...register("end_time")} />
+              {e.end_time && <p className="text-xs text-destructive">{e.end_time.message}</p>}
+            </div>
+          </div>
 
-        <button type="submit" disabled={isSubmitting}
-          className="w-full py-2.5 rounded-lg text-sm font-semibold transition-all"
-          style={{
-            background: isSubmitting ? "var(--color-border)" : "var(--color-primary)",
-            color: isSubmitting ? "var(--color-muted)" : "#fff",
-            cursor: isSubmitting ? "not-allowed" : "pointer",
-          }}>
-          {isSubmitting ? "Booking…" : "Book"}
-        </button>
-      </form>
-    </div>
-  );
-}
+          <Button type="submit" className="w-full cursor-pointer" disabled={isSubmitting}
+            style={{ background: "oklch(0.55 0.26 280)", color: "white" }}>
+            {isSubmitting ? "Booking..." : "Confirm Booking"}
+          </Button>
 
-const fieldBase = "w-full px-3 py-2.5 rounded-lg text-sm";
-const fieldStyle = { background: "var(--color-surface-2)", color: "var(--color-text)" };
-
-function InputField({ label, id, type, error, reg }: {
-  label: string; id: string; type: string; error?: string; reg: object;
-}) {
-  return (
-    <div className="flex flex-col gap-1.5">
-      <label htmlFor={id} className="text-xs font-medium uppercase tracking-wide"
-        style={{ color: "var(--color-muted)" }}>{label}</label>
-      <input id={id} type={type}
-        className={fieldBase}
-        style={{ ...fieldStyle, border: `1px solid ${error ? "var(--color-danger)" : "var(--color-border)"}` }}
-        {...reg} />
-      {error && <span className="text-xs" style={{ color: "var(--color-danger)" }}>{error}</span>}
-    </div>
-  );
-}
-
-function SelectField({ label, id, error, reg, disabled, children }: {
-  label: string; id: string; error?: string; reg: object; disabled?: boolean; children: React.ReactNode;
-}) {
-  return (
-    <div className="flex flex-col gap-1.5">
-      <label htmlFor={id} className="text-xs font-medium uppercase tracking-wide"
-        style={{ color: "var(--color-muted)" }}>{label}</label>
-      <select id={id} disabled={disabled}
-        className={fieldBase}
-        style={{ ...fieldStyle, border: `1px solid ${error ? "var(--color-danger)" : "var(--color-border)"}`, opacity: disabled ? 0.5 : 1 }}
-        {...reg}>
-        {children}
-      </select>
-      {error && <span className="text-xs" style={{ color: "var(--color-danger)" }}>{error}</span>}
-    </div>
+        </form>
+      </CardContent>
+    </Card>
   );
 }

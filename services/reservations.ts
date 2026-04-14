@@ -48,11 +48,11 @@ export async function createReservation(
       start_time: input.start_time.toISOString(),
       end_time: input.end_time.toISOString(),
     })
-    .select("id, device_id, user_id, start_time, end_time, created_at")
+    .select("id, device_id, user_id, start_time, end_time, created_at, status")
     .single();
 
   if (error) {
-    if (error.code === EXCLUSION_VIOLATION) {
+    if (error.code === EXCLUSION_VIOLATION || error.message?.toLowerCase().includes("overlap")) {
       return { success: false, error: "OVERLAP" };
     }
     return { success: false, error: error.message };

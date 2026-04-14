@@ -19,7 +19,7 @@ export async function POST(request: Request) {
   const { command, device_id, hall_id, args } = parsed.data;
 
   // Resolve authenticated user
-  const supabase = getServerClient();
+  const supabase = await getServerClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -60,3 +60,4 @@ export async function POST(request: Request) {
 
   return NextResponse.json(agentResult.data, { status: 200 });
 }
+

@@ -8,7 +8,7 @@ export async function openRegisterAction(
   hallId: string,
   openingBalance: number
 ): Promise<{ error?: string }> {
-  const supabase = getServerClient();
+  const supabase = await getServerClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { error: "Unauthorized" };
 
@@ -29,7 +29,7 @@ export async function closeRegisterAction(
   hallId: string,
   actualBalance: number
 ): Promise<{ error?: string }> {
-  const supabase = getServerClient();
+  const supabase = await getServerClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { error: "Unauthorized" };
 

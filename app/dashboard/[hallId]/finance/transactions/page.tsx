@@ -10,7 +10,7 @@ export const metadata: Metadata = { title: "Transactions | Gaming Hub" };
 // ─── data fetching ────────────────────────────────────────────────────────────
 
 async function getHallTransactions(hallId: string): Promise<TransactionRow[]> {
-  const supabase = getServerClient();
+  const supabase = await getServerClient();
 
   // Resolve payment IDs scoped to this hall via sessions → devices
   const { data: paymentData } = await supabase

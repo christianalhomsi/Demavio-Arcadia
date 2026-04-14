@@ -1,25 +1,26 @@
 import type { Metadata } from "next";
-import { Inter, Geist } from "next/font/google";
+import { GeistSans } from "geist/font/sans";
+import { GeistMono } from "geist/font/mono";
 import ReactQueryProvider from "@/lib/query/provider";
+import { ThemeProvider } from "@/components/theme-provider";
+import { Toaster } from "@/components/ui/sonner";
 import "./globals.css";
-import { cn } from "@/lib/utils";
-
-const geist = Geist({subsets:['latin'],variable:'--font-sans'});
 
 export const metadata: Metadata = {
-  title: "Gaming Hub",
-  description: "Gaming Hub",
+  title: { default: "Gaming Hub", template: "%s | Gaming Hub" },
+  description: "Gaming Hub — Staff & Player Portal",
 };
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={cn("font-sans", geist.variable)}>
+    <html lang="en" className={`${GeistSans.variable} ${GeistMono.variable}`} suppressHydrationWarning>
       <body>
-        <ReactQueryProvider>{children}</ReactQueryProvider>
+        <ThemeProvider>
+          <ReactQueryProvider>
+            {children}
+          </ReactQueryProvider>
+          <Toaster richColors position="top-right" />
+        </ThemeProvider>
       </body>
     </html>
   );

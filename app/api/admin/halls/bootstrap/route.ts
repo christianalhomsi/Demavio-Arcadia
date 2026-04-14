@@ -1,0 +1,133 @@
+import { NextResponse } from "next/server";
+import type { SupabaseClient } from "@supabase/supabase-js";
+import { hallBootstrapSchema } from "@/schemas/admin-hall";
+import { assertSuperAdmin } from "@/lib/admin-auth";
+import { getAdminClient } from "@/lib/supabase/admin";
+
+async function rollbackHall(admin: SupabaseClient, hallId: string) {
+  await admin.from("devices").delete().eq("hall_id", hallId);
+  await admin.from("staff_assignments").delete().eq("hall_id", hallId);
+  await admin.from("staff_hall_access").delete().eq("hall_id", hallId);
+  await admin.from("halls").delete().eq("id", hallId);
+}
+
+export async function POST(request: Request) {
+  const gate = await assertSuperAdmin();
+  if (!gate.ok) return gate.response;
+
+  const body = await request.json().catch(() => null);
+  const parsed = hallBootstrapSchema.safeParse(body);
+  if (!parsed.success) {
+    return NextResponse.json(
+      { error: parsed.error.flatten().fieldErrors },
+      { status: 400 }
+    );
+  }
+
+  const { name, address, device_count, device_name_prefix, staff, extra_staff } = parsed.data;
+  const admin = getAdminClient();
+
+  const { data: hallRow, error: hallErr } = await admin
+    .from("halls")
+    .insert({
+      name,
+      address: address ?? null,
+    })
+    .select("id")
+    .single();
+
+  if (hallErr || !hallRow) {
+    console.error("[admin/halls/bootstrap] hall insert", hallErr);
+    return NextResponse.json({ error: "Failed to create hall" }, { status: 500 });
+  }
+
+  const hallId = hallRow.id as string;
+
+  const devices = Array.from({ length: device_count }, (_, i) => ({
+    hall_id: hallId,
+    name: `${device_name_prefix} ${i + 1}`,
+    status: "available" as const,
+  }));
+
+  const { error: devErr } = await admin.from("devices").insert(devices);
+  if (devErr) {
+    console.error("[admin/halls/bootstrap] devices insert", devErr);
+    await rollbackHall(admin, hallId);
+    return NextResponse.json({ error: "Failed to create devices" }, { status: 500 });
+  }
+
+  if (staff) {
+    const { data: created, error: createErr } = await admin.auth.admin.createUser({
+      email: staff.email,
+      password: staff.password,
+      email_confirm: true,
+    });
+
+    if (createErr || !created?.user) {
+      await rollbackHall(admin, hallId);
+      return NextResponse.json(
+        { error: createErr?.message || "Failed to create user" },
+        { status: 422 }
+      );
+    }
+
+    const userId = created.user.id;
+
+    await admin.from("profiles").upsert({ id: userId, email: staff.email, role: "hall_manager" });
+
+    const { error: saErr } = await admin.from("staff_assignments").insert({
+      user_id: userId,
+      hall_id: hallId,
+      role: "hall_manager",
+    });
+
+    if (saErr) {
+      console.error("[admin/halls/bootstrap] staff_assignments", saErr);
+      await rollbackHall(admin, hallId);
+      return NextResponse.json(
+        { error: saErr.message || "Failed to assign staff" },
+        { status: 500 }
+      );
+    }
+
+    const { error: legacyErr } = await admin.from("staff_hall_access").insert({
+      user_id: userId,
+      hall_id: hallId,
+    });
+
+    if (legacyErr) {
+      console.error("[admin/halls/bootstrap] staff_hall_access", legacyErr);
+      await rollbackHall(admin, hallId);
+      return NextResponse.json(
+        { error: legacyErr.message || "Failed to sync legacy staff access" },
+        { status: 500 }
+      );
+    }
+  }
+
+  if (extra_staff?.length) {
+    for (const member of extra_staff) {
+      const { data: created, error: createErr } = await admin.auth.admin.createUser({
+        email: member.email,
+        password: member.password,
+        email_confirm: true,
+      });
+
+      if (createErr || !created?.user) {
+        console.error("[admin/halls/bootstrap] extra_staff createUser", createErr);
+        await rollbackHall(admin, hallId);
+        return NextResponse.json(
+          { error: createErr?.message || `Failed to create user ${member.email}` },
+          { status: 422 }
+        );
+      }
+
+      const uid = created.user.id;
+      await admin.from("profiles").upsert({ id: uid, email: member.email, role: "hall_staff" });
+      await admin.from("staff_assignments").insert({ user_id: uid, hall_id: hallId, role: "hall_staff" });
+      await admin.from("staff_hall_access").insert({ user_id: uid, hall_id: hallId });
+    }
+  }
+
+  return NextResponse.json({ hall_id: hallId }, { status: 201 });
+}

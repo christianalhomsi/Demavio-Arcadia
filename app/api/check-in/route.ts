@@ -23,7 +23,7 @@ export async function POST(request: Request) {
   const { reservation_id, device_id, hall_id } = parsed.data;
 
   // Resolve authenticated staff user
-  const supabase = getServerClient();
+  const supabase = await getServerClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -70,3 +70,4 @@ export async function POST(request: Request) {
 
   return NextResponse.json(sessionResult.data, { status: 201 });
 }
+

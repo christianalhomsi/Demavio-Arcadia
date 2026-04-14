@@ -9,7 +9,7 @@ export const metadata: Metadata = { title: "Agent | Gaming Hub" };
 // ─── data ─────────────────────────────────────────────────────────────────────
 
 async function getHallDevices(hallId: string): Promise<Device[]> {
-  const supabase = getServerClient();
+  const supabase = await getServerClient();
   const { data } = await supabase
     .from("devices")
     .select("id, hall_id, name, status, last_heartbeat")
@@ -40,16 +40,17 @@ function AgentPanelSkeleton() {
 
 // ─── page ─────────────────────────────────────────────────────────────────────
 
-export default function AgentPage({
+export default async function AgentPage({
   params,
 }: {
-  params: { hallId: string };
+  params: Promise<{ hallId: string }>;
 }) {
+  const { hallId } = await params;
   return (
     <div style={page}>
       <p style={pageHeading}>Agent commands</p>
       <Suspense fallback={<AgentPanelSkeleton />}>
-        <AgentPanelLoader hallId={params.hallId} />
+        <AgentPanelLoader hallId={hallId} />
       </Suspense>
     </div>
   );

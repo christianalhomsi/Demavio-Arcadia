@@ -9,9 +9,9 @@ export default async function DashboardLayout({
   params,
 }: {
   children: React.ReactNode;
-  params: { hallId: string };
+  params: Promise<{ hallId: string }>;
 }) {
-  const { hallId } = params;
+  const { hallId } = await params;
   const supabase = await getServerClient();
 
   const { data: { user } } = await supabase.auth.getUser();
@@ -29,14 +29,13 @@ export default async function DashboardLayout({
   if (!hall) notFound();
 
   return (
-    <div className="flex flex-col min-h-screen" style={{ background: "var(--color-bg)" }}>
-      <DashboardHeader hallName={hall.name} />
+    <div className="flex flex-col min-h-screen bg-background">
+      <DashboardHeader hallName={hall.name} hallId={hallId} />
       <div className="flex flex-1 overflow-hidden">
-        <aside className="w-48 shrink-0 border-r overflow-y-auto"
-          style={{ background: "var(--color-surface)", borderColor: "var(--color-border)" }}>
+        <aside className="w-52 shrink-0 border-r border-border/60 overflow-y-auto bg-card/50 hidden md:block">
           <DashboardSidebar hallId={hallId} />
         </aside>
-        <main className="flex-1 p-6 overflow-y-auto">
+        <main className="flex-1 overflow-y-auto">
           {children}
         </main>
       </div>
