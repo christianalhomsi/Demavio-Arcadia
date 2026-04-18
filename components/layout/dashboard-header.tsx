@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { Separator } from "@/components/ui/separator";
 import LogoutButton from "@/components/ui/logout-button";
+import { LanguageToggle } from "@/components/language-toggle";
 import { Gamepad2, ChevronRight, Wifi } from "lucide-react";
 
 interface BreadcrumbItem {
@@ -83,6 +84,7 @@ export default function DashboardHeader({ hallName, hallId, breadcrumbs }: Dashb
         <span>Live</span>
       </div>
 
+      <LanguageToggle />
       <LogoutButton />
     </header>
   );

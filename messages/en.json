@@ -1,0 +1,84 @@
+{
+  "common": {
+    "login": "Login",
+    "logout": "Logout",
+    "email": "Email",
+    "password": "Password",
+    "submit": "Submit",
+    "cancel": "Cancel",
+    "save": "Save",
+    "delete": "Delete",
+    "edit": "Edit",
+    "search": "Search",
+    "loading": "Loading...",
+    "error": "Error",
+    "success": "Success",
+    "back": "Back",
+    "next": "Next",
+    "previous": "Previous",
+    "close": "Close",
+    "confirm": "Confirm"
+  },
+  "nav": {
+    "halls": "Halls",
+    "reservations": "Reservations",
+    "dashboard": "Dashboard",
+    "admin": "Admin",
+    "users": "Users",
+    "overview": "Overview",
+    "devices": "Devices",
+    "finance": "Finance",
+    "agent": "Agent",
+    "playerApp": "Player App"
+  },
+  "auth": {
+    "welcomeBack": "Welcome Back",
+    "signIn": "Sign In",
+    "signUp": "Sign Up",
+    "verifyOtp": "Verify OTP",
+    "enterCode": "Enter the code sent to your email",
+    "continueWithGoogle": "Continue with Google",
+    "sendOtp": "Send OTP",
+    "checkEmail": "Check your email",
+    "otpSent": "We sent you a one-time password",
+    "createAccount": "Create account",
+    "signInToAccount": "Sign in to your account"
+  },
+  "halls": {
+    "title": "Halls",
+    "available": "Available",
+    "busy": "Busy",
+    "offline": "Offline",
+    "viewDetails": "View Details",
+    "bookNow": "Book Now",
+    "noHallsAvailable": "No halls available",
+    "checkBackLater": "Check back later or contact your admin",
+    "allHalls": "All Halls",
+    "findYourGamingArena": "Find your gaming arena",
+    "browseHalls": "Browse available halls, pick a device, and book your session in seconds",
+    "bookYourSession": "Book your session",
+    "newBooking": "New Booking"
+  },
+  "reservations": {
+    "title": "Reservations",
+    "new": "New Reservation",
+    "pending": "Pending",
+    "confirmed": "Confirmed",
+    "cancelled": "Cancelled",
+    "completed": "Completed",
+    "myReservations": "My Reservations"
+  },
+  "devices": {
+    "title": "Devices",
+    "status": "Status",
+    "type": "Type",
+    "name": "Name",
+    "active": "Active",
+    "total": "Total"
+  },
+  "errors": {
+    "invalidEmail": "Invalid email address",
+    "required": "This field is required",
+    "somethingWrong": "Something went wrong"
+  }
+}

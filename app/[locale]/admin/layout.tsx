@@ -1,10 +1,13 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { getTranslations } from 'next-intl/server';
 import { getServerClient } from "@/lib/supabase/server";
 import { isSuperAdmin } from "@/services/access";
+import { LanguageToggle } from "@/components/language-toggle";
 import AdminNav from "./admin-nav";
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
+  const t = await getTranslations('nav');
   const supabase = await getServerClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/login");
@@ -38,11 +41,14 @@ export default async function AdminLayout({ children }: { children: React.ReactN
 
           <div className="flex-1" />
 
-          <Link href="/halls"
-            className="inline-flex items-center gap-1.5 h-8 px-3 rounded-lg text-xs font-medium border border-border/60 text-muted-foreground hover:text-foreground hover:bg-muted transition-colors">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-            Player app
-          </Link>
+          <div className="flex items-center gap-1.5">
+            <LanguageToggle />
+            <Link href="/halls"
+              className="inline-flex items-center gap-1.5 h-8 px-3 rounded-lg text-xs font-medium border border-border/60 text-muted-foreground hover:text-foreground hover:bg-muted transition-colors">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+              {t('playerApp')}
+            </Link>
+          </div>
         </div>
       </header>
 

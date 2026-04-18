@@ -1,0 +1,84 @@
+{
+  "common": {
+    "login": "تسجيل الدخول",
+    "logout": "تسجيل الخروج",
+    "email": "البريد الإلكتروني",
+    "password": "كلمة المرور",
+    "submit": "إرسال",
+    "cancel": "إلغاء",
+    "save": "حفظ",
+    "delete": "حذف",
+    "edit": "تعديل",
+    "search": "بحث",
+    "loading": "جاري التحميل...",
+    "error": "خطأ",
+    "success": "نجح",
+    "back": "رجوع",
+    "next": "التالي",
+    "previous": "السابق",
+    "close": "إغلاق",
+    "confirm": "تأكيد"
+  },
+  "nav": {
+    "halls": "الصالات",
+    "reservations": "الحجوزات",
+    "dashboard": "لوحة التحكم",
+    "admin": "الإدارة",
+    "users": "المستخدمين",
+    "overview": "نظرة عامة",
+    "devices": "الأجهزة",
+    "finance": "المالية",
+    "agent": "الوكيل",
+    "playerApp": "تطبيق اللاعبين"
+  },
+  "auth": {
+    "welcomeBack": "مرحباً بعودتك",
+    "signIn": "تسجيل الدخول",
+    "signUp": "إنشاء حساب",
+    "verifyOtp": "التحقق من الرمز",
+    "enterCode": "أدخل الرمز المرسل إلى بريدك الإلكتروني",
+    "continueWithGoogle": "المتابعة مع Google",
+    "sendOtp": "إرسال الرمز",
+    "checkEmail": "تحقق من بريدك الإلكتروني",
+    "otpSent": "تم إرسال رمز لمرة واحدة",
+    "createAccount": "إنشاء حساب",
+    "signInToAccount": "تسجيل الدخول إلى حسابك"
+  },
+  "halls": {
+    "title": "الصالات",
+    "available": "متاح",
+    "busy": "مشغول",
+    "offline": "غير متصل",
+    "viewDetails": "عرض التفاصيل",
+    "bookNow": "احجز الآن",
+    "noHallsAvailable": "لا توجد صالات متاحة",
+    "checkBackLater": "تحقق لاحقاً أو اتصل بالمسؤول",
+    "allHalls": "جميع الصالات",
+    "findYourGamingArena": "ابحث عن ساحة الألعاب الخاصة بك",
+    "browseHalls": "تصفح الصالات المتاحة، اختر جهازاً، واحجز جلستك في ثوانٍ",
+    "bookYourSession": "احجز جلستك",
+    "newBooking": "حجز جديد"
+  },
+  "reservations": {
+    "title": "الحجوزات",
+    "new": "حجز جديد",
+    "pending": "قيد الانتظار",
+    "confirmed": "مؤكد",
+    "cancelled": "ملغي",
+    "completed": "مكتمل",
+    "myReservations": "حجوزاتي"
+  },
+  "devices": {
+    "title": "الأجهزة",
+    "status": "الحالة",
+    "type": "النوع",
+    "name": "الاسم",
+    "active": "نشط",
+    "total": "الإجمالي"
+  },
+  "errors": {
+    "invalidEmail": "البريد الإلكتروني غير صالح",
+    "required": "هذا الحقل مطلوب",
+    "somethingWrong": "حدث خطأ ما"
+  }
+}

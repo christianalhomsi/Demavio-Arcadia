@@ -81,6 +81,7 @@
   --font-sans:    var(--font-geist-sans), "Inter", system-ui, sans-serif;
   --font-mono:    var(--font-geist-mono), "JetBrains Mono", monospace;
   --font-heading: var(--font-geist-sans), "Inter", system-ui, sans-serif;
+  --font-arabic:  var(--font-cairo), system-ui, sans-serif;
 
   /* ── Motion ── */
   --duration-fast:   150ms;
@@ -161,6 +162,11 @@
     @apply font-sans;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+  }
+
+  html[lang="ar"] {
+    font-family: var(--font-arabic);
+    direction: rtl;
   }
 
   body {

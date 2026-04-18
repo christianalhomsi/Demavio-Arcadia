@@ -6,6 +6,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
+import { useTranslations } from 'next-intl';
 import { otpRequestSchema, type OtpRequestInput } from "@/schemas/otp";
 import { getBrowserClient } from "@/lib/supabase/client";
 import { Input } from "@/components/ui/input";
@@ -62,6 +63,7 @@ function Divider() {
 
 export default function AuthForm() {
   const [tab, setTab] = useState<"login" | "signup">("login");
+  const t = useTranslations('auth');
 
   return (
     <div className="rounded-2xl border border-border/60 bg-card overflow-hidden"
@@ -74,15 +76,15 @@ export default function AuthForm() {
       {/* tab switcher */}
       <div className="p-4 pb-0">
         <div className="flex p-1 rounded-xl gap-1 bg-muted/60">
-          {(["login", "signup"] as const).map((t) => (
-            <button key={t} onClick={() => setTab(t)}
+          {(["login", "signup"] as const).map((tabKey) => (
+            <button key={tabKey} onClick={() => setTab(tabKey)}
               className="flex-1 py-2 rounded-lg text-sm font-medium transition-all duration-200 cursor-pointer"
               style={{
-                background: tab === t ? "oklch(0.55 0.26 280)" : "transparent",
-                color: tab === t ? "white" : "var(--color-muted-foreground)",
-                boxShadow: tab === t ? "0 2px 8px oklch(0.55 0.26 280 / 0.3)" : "none",
+                background: tab === tabKey ? "oklch(0.55 0.26 280)" : "transparent",
+                color: tab === tabKey ? "white" : "var(--color-muted-foreground)",
+                boxShadow: tab === tabKey ? "0 2px 8px oklch(0.55 0.26 280 / 0.3)" : "none",
               }}>
-              {t === "login" ? "Sign In" : "Sign Up"}
+              {tabKey === "login" ? t("signIn") : "Sign Up"}
             </button>
           ))}
         </div>
@@ -96,6 +98,7 @@ export default function AuthForm() {
 }
 
 function LoginForm() {
+  const t = useTranslations("auth");
   const router = useRouter();
   const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<LoginInput>({
     resolver: zodResolver(loginSchema),
@@ -122,8 +125,8 @@ function LoginForm() {
   return (
     <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-4">
       <div className="space-y-1 mb-5">
-        <h2 className="text-lg font-semibold">Welcome back</h2>
-        <p className="text-sm text-muted-foreground">Sign in to your account</p>
+        <h2 className="text-lg font-semibold">{t('welcomeBack')}</h2>
+        <p className="text-sm text-muted-foreground">{t('signIn')}</p>
       </div>
 
       <Field label="Email" id="email" type="email" placeholder="you@example.com"

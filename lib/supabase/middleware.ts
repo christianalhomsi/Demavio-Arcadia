@@ -3,8 +3,8 @@ import { NextResponse, type NextRequest } from "next/server";
 import { getSupabaseEnv } from "@/lib/env";
 import { HALL_DASHBOARD_ROLES } from "@/types/user-role";
 
-export async function updateSession(request: NextRequest) {
-  let supabaseResponse = NextResponse.next({ request });
+export async function updateSession(request: NextRequest, response?: NextResponse) {
+  let supabaseResponse = response || NextResponse.next({ request });
   const supabaseEnv = getSupabaseEnv();
 
   const supabase = createServerClient(supabaseEnv.url, supabaseEnv.anonKey, {
@@ -27,13 +27,18 @@ export async function updateSession(request: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser();
 
   const { pathname } = request.nextUrl;
-  const isAuthPage = pathname.startsWith("/login") || pathname.startsWith("/verify-otp") || pathname.startsWith("/auth/");
+  
+  // Extract locale from pathname
+  const locale = pathname.split('/')[1];
+  const localePrefix = ['ar', 'en'].includes(locale) ? `/${locale}` : '';
+  
+  const isAuthPage = pathname.includes("/login") || pathname.includes("/verify-otp") || pathname.includes("/auth/");
 
   if (!user && !isAuthPage) {
-    return NextResponse.redirect(new URL("/login", request.url));
+    return NextResponse.redirect(new URL(`${localePrefix}/login`, request.url));
   }
 
-  if (user && (pathname.startsWith("/login") || pathname.startsWith("/verify-otp"))) {
+  if (user && (pathname.includes("/login") || pathname.includes("/verify-otp"))) {
     // check role to redirect to correct place
     const { data: profile } = await supabase
       .from("profiles")
@@ -51,11 +56,11 @@ export async function updateSession(request: NextRequest) {
         .maybeSingle();
 
       if (assignment?.hall_id) {
-        return NextResponse.redirect(new URL(`/dashboard/${assignment.hall_id}`, request.url));
+        return NextResponse.redirect(new URL(`${localePrefix}/dashboard/${assignment.hall_id}`, request.url));
       }
     }
 
-    return NextResponse.redirect(new URL("/halls", request.url));
+    return NextResponse.redirect(new URL(`${localePrefix}/halls`, request.url));
   }
 
   return supabaseResponse;

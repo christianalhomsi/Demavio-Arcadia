@@ -12,8 +12,12 @@ const appEnvSchema = z.object({
 });
 
 const emailEnvSchema = z.object({
-  EMAIL_PROVIDER_API_KEY: z.string().min(1),
-  EMAIL_FROM: z.string().email(),
+  SMTP_HOST: z.string().min(1),
+  SMTP_PORT: z.string().regex(/^\d+$/),
+  SMTP_USER: z.string().email(),
+  SMTP_PASSWORD: z.string().min(1),
+  SMTP_FROM_EMAIL: z.string().email(),
+  SMTP_FROM_NAME: z.string().min(1),
 });
 
 const agentEnvSchema = z.object({
@@ -67,8 +71,12 @@ export function getEmailEnv() {
   }
 
   return {
-    apiKey: emailCache.EMAIL_PROVIDER_API_KEY,
-    from: emailCache.EMAIL_FROM,
+    host: emailCache.SMTP_HOST,
+    port: parseInt(emailCache.SMTP_PORT, 10),
+    user: emailCache.SMTP_USER,
+    password: emailCache.SMTP_PASSWORD,
+    fromEmail: emailCache.SMTP_FROM_EMAIL,
+    fromName: emailCache.SMTP_FROM_NAME,
   } as const;
 }
 

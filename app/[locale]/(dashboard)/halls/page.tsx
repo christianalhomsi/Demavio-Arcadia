@@ -1,21 +1,28 @@
 import { Suspense } from "react";
 import type { Metadata } from "next";
 import Link from "next/link";
-import { redirect } from "next/navigation";
+import { useTranslations } from 'next-intl';
+import { getTranslations } from 'next-intl/server';
+import { redirect } from "@/lib/navigation";
 import { getServerClient } from "@/lib/supabase/server";
 import { getHalls } from "@/services/halls";
 import { isSuperAdmin } from "@/services/access";
 import HallCard from "@/components/ui/hall-card";
 import { Skeleton } from "@/components/ui/skeleton";
 import LogoutButton from "@/components/ui/logout-button";
+import { LanguageToggle } from "@/components/language-toggle";
 import { HALL_DASHBOARD_ROLES } from "@/types/user-role";
 import { Gamepad2, Plus, LayoutDashboard, ShieldCheck, CalendarDays, Building2, Zap } from "lucide-react";
 
-export const metadata: Metadata = { title: "Arcadia" };
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations('halls');
+  return { title: t('title') };
+}
 
 type DeviceStats = { total: number; available: number; active: number; offline: number };
 
 async function HallsGrid() {
+  const t = await getTranslations('halls');
   const supabase = await getServerClient();
   const halls = await getHalls();
 
@@ -26,8 +33,8 @@ async function HallsGrid() {
           style={{ background: "oklch(0.55 0.26 280 / 0.1)", border: "1px solid oklch(0.55 0.26 280 / 0.2)" }}>
           <Building2 size={36} style={{ color: "oklch(0.65 0.22 280)" }} />
         </div>
-        <p className="text-lg font-semibold text-foreground mb-2">No halls available</p>
-        <p className="text-sm text-muted-foreground">Check back later or contact your admin.</p>
+        <p className="text-lg font-semibold text-foreground mb-2">{t('noHallsAvailable')}</p>
+        <p className="text-sm text-muted-foreground">{t('checkBackLater')}</p>
       </div>
     );
   }
@@ -70,6 +77,7 @@ function HallsGridSkeleton() {
 }
 
 export default async function HallsPage() {
+  const t = await getTranslations();
   const supabase = await getServerClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/login");
@@ -107,24 +115,25 @@ export default async function HallsPage() {
           <div className="flex-1" />
 
           <nav className="flex items-center gap-1.5">
+            <LanguageToggle />
             {showAdmin && (
               <Link href="/admin"
                 className="inline-flex items-center gap-1.5 h-8 px-3 rounded-lg text-xs font-medium border border-violet-500/30 bg-violet-500/10 text-violet-400 hover:bg-violet-500/20 transition-colors">
                 <ShieldCheck size={13} />
-                Admin
+                {t('nav.admin')}
               </Link>
             )}
             {hallDashboardId && (
               <Link href={`/dashboard/${hallDashboardId}`}
                 className="inline-flex items-center gap-1.5 h-8 px-3 rounded-lg text-xs font-medium border border-border/60 hover:bg-muted transition-colors text-muted-foreground hover:text-foreground">
                 <LayoutDashboard size={13} />
-                Dashboard
+                {t('nav.dashboard')}
               </Link>
             )}
             <Link href="/reservations"
               className="inline-flex items-center gap-1.5 h-8 px-3 rounded-lg text-xs font-medium border border-border/60 hover:bg-muted transition-colors text-muted-foreground hover:text-foreground">
               <CalendarDays size={13} />
-              <span className="hidden sm:block">Reservations</span>
+              <span className="hidden sm:block">{t('nav.reservations')}</span>
             </Link>
             <LogoutButton />
           </nav>
@@ -146,20 +155,13 @@ export default async function HallsPage() {
               <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium border"
                 style={{ background: "oklch(0.55 0.26 280 / 0.1)", borderColor: "oklch(0.55 0.26 280 / 0.25)", color: "oklch(0.75 0.18 280)" }}>
                 <Zap size={11} />
-                Book your session
+                {t('halls.bookYourSession')}
               </div>
               <h1 className="text-3xl sm:text-4xl font-bold tracking-tight">
-                Find your{" "}
-                <span style={{
-                  background: "linear-gradient(135deg, oklch(0.65 0.22 280), oklch(0.82 0.14 200))",
-                  WebkitBackgroundClip: "text",
-                  WebkitTextFillColor: "transparent",
-                }}>
-                  gaming arena
-                </span>
+                {t('halls.findYourGamingArena')}
               </h1>
               <p className="text-muted-foreground text-sm sm:text-base max-w-md">
-                Browse available halls, pick a device, and book your session in seconds.
+                {t('halls.browseHalls')}
               </p>
             </div>
 
@@ -167,7 +169,7 @@ export default async function HallsPage() {
               className="inline-flex items-center gap-2 h-10 px-5 rounded-xl text-sm font-semibold text-white transition-all hover:opacity-90 hover:scale-[1.02] active:scale-[0.98] shrink-0"
               style={{ background: "linear-gradient(135deg, oklch(0.55 0.26 280), oklch(0.48 0.26 280))", boxShadow: "0 0 20px oklch(0.55 0.26 280 / 0.3)" }}>
               <Plus size={16} />
-              New Booking
+              {t('halls.newBooking')}
             </Link>
           </div>
         </div>
@@ -176,7 +178,7 @@ export default async function HallsPage() {
       {/* ── Halls Grid ── */}
       <main className="max-w-6xl mx-auto px-5 py-10">
         <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-6">
-          All Halls
+          {t('halls.allHalls')}
         </p>
         <Suspense fallback={<HallsGridSkeleton />}>
           <HallsGrid />
