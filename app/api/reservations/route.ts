@@ -16,6 +16,10 @@ export async function POST(request: Request) {
 
   const { hall_id, device_id, start_time, end_time } = parsed.data;
 
+  // Validate end > start
+  if (new Date(end_time) <= new Date(start_time)) {
+    return NextResponse.json({ error: "End time must be after start time" }, { status: 400 });
+  }
   // Resolve authenticated user
   const supabase = await getServerClient();
   const { data: { user } } = await supabase.auth.getUser();

@@ -7,7 +7,7 @@ import type { CashRegister } from "@/types/cash-register";
 import OpenRegisterForm from "./open-register-form";
 import CloseRegisterForm from "./close-register-form";
 
-export const metadata: Metadata = { title: "Cash Register | Gaming Hub" };
+export const metadata: Metadata = { title: "Cash Register | Arcadia" };
 
 // ─── data ─────────────────────────────────────────────────────────────────────
 

@@ -5,24 +5,19 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Card } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import ReservationActions from "./reservation-actions";
+import { CalendarDays } from "lucide-react";
 
 export const metadata: Metadata = { title: "Reservations" };
 
 type ReservationRow = {
-  id: string;
-  start_time: string;
-  end_time: string;
-  status: string;
-  user_id: string;
+  id: string; start_time: string; end_time: string;
+  status: string; user_id: string;
   devices: { name: string } | null;
 };
 
 const STATUS_STYLE: Record<string, string> = {
-  confirmed: "badge-confirmed",
-  active:    "badge-active",
-  cancelled: "badge-cancelled",
-  completed: "badge-completed",
-  pending:   "badge-idle",
+  confirmed: "badge-confirmed", active: "badge-active",
+  cancelled: "badge-cancelled", completed: "badge-completed", pending: "badge-idle",
 };
 
 function fmt(iso: string) {
@@ -32,37 +27,25 @@ function fmt(iso: string) {
 async function ReservationsList({ hallId }: { hallId: string }) {
   const supabase = await getServerClient();
 
-  const { data: deviceData } = await supabase
-    .from("devices")
-    .select("id")
-    .eq("hall_id", hallId);
-
-  const deviceIds = (deviceData ?? []).map((d: { id: string }) => d.id);
-
-  if (deviceIds.length === 0) {
-    return <p className="text-sm text-muted-foreground py-8 text-center">No reservations yet.</p>;
-  }
-
+  // single query using join instead of 3 sequential queries
   const { data } = await supabase
     .from("reservations")
-    .select("id, start_time, end_time, status, user_id, devices(name)")
-    .in("device_id", deviceIds)
+    .select("id, start_time, end_time, status, user_id, devices!inner(name, hall_id)")
+    .eq("devices.hall_id", hallId)
     .order("start_time", { ascending: false });
 
   const rows = (data ?? []) as unknown as ReservationRow[];
 
   if (rows.length === 0) {
-    return <p className="text-sm text-muted-foreground py-8 text-center">No reservations yet.</p>;
+    return <p className="text-sm text-muted-foreground py-10 text-center">No reservations yet.</p>;
   }
 
-  const userIds = [...new Set(rows.map((r) => r.user_id).filter(Boolean))];
+  const userIds = [...new Set(rows.map(r => r.user_id).filter(Boolean))];
   const { data: profilesData } = await supabase
-    .from("profiles")
-    .select("id, email")
-    .in("id", userIds);
+    .from("profiles").select("id, email").in("id", userIds);
 
   const emailMap = new Map((profilesData ?? []).map((p: { id: string; email: string }) => [p.id, p.email]));
-  const rowsWithEmail = rows.map((r) => ({ ...r, email: emailMap.get(r.user_id) ?? "—" }));
+  const rowsWithEmail = rows.map(r => ({ ...r, email: emailMap.get(r.user_id) ?? "—" }));
 
   return (
     <Card className="border-border/60 overflow-hidden">
@@ -113,9 +96,12 @@ export default async function ReservationsPage({ params }: { params: Promise<{ h
   const { hallId } = await params;
   return (
     <div className="page-shell">
-      <div>
-        <h1 className="text-xl font-bold">Reservations</h1>
-        <p className="text-sm text-muted-foreground mt-0.5">All bookings for this hall</p>
+      <div className="flex items-center gap-2.5">
+        <CalendarDays size={18} className="text-muted-foreground" />
+        <div>
+          <h1 className="text-xl font-bold leading-none">Reservations</h1>
+          <p className="text-sm text-muted-foreground mt-0.5">All bookings for this hall</p>
+        </div>
       </div>
       <Separator className="opacity-40" />
       <Suspense fallback={<ReservationsSkeleton />}>

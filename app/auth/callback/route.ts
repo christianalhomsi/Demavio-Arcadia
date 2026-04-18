@@ -1,0 +1,34 @@
+import { NextResponse } from "next/server";
+import { getServerClient } from "@/lib/supabase/server";
+
+export async function GET(request: Request) {
+  const { searchParams, origin } = new URL(request.url);
+  const code  = searchParams.get("code");
+  const error = searchParams.get("error");
+
+  if (error) return NextResponse.redirect(`${origin}/login?error=${error}`);
+  if (!code) return NextResponse.redirect(`${origin}/login`);
+
+  const supabase = await getServerClient();
+  const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
+  if (exchangeError) return NextResponse.redirect(`${origin}/login?error=${exchangeError.message}`);
+
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return NextResponse.redirect(`${origin}/login`);
+
+  // ensure profile exists
+  await supabase.from("profiles").upsert({ id: user.id, email: user.email, role: "player" }, { onConflict: "id", ignoreDuplicates: true });
+
+  const { data: profile } = await supabase.from("profiles").select("role").eq("id", user.id).maybeSingle();
+  const role = profile?.role;
+
+  if (role === "super_admin") return NextResponse.redirect(`${origin}/admin`);
+
+  if (role === "hall_manager" || role === "hall_staff") {
+    const { data: assignment } = await supabase
+      .from("staff_assignments").select("hall_id").eq("user_id", user.id).maybeSingle();
+    return NextResponse.redirect(`${origin}${assignment?.hall_id ? `/dashboard/${assignment.hall_id}` : "/halls"}`);
+  }
+
+  return NextResponse.redirect(`${origin}/halls`);
+}

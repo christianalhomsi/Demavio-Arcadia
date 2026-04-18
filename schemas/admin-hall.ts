@@ -7,6 +7,12 @@ export const hallBootstrapSchema = z.object({
   address: z.string().max(500).optional().nullable(),
   device_count: z.coerce.number().int().min(1).max(500),
   device_name_prefix: z.string().min(1).max(80).optional().default("Station"),
+  working_hours: z.array(z.object({
+    day: z.number().int().min(0).max(6),
+    open_time: z.string(),
+    close_time: z.string(),
+    is_open: z.boolean(),
+  })).optional(),
   staff: z.object({
     email: z.string().email(),
     password: z.string().min(6),

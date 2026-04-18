@@ -6,6 +6,7 @@ import { getServerClient } from "@/lib/supabase/server";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
+import { Gamepad2, ChevronRight, CalendarDays, Plus, CalendarX } from "lucide-react";
 
 export const metadata: Metadata = { title: "My Reservations" };
 
@@ -48,14 +49,24 @@ async function ReservationsList() {
 
   if (rows.length === 0) {
     return (
-      <Card className="border-border/60 py-16 text-center">
-        <div className="text-4xl mb-3">📅</div>
+      <div className="flex flex-col items-center justify-center py-24 text-center">
+        <div
+          className="w-14 h-14 rounded-2xl flex items-center justify-center mb-4"
+          style={{ background: "oklch(0.55 0.26 280 / 0.08)", border: "1px solid oklch(0.55 0.26 280 / 0.15)" }}
+        >
+          <CalendarX size={24} className="text-muted-foreground" />
+        </div>
         <p className="font-semibold text-foreground mb-1">No reservations yet</p>
         <p className="text-sm text-muted-foreground mb-4">Book a device to get started</p>
-        <Link href="/reservations/new" className="inline-flex items-center justify-center h-7 px-2.5 rounded-lg text-xs font-medium text-white transition-colors" style={{ background: "oklch(0.55 0.26 280)" }}>
+        <Link
+          href="/reservations/new"
+          className="inline-flex items-center gap-1.5 h-8 px-3 rounded-lg text-xs font-medium text-white transition-colors"
+          style={{ background: "oklch(0.55 0.26 280)" }}
+        >
+          <Plus size={13} />
           Book a device
         </Link>
-      </Card>
+      </div>
     );
   }
 
@@ -91,7 +102,7 @@ async function ReservationsList() {
   );
 }
 
-function Skeleton_() {
+function ReservationsSkeleton() {
   return (
     <div className="space-y-2">
       {Array.from({ length: 5 }).map((_, i) => (
@@ -104,35 +115,46 @@ function Skeleton_() {
 export default function ReservationsPage() {
   return (
     <div className="min-h-screen bg-background">
-      {/* nav */}
       <header className="flex items-center gap-3 px-5 h-14 border-b border-border/60 bg-card/80 backdrop-blur-sm sticky top-0 z-50">
-        <Link href="/halls" className="flex items-center gap-2">
-          <div className="w-7 h-7 rounded-lg flex items-center justify-center text-sm"
-            style={{ background: "oklch(0.55 0.26 280 / 0.15)", border: "1px solid oklch(0.55 0.26 280 / 0.3)" }}>
-            🎮
+        <Link href="/halls" className="flex items-center gap-2 group shrink-0">
+          <div
+            className="w-7 h-7 rounded-lg flex items-center justify-center transition-all group-hover:scale-105"
+            style={{ background: "oklch(0.55 0.26 280 / 0.15)", border: "1px solid oklch(0.55 0.26 280 / 0.3)" }}
+          >
+            <Gamepad2 size={15} style={{ color: "oklch(0.65 0.22 280)" }} />
           </div>
           <span className="text-sm font-bold tracking-tight hidden sm:block">
-            <span style={{ color: "oklch(0.55 0.26 280)" }}>Gaming</span>
-            <span style={{ color: "oklch(0.82 0.14 200)" }}>Hub</span>
+            <span style={{ color: "oklch(0.55 0.26 280)" }}>Arc</span>
+            <span style={{ color: "oklch(0.82 0.14 200)" }}>adia</span>
           </span>
         </Link>
         <Separator orientation="vertical" className="h-5 opacity-30" />
-        <Link href="/halls" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Halls</Link>
-        <span className="text-border text-sm">/</span>
-        <span className="text-sm font-medium text-foreground">My Reservations</span>
+        <nav className="flex items-center gap-1 text-sm">
+          <Link href="/halls" className="text-muted-foreground hover:text-foreground transition-colors">Halls</Link>
+          <ChevronRight size={13} className="text-border" />
+          <span className="text-foreground font-medium">My Reservations</span>
+        </nav>
         <div className="flex-1" />
-        <Link href="/reservations/new" className="inline-flex items-center justify-center h-7 px-2.5 rounded-lg text-xs font-medium text-white transition-colors" style={{ background: "oklch(0.55 0.26 280)" }}>
-          + New
+        <Link
+          href="/reservations/new"
+          className="inline-flex items-center gap-1.5 h-7 px-2.5 rounded-lg text-xs font-medium text-white transition-colors"
+          style={{ background: "oklch(0.55 0.26 280)" }}
+        >
+          <Plus size={12} />
+          New
         </Link>
       </header>
 
       <div className="page-shell">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">My Reservations</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">All your device bookings</p>
+        <div className="flex items-center gap-2.5">
+          <CalendarDays size={18} className="text-muted-foreground" />
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight leading-none">My Reservations</h1>
+            <p className="text-sm text-muted-foreground mt-0.5">All your device bookings</p>
+          </div>
         </div>
         <Separator className="opacity-40" />
-        <Suspense fallback={<Skeleton_ />}>
+        <Suspense fallback={<ReservationsSkeleton />}>
           <ReservationsList />
         </Suspense>
       </div>

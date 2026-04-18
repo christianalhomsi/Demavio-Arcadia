@@ -7,8 +7,8 @@ export async function GET(request: Request) {
   if (!gate.ok) return gate.response;
 
   const url = new URL(request.url);
-  const page = Math.max(1, Number(url.searchParams.get("page") || "1"));
-  const perPage = Math.min(100, Math.max(1, Number(url.searchParams.get("perPage") || "30")));
+  const page    = Math.max(1, Number(url.searchParams.get("page")    || "1"));
+  const perPage = Math.min(100, Math.max(1, Number(url.searchParams.get("perPage") || "50")));
 
   const admin = getAdminClient();
   const { data, error } = await admin.auth.admin.listUsers({ page, perPage });
@@ -18,13 +18,24 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
+  const userIds = (data.users ?? []).map(u => u.id);
+
+  // fetch roles from profiles using admin client to bypass RLS
+  const { data: profiles } = await admin
+    .from("profiles")
+    .select("id, role")
+    .in("id", userIds);
+
+  const roleMap = new Map((profiles ?? []).map(p => [p.id, p.role as string]));
+
   return NextResponse.json({
-    users: (data.users ?? []).map((u) => ({
-      id: u.id,
-      email: u.email,
+    users: (data.users ?? []).map(u => ({
+      id:         u.id,
+      email:      u.email,
       created_at: u.created_at,
+      role:       roleMap.get(u.id) ?? "unknown",
     })),
-    total: data.total ?? data.users?.length ?? 0,
+    total:   data.total ?? data.users?.length ?? 0,
     page,
     perPage,
   });

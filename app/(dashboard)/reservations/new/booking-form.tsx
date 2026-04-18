@@ -14,12 +14,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
+import CalendarBooking from "./calendar-booking";
 
 const formSchema = z.object({
   hall_id:    z.string().min(1, "Select a hall"),
   device_id:  z.string().min(1, "Select a device"),
-  start_time: z.string().min(1, "Required"),
-  end_time:   z.string().min(1, "Required"),
+  booking_date: z.string().min(1, "Required"),
+  start_time: z.string().optional(),
+  end_time:   z.string().optional(),
 });
 type FormValues = z.infer<typeof formSchema>;
 type E = Record<string, { message?: string } | undefined>;
@@ -28,16 +30,27 @@ export default function BookingForm({ halls }: { halls: Hall[] }) {
   const [devices, setDevices] = useState<Device[]>([]);
   const [devicesLoading, setDevicesLoading] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [selectedSlot, setSelectedSlot] = useState<{ start: Date; end: Date } | null>(null);
 
   const { register, handleSubmit, watch, setValue, formState: { errors: rawErrors, isSubmitting } } = useForm<FormValues>({
     resolver: zodResolver(formSchema),
+    defaultValues: {
+      hall_id: "",
+      device_id: "",
+      booking_date: new Date().toISOString().split('T')[0],
+    },
   });
   const e = rawErrors as E;
 
   const selectedHallId = watch("hall_id");
+  const selectedDeviceId = watch("device_id");
+  const bookingDate = watch("booking_date");
 
   useEffect(() => {
-    if (!selectedHallId) { setDevices([]); return; }
+    if (!selectedHallId) { 
+      setDevices([]); 
+      return; 
+    }
     setDevicesLoading(true);
     setValue("device_id", "");
     const supabase = getBrowserClient();
@@ -49,10 +62,19 @@ export default function BookingForm({ halls }: { halls: Hall[] }) {
   }, [selectedHallId, setValue]);
 
   async function onSubmit(data: FormValues) {
+    if (!selectedSlot) {
+      toast.error("Please select a time slot");
+      return;
+    }
+
     const res = await fetch("/api/reservations", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(data),
+      body: JSON.stringify({
+        ...data,
+        start_time: selectedSlot.start.toISOString(),
+        end_time: selectedSlot.end.toISOString(),
+      }),
     });
     if (res.status === 201) { setSuccess(true); toast.success("Reservation confirmed!"); return; }
     const json = await res.json().catch(() => ({} as { error?: string }));
@@ -60,6 +82,12 @@ export default function BookingForm({ halls }: { halls: Hall[] }) {
     if (errMsg === "OVERLAP") toast.error("Time slot already taken.");
     else toast.error(errMsg);
   }
+
+  const handleSelectSlot = (start: Date, end: Date) => {
+    setSelectedSlot({ start, end });
+    setValue("start_time", start.toISOString());
+    setValue("end_time", end.toISOString());
+  };
 
   if (success) {
     return (
@@ -85,12 +113,14 @@ export default function BookingForm({ halls }: { halls: Hall[] }) {
 
           <div className="space-y-1.5">
             <Label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Hall</Label>
-            <Select onValueChange={(v) => setValue("hall_id", v as string)}>
+            <Select value={selectedHallId} onValueChange={(v) => setValue("hall_id", v as string)}>
               <SelectTrigger className={e.hall_id ? "border-destructive" : ""}>
-                <SelectValue placeholder="Select a hall" />
+                <SelectValue placeholder="Select a hall">
+                  {selectedHallId ? halls.find(h => h.id === selectedHallId)?.name : "Select a hall"}
+                </SelectValue>
               </SelectTrigger>
               <SelectContent>
-                {halls.map((h) => <SelectItem key={h.id} value={h.id}>{h.name}</SelectItem>)}
+                {halls.map((h) => <SelectItem key={h.id} value={h.id} label={h.name}>{h.name}</SelectItem>)}
               </SelectContent>
             </Select>
             {e.hall_id && <p className="text-xs text-destructive">{e.hall_id.message}</p>}
@@ -98,38 +128,63 @@ export default function BookingForm({ halls }: { halls: Hall[] }) {
 
           <div className="space-y-1.5">
             <Label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Device</Label>
-            <Select onValueChange={(v) => setValue("device_id", v as string)} disabled={!selectedHallId || devicesLoading}>
+            <Select value={selectedDeviceId} onValueChange={(v) => setValue("device_id", v as string)} disabled={!selectedHallId || devicesLoading}>
               <SelectTrigger className={e.device_id ? "border-destructive" : ""}>
                 <SelectValue placeholder={
                   devicesLoading ? "Loading..." :
                   !selectedHallId ? "Select a hall first" :
                   devices.length === 0 ? "No available devices" :
                   "Select a device"
-                } />
+                }>
+                  {selectedDeviceId ? devices.find(d => d.id === selectedDeviceId)?.name : (
+                    devicesLoading ? "Loading..." :
+                    !selectedHallId ? "Select a hall first" :
+                    devices.length === 0 ? "No available devices" :
+                    "Select a device"
+                  )}
+                </SelectValue>
               </SelectTrigger>
               <SelectContent>
-                {devices.map((d) => <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>)}
+                {devices.map((d) => <SelectItem key={d.id} value={d.id} label={d.name}>{d.name}</SelectItem>)}
               </SelectContent>
             </Select>
             {e.device_id && <p className="text-xs text-destructive">{e.device_id.message}</p>}
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1.5">
-              <Label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Start time</Label>
-              <Input type="datetime-local"
-                className={e.start_time ? "border-destructive" : ""}
-                {...register("start_time")} />
-              {e.start_time && <p className="text-xs text-destructive">{e.start_time.message}</p>}
-            </div>
-            <div className="space-y-1.5">
-              <Label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">End time</Label>
-              <Input type="datetime-local"
-                className={e.end_time ? "border-destructive" : ""}
-                {...register("end_time")} />
-              {e.end_time && <p className="text-xs text-destructive">{e.end_time.message}</p>}
-            </div>
+          <div className="space-y-1.5">
+            <Label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Booking Date</Label>
+            <Input type="date"
+              className={e.booking_date ? "border-destructive" : ""}
+              {...register("booking_date")} />
+            {e.booking_date && <p className="text-xs text-destructive">{e.booking_date.message}</p>}
           </div>
+
+          {selectedDeviceId && bookingDate && (
+            <div className="space-y-1.5">
+              <Label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                Select Time Slot (30 min)
+              </Label>
+              <CalendarBooking
+                deviceId={selectedDeviceId}
+                hallId={selectedHallId}
+                selectedDate={new Date(bookingDate)}
+                onSelectSlot={handleSelectSlot}
+                selectedStart={selectedSlot?.start}
+                selectedEnd={selectedSlot?.end}
+              />
+            </div>
+          )}
+
+          {selectedSlot && (
+            <div className="p-3 rounded-lg bg-muted/50 text-sm">
+              <span className="text-muted-foreground">Selected: </span>
+              <span className="font-medium">
+                {selectedSlot.start.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", hour12: false })}
+                {" - "}
+                {selectedSlot.end.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", hour12: false })}
+              </span>
+            </div>
+          )}
 
           <Button type="submit" className="w-full cursor-pointer" disabled={isSubmitting}
             style={{ background: "oklch(0.55 0.26 280)", color: "white" }}>

@@ -5,7 +5,7 @@ import { getServerClient } from "@/lib/supabase/server";
 import type { TransactionType } from "@/types/transaction";
 import TransactionsTable, { type TransactionRow } from "./transactions-table";
 
-export const metadata: Metadata = { title: "Transactions | Gaming Hub" };
+export const metadata: Metadata = { title: "Transactions | Arcadia" };
 
 // ─── data fetching ────────────────────────────────────────────────────────────
 
@@ -41,14 +41,14 @@ async function TransactionsLoader({ hallId }: { hallId: string }) {
 
 function TableSkeleton() {
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
-      <div style={{ display: "flex", gap: "0.75rem", marginBottom: "0.5rem" }}>
+    <div className="flex flex-col gap-2">
+      <div className="flex gap-3 mb-2">
         {Array.from({ length: 3 }).map((_, i) => (
-          <div key={i} style={{ ...skel, height: "32px", width: "120px" }} />
+          <div key={i} className="h-8 w-28 rounded-lg skeleton-shimmer" />
         ))}
       </div>
       {Array.from({ length: 8 }).map((_, i) => (
-        <div key={i} style={{ ...skel, height: "44px" }} />
+        <div key={i} className="h-11 rounded-lg skeleton-shimmer" />
       ))}
     </div>
   );
@@ -62,15 +62,15 @@ export default function TransactionsPage({
   params: { hallId: string };
 }) {
   return (
-    <div style={page}>
-      <div style={pageHeader}>
-        <p style={pageHeading}>Transactions</p>
-        <Link href={`/dashboard/${params.hallId}/finance`} style={backLink}>
+    <div className="page-shell">
+      <div className="flex items-center justify-between">
+        <h1 className="text-xl font-bold">Transactions</h1>
+        <Link href={`/dashboard/${params.hallId}/finance`}
+          className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors px-2 py-1 rounded-lg hover:bg-muted">
           ← Finance overview
         </Link>
       </div>
-
-      <div style={card}>
+      <div className="rounded-2xl border border-border/50 bg-card p-5">
         <Suspense fallback={<TableSkeleton />}>
           <TransactionsLoader hallId={params.hallId} />
         </Suspense>
@@ -79,44 +79,3 @@ export default function TransactionsPage({
   );
 }
 
-// ─── styles ───────────────────────────────────────────────────────────────────
-
-const page: React.CSSProperties = {
-  display: "flex",
-  flexDirection: "column",
-  gap: "1.5rem",
-  maxWidth: "960px",
-};
-
-const pageHeader: React.CSSProperties = {
-  display: "flex",
-  alignItems: "baseline",
-  justifyContent: "space-between",
-  gap: "1rem",
-};
-
-const pageHeading: React.CSSProperties = {
-  margin: 0,
-  fontSize: "1.25rem",
-  fontWeight: 700,
-  color: "#111827",
-};
-
-const backLink: React.CSSProperties = {
-  fontSize: "0.875rem",
-  color: "#6b7280",
-  textDecoration: "none",
-};
-
-const card: React.CSSProperties = {
-  background: "#fff",
-  borderRadius: "0.75rem",
-  boxShadow: "0 1px 4px rgba(0,0,0,0.07)",
-  padding: "1.5rem",
-};
-
-const skel: React.CSSProperties = {
-  borderRadius: "0.375rem",
-  background: "#e5e7eb",
-  width: "100%",
-};

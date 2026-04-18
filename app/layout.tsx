@@ -4,11 +4,13 @@ import { GeistMono } from "geist/font/mono";
 import ReactQueryProvider from "@/lib/query/provider";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
+import { NavigationLoader } from "@/components/navigation-loader";
+import { QueryLoadingBar } from "@/components/query-loading-bar";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: { default: "Gaming Hub", template: "%s | Gaming Hub" },
-  description: "Gaming Hub — Staff & Player Portal",
+  title: { default: "Arcadia", template: "%s | Arcadia" },
+  description: "Arcadia — Staff & Player Portal",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
@@ -17,7 +19,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body>
         <ThemeProvider>
           <ReactQueryProvider>
-            {children}
+            <QueryLoadingBar />
+            <NavigationLoader>
+              {children}
+            </NavigationLoader>
           </ReactQueryProvider>
           <Toaster richColors position="top-right" />
         </ThemeProvider>

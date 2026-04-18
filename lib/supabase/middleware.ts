@@ -26,13 +26,13 @@ export async function updateSession(request: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser();
 
   const { pathname } = request.nextUrl;
-  const isAuthPage = pathname.startsWith("/login") || pathname.startsWith("/verify-otp");
+  const isAuthPage = pathname.startsWith("/login") || pathname.startsWith("/verify-otp") || pathname.startsWith("/auth/");
 
   if (!user && !isAuthPage) {
     return NextResponse.redirect(new URL("/login", request.url));
   }
 
-  if (user && isAuthPage) {
+  if (user && (pathname.startsWith("/login") || pathname.startsWith("/verify-otp"))) {
     // check role to redirect to correct place
     const { data: profile } = await supabase
       .from("profiles")

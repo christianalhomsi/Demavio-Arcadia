@@ -32,6 +32,7 @@ export async function POST(request: Request) {
     .insert({
       name,
       address: address ?? null,
+      working_hours: parsed.data.working_hours ?? null,
     })
     .select("id")
     .single();

@@ -4,7 +4,7 @@ import { getServerClient } from "@/lib/supabase/server";
 import type { Device } from "@/services/devices";
 import AgentPanel from "./agent-panel";
 
-export const metadata: Metadata = { title: "Agent | Gaming Hub" };
+export const metadata: Metadata = { title: "Agent | Arcadia" };
 
 // ─── data ─────────────────────────────────────────────────────────────────────
 

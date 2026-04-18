@@ -7,7 +7,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogBody } from "@/components/ui/dialog";
 import { toast } from "sonner";
+import { Monitor, Timer, Clock, WifiOff, LogIn, StopCircle, CheckCircle2, Calendar } from "lucide-react";
+import CalendarBooking from "@/app/(dashboard)/reservations/new/calendar-booking";
 
 export type StaffDeviceCardProps = {
   id: string;
@@ -18,11 +21,11 @@ export type StaffDeviceCardProps = {
   activeSession: { id: string; started_at: string } | null;
 };
 
-const STATUS: Record<DeviceStatus, { cls: string; label: string }> = {
-  available: { cls: "badge-available", label: "Available" },
-  active:    { cls: "badge-active",    label: "Active" },
-  offline:   { cls: "badge-offline",   label: "Offline" },
-  idle:      { cls: "badge-idle",      label: "Reserved" },
+const STATUS: Record<DeviceStatus, { cls: string; label: string; icon: React.ElementType }> = {
+  available: { cls: "badge-available", label: "Available", icon: CheckCircle2 },
+  active:    { cls: "badge-active",    label: "Active",    icon: Timer },
+  offline:   { cls: "badge-offline",   label: "Offline",   icon: WifiOff },
+  idle:      { cls: "badge-idle",      label: "Reserved",  icon: Clock },
 };
 
 function elapsed(startedAt: string): string {
@@ -38,6 +41,9 @@ export default function StaffDeviceCard(props: StaffDeviceCardProps) {
   const [reservation, setReservation] = useState(pendingReservation);
   const [ratePerHour, setRatePerHour] = useState("");
   const [showEndForm, setShowEndForm] = useState(false);
+  const [showBooking, setShowBooking] = useState(false);
+  const [bookingDate, setBookingDate] = useState(new Date().toISOString().split('T')[0]);
+  const [selectedSlot, setSelectedSlot] = useState<{ start: Date; end: Date } | null>(null);
   const [loading, setLoading]         = useState(false);
 
   async function handleCheckIn() {
@@ -84,7 +90,37 @@ export default function StaffDeviceCard(props: StaffDeviceCardProps) {
     }
   }
 
+  async function handleBookDevice() {
+    if (!selectedSlot) {
+      toast.error("Please select a time slot");
+      return;
+    }
+    setLoading(true);
+    const res = await fetch("/api/reservations", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        hall_id: hallId,
+        device_id: id,
+        start_time: selectedSlot.start.toISOString(),
+        end_time: selectedSlot.end.toISOString(),
+      }),
+    });
+    setLoading(false);
+    if (res.status === 201) {
+      toast.success("Device booked successfully!");
+      setShowBooking(false);
+      setSelectedSlot(null);
+    } else {
+      const json = await res.json().catch(() => ({} as { error?: string }));
+      const errMsg = (json?.error as string) ?? "Something went wrong.";
+      if (errMsg === "OVERLAP") toast.error("Time slot already taken.");
+      else toast.error(errMsg);
+    }
+  }
+
   const s = STATUS[status] ?? STATUS.offline;
+  const StatusIcon = s.icon;
 
   return (
     <Card className="border-border/60 hover:border-border transition-colors">
@@ -92,10 +128,11 @@ export default function StaffDeviceCard(props: StaffDeviceCardProps) {
         {/* header */}
         <div className="flex items-start justify-between gap-2">
           <div className="flex items-center gap-2 min-w-0">
-            <span className="text-base shrink-0">🖥</span>
+            <Monitor size={15} className="text-muted-foreground shrink-0" />
             <p className="text-sm font-semibold text-foreground truncate">{name}</p>
           </div>
-          <span className={`text-xs font-medium px-2 py-0.5 rounded-full shrink-0 ${s.cls}`}>
+          <span className={`flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full shrink-0 ${s.cls}`}>
+            <StatusIcon size={11} />
             {s.label}
           </span>
         </div>
@@ -116,17 +153,98 @@ export default function StaffDeviceCard(props: StaffDeviceCardProps) {
 
         {/* check-in */}
         {status === "idle" && reservation && !loading && (
-          <Button size="sm" className="w-full text-xs cursor-pointer"
+          <Button
+            size="sm"
+            className="w-full text-xs cursor-pointer gap-1.5"
             style={{ background: "oklch(0.55 0.26 280)", color: "white" }}
-            onClick={handleCheckIn}>
+            onClick={handleCheckIn}
+          >
+            <LogIn size={13} />
             Check in
           </Button>
         )}
 
+        {/* book device */}
+        {status === "available" && !showBooking && (
+          <Button
+            size="sm"
+            variant="outline"
+            className="w-full text-xs cursor-pointer gap-1.5"
+            onClick={() => setShowBooking(true)}
+          >
+            <Calendar size={13} />
+            Book device
+          </Button>
+        )}
+
+        <Dialog open={showBooking} onOpenChange={setShowBooking}>
+          <DialogContent onClose={() => setShowBooking(false)}>
+            <DialogHeader>
+              <DialogTitle>Book {name}</DialogTitle>
+            </DialogHeader>
+            <DialogBody className="space-y-4">
+              <div className="space-y-1.5">
+                <Label className="text-xs text-muted-foreground">Booking Date</Label>
+                <Input
+                  type="date"
+                  value={bookingDate}
+                  onChange={(e) => setBookingDate(e.target.value)}
+                  className="h-9"
+                />
+              </div>
+              {bookingDate && (
+                <div className="space-y-1.5">
+                  <Label className="text-xs text-muted-foreground">Select Time Slot (30 min)</Label>
+                  <CalendarBooking
+                    deviceId={id}
+                    hallId={hallId}
+                    selectedDate={new Date(bookingDate)}
+                    onSelectSlot={(start, end) => setSelectedSlot({ start, end })}
+                    selectedStart={selectedSlot?.start}
+                    selectedEnd={selectedSlot?.end}
+                  />
+                </div>
+              )}
+              {selectedSlot && (
+                <div className="p-3 rounded-lg bg-muted/50 text-sm">
+                  <span className="text-muted-foreground">Selected: </span>
+                  <span className="font-medium">
+                    {selectedSlot.start.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", hour12: false })}
+                    {" - "}
+                    {selectedSlot.end.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", hour12: false })}
+                  </span>
+                </div>
+              )}
+              <div className="flex gap-3 pt-2">
+                <Button
+                  className="flex-1 cursor-pointer"
+                  disabled={loading || !selectedSlot}
+                  style={{ background: "oklch(0.55 0.26 280)", color: "white" }}
+                  onClick={handleBookDevice}
+                >
+                  {loading ? "Booking…" : "Confirm Booking"}
+                </Button>
+                <Button
+                  variant="outline"
+                  className="flex-1 cursor-pointer"
+                  onClick={() => { setShowBooking(false); setSelectedSlot(null); }}
+                >
+                  Cancel
+                </Button>
+              </div>
+            </DialogBody>
+          </DialogContent>
+        </Dialog>
+
         {/* end session */}
         {status === "active" && session && !showEndForm && (
-          <Button size="sm" variant="outline" className="w-full text-xs cursor-pointer border-destructive/40 text-destructive hover:bg-destructive/10"
-            onClick={() => setShowEndForm(true)}>
+          <Button
+            size="sm"
+            variant="outline"
+            className="w-full text-xs cursor-pointer gap-1.5 border-destructive/40 text-destructive hover:bg-destructive/10"
+            onClick={() => setShowEndForm(true)}
+          >
+            <StopCircle size={13} />
             End session
           </Button>
         )}
@@ -136,19 +254,28 @@ export default function StaffDeviceCard(props: StaffDeviceCardProps) {
           <div className="space-y-3 pt-1 border-t border-border/40">
             <div className="space-y-1">
               <Label className="text-xs text-muted-foreground">Rate / hour</Label>
-              <Input type="number" min="0" step="0.01" placeholder="e.g. 5.00"
+              <Input
+                type="number" min="0" step="0.01" placeholder="e.g. 5.00"
                 value={ratePerHour} onChange={(e) => setRatePerHour(e.target.value)}
-                className="text-xs h-8" />
+                className="text-xs h-8"
+              />
             </div>
             <div className="flex gap-2">
-              <Button size="sm" className="flex-1 text-xs cursor-pointer"
+              <Button
+                size="sm"
+                className="flex-1 text-xs cursor-pointer"
                 disabled={loading || !ratePerHour}
                 style={{ background: "oklch(0.55 0.26 280)", color: "white" }}
-                onClick={handleEndSession}>
+                onClick={handleEndSession}
+              >
                 {loading ? "Ending…" : "Confirm"}
               </Button>
-              <Button size="sm" variant="outline" className="flex-1 text-xs cursor-pointer"
-                onClick={() => { setShowEndForm(false); setRatePerHour(""); }}>
+              <Button
+                size="sm"
+                variant="outline"
+                className="flex-1 text-xs cursor-pointer"
+                onClick={() => { setShowEndForm(false); setRatePerHour(""); }}
+              >
                 Cancel
               </Button>
             </div>

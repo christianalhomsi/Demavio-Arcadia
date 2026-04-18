@@ -241,6 +241,12 @@
     animation: shimmer 1.8s ease-in-out infinite;
   }
 
+  /* ── Loading animation ── */
+  @keyframes loading {
+    0%   { transform: translateX(-100%); }
+    100% { transform: translateX(400%); }
+  }
+
   /* ── Nav link active ── */
   .nav-link {
     @apply flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium

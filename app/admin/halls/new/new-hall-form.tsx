@@ -6,17 +6,60 @@ import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import { Building2, MapPin, Monitor, Hash, UserCog, UserPlus, Trash2, Plus, Clock } from "lucide-react";
+import WorkingHoursEditor from "@/components/ui/working-hours-editor";
+import type { WorkingHours } from "@/types/hall";
+
+function Section({ icon: Icon, title, desc, children, accent = "oklch(0.55 0.26 280)" }: {
+  icon: React.ElementType; title: string; desc?: string;
+  children: React.ReactNode; accent?: string;
+}) {
+  return (
+    <div className="rounded-2xl border border-border/50 bg-card overflow-hidden">
+      <div className="flex items-center gap-3 px-5 py-4 border-b border-border/40"
+        style={{ background: `${accent}08` }}>
+        <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
+          style={{ background: `${accent}15`, border: `1px solid ${accent}25` }}>
+          <Icon size={15} style={{ color: accent }} />
+        </div>
+        <div>
+          <p className="text-sm font-semibold text-foreground">{title}</p>
+          {desc && <p className="text-xs text-muted-foreground mt-0.5">{desc}</p>}
+        </div>
+      </div>
+      <div className="p-5 space-y-4">{children}</div>
+    </div>
+  );
+}
+
+function Field({ label, id, children }: { label: string; id: string; children: React.ReactNode }) {
+  return (
+    <div className="space-y-1.5">
+      <Label htmlFor={id} className="text-xs font-medium text-muted-foreground">{label}</Label>
+      {children}
+    </div>
+  );
+}
 
 export default function NewHallForm() {
   const router = useRouter();
-  const [pending, setPending] = useState(false);
-  const [name, setName] = useState("");
-  const [address, setAddress] = useState("");
-  const [deviceCount, setDeviceCount] = useState("4");
-  const [prefix, setPrefix] = useState("Station");
-  const [staffEmail, setStaffEmail] = useState("");
+  const [pending, setPending]           = useState(false);
+  const [name, setName]                 = useState("");
+  const [address, setAddress]           = useState("");
+  const [deviceCount, setDeviceCount]   = useState("4");
+  const [prefix, setPrefix]             = useState("Station");
+  const [staffEmail, setStaffEmail]     = useState("");
   const [staffPassword, setStaffPassword] = useState("");
-  const [extraStaff, setExtraStaff] = useState<{ email: string; password: string }[]>([]);
+  const [extraStaff, setExtraStaff]     = useState<{ email: string; password: string }[]>([]);
+  const [workingHours, setWorkingHours] = useState<WorkingHours[]>([
+    { day: 0, open_time: "09:00", close_time: "23:00", is_open: true },
+    { day: 1, open_time: "09:00", close_time: "23:00", is_open: true },
+    { day: 2, open_time: "09:00", close_time: "23:00", is_open: true },
+    { day: 3, open_time: "09:00", close_time: "23:00", is_open: true },
+    { day: 4, open_time: "09:00", close_time: "23:00", is_open: true },
+    { day: 5, open_time: "09:00", close_time: "23:00", is_open: true },
+    { day: 6, open_time: "09:00", close_time: "23:00", is_open: true },
+  ]);
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -24,9 +67,15 @@ export default function NewHallForm() {
     try {
       const device_count = Number(deviceCount);
       if (!Number.isFinite(device_count) || device_count < 1) {
-        toast.error("Device count must be at least 1.");
-        setPending(false);
-        return;
+        toast.error("Device count must be at least 1."); setPending(false); return;
+      }
+      if (staffPassword.length < 6) {
+        toast.error("Manager password must be at least 6 characters."); setPending(false); return;
+      }
+      for (const s of extraStaff.filter(s => s.email.trim())) {
+        if (s.password.length < 6) {
+          toast.error(`Password for ${s.email} must be at least 6 characters.`); setPending(false); return;
+        }
       }
 
       const body: Record<string, unknown> = {
@@ -34,26 +83,13 @@ export default function NewHallForm() {
         address: address.trim() || null,
         device_count,
         device_name_prefix: prefix.trim() || "Station",
+        working_hours: workingHours,
+        staff: { email: staffEmail.trim(), password: staffPassword, role: "hall_manager" },
       };
 
-      const email = staffEmail.trim();
-      if (staffPassword.length < 6) {
-        toast.error("Password must be at least 6 characters.");
-        setPending(false);
-        return;
-      }
-      body.staff = { email, password: staffPassword, role: "hall_manager" };
-
-      const filledExtra = extraStaff.filter((s) => s.email.trim());
-      for (const s of filledExtra) {
-        if (s.password.length < 6) {
-          toast.error(`Password for ${s.email} must be at least 6 characters.`);
-          setPending(false);
-          return;
-        }
-      }
+      const filledExtra = extraStaff.filter(s => s.email.trim());
       if (filledExtra.length > 0) {
-        body.extra_staff = filledExtra.map((s) => ({ email: s.email.trim(), password: s.password }));
+        body.extra_staff = filledExtra.map(s => ({ email: s.email.trim(), password: s.password }));
       }
 
       const res = await fetch("/api/admin/halls/bootstrap", {
@@ -63,17 +99,9 @@ export default function NewHallForm() {
       });
 
       const data = await res.json().catch(() => ({}));
-      if (!res.ok) {
-        toast.error(
-          typeof data.error === "string"
-            ? data.error
-            : "Could not create hall."
-        );
-        setPending(false);
-        return;
-      }
+      if (!res.ok) { toast.error(typeof data.error === "string" ? data.error : "Could not create hall."); setPending(false); return; }
 
-      toast.success("Hall created.");
+      toast.success("Hall created successfully!");
       router.push("/admin/halls");
       router.refresh();
     } catch {
@@ -84,121 +112,123 @@ export default function NewHallForm() {
   }
 
   return (
-    <form onSubmit={onSubmit} className="space-y-6 max-w-lg">
-      <div className="space-y-2">
-        <Label htmlFor="name">Hall name</Label>
-        <Input
-          id="name"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          required
-          autoComplete="off"
-        />
-      </div>
-      <div className="space-y-2">
-        <Label htmlFor="address">Address (optional)</Label>
-        <Input
-          id="address"
-          value={address}
-          onChange={(e) => setAddress(e.target.value)}
-          autoComplete="off"
-        />
-      </div>
-      <div className="space-y-2">
-        <Label htmlFor="device_count">Number of devices</Label>
-        <Input
-          id="device_count"
-          type="number"
-          min={1}
-          max={500}
-          value={deviceCount}
-          onChange={(e) => setDeviceCount(e.target.value)}
-          required
-        />
-      </div>
-      <div className="space-y-2">
-        <Label htmlFor="prefix">Device name prefix</Label>
-        <Input
-          id="prefix"
-          value={prefix}
-          onChange={(e) => setPrefix(e.target.value)}
-          placeholder="Station"
-        />
-      </div>
+    <form onSubmit={onSubmit} className="space-y-5 max-w-2xl">
 
-      <div className="rounded-xl border border-border/60 p-4 space-y-4 bg-card/40">
-        <p className="text-sm font-medium text-foreground">Hall manager account</p>
-        <div className="space-y-2">
-          <Label htmlFor="staff_email">Email</Label>
-          <Input
-            id="staff_email"
-            type="email"
-            value={staffEmail}
-            onChange={(e) => setStaffEmail(e.target.value)}
-            autoComplete="off"
-            placeholder="manager@example.com"
-            required
-          />
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="staff_password">Password</Label>
-          <Input
-            id="staff_password"
-            type="password"
-            value={staffPassword}
-            onChange={(e) => setStaffPassword(e.target.value)}
-            autoComplete="new-password"
-            placeholder="Min 6 characters"
-            required
-          />
-        </div>
-      </div>
-
-      <div className="rounded-xl border border-border/60 p-4 space-y-4 bg-card/40">
-        <div className="flex items-center justify-between">
-          <p className="text-sm font-medium text-foreground">Staff accounts (optional)</p>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={() => setExtraStaff((prev) => [...prev, { email: "", password: "" }])}
-          >
-            + Add staff
-          </Button>
-        </div>
-        {extraStaff.map((s, i) => (
-          <div key={i} className="space-y-2 border-t border-border/40 pt-4">
-            <div className="flex items-center justify-between">
-              <span className="text-xs text-muted-foreground">Staff {i + 1}</span>
-              <button
-                type="button"
-                className="text-xs text-destructive hover:underline"
-                onClick={() => setExtraStaff((prev) => prev.filter((_, j) => j !== i))}
-              >
-                Remove
-              </button>
+      {/* Hall info */}
+      <Section icon={Building2} title="Hall Information" desc="Basic details about the hall">
+        <div className="grid sm:grid-cols-2 gap-4">
+          <Field label="Hall name" id="name">
+            <div className="relative">
+              <Building2 size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground/50 pointer-events-none" />
+              <Input id="name" value={name} onChange={e => setName(e.target.value)}
+                placeholder="e.g. Downtown Arena" required autoComplete="off" className="pl-9" />
             </div>
-            <Input
-              type="email"
-              placeholder="staff@example.com"
-              value={s.email}
-              onChange={(e) => setExtraStaff((prev) => prev.map((x, j) => j === i ? { ...x, email: e.target.value } : x))}
-              autoComplete="off"
-            />
-            <Input
-              type="password"
-              placeholder="Min 6 characters"
-              value={s.password}
-              onChange={(e) => setExtraStaff((prev) => prev.map((x, j) => j === i ? { ...x, password: e.target.value } : x))}
-              autoComplete="new-password"
-            />
-          </div>
-        ))}
-      </div>
+          </Field>
+          <Field label="Address (optional)" id="address">
+            <div className="relative">
+              <MapPin size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground/50 pointer-events-none" />
+              <Input id="address" value={address} onChange={e => setAddress(e.target.value)}
+                placeholder="123 Main St" autoComplete="off" className="pl-9" />
+            </div>
+          </Field>
+        </div>
+      </Section>
 
-      <div className="flex gap-2">
-        <Button type="submit" disabled={pending}>
-          {pending ? "Creating…" : "Create hall"}
+      {/* Devices */}
+      <Section icon={Monitor} title="Devices" desc="Configure the devices for this hall">
+        <div className="grid sm:grid-cols-2 gap-4">
+          <Field label="Number of devices" id="device_count">
+            <div className="relative">
+              <Monitor size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground/50 pointer-events-none" />
+              <Input id="device_count" type="number" min={1} max={500}
+                value={deviceCount} onChange={e => setDeviceCount(e.target.value)}
+                required className="pl-9" />
+            </div>
+          </Field>
+          <Field label="Device name prefix" id="prefix">
+            <div className="relative">
+              <Hash size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground/50 pointer-events-none" />
+              <Input id="prefix" value={prefix} onChange={e => setPrefix(e.target.value)}
+                placeholder="Station" className="pl-9" />
+            </div>
+          </Field>
+        </div>
+        <p className="text-xs text-muted-foreground">
+          Devices will be named: <span className="font-mono text-foreground">{prefix || "Station"} 1</span>, <span className="font-mono text-foreground">{prefix || "Station"} 2</span>…
+        </p>
+      </Section>
+
+      {/* Working Hours */}
+      <Section icon={Clock} title="Working Hours" desc="Set opening hours for each day" accent="oklch(0.65 0.20 140)">
+        <WorkingHoursEditor value={workingHours} onChange={setWorkingHours} />
+      </Section>
+
+      {/* Manager */}
+      <Section icon={UserCog} title="Hall Manager" desc="Primary manager account for this hall" accent="oklch(0.82 0.14 200)">
+        <div className="grid sm:grid-cols-2 gap-4">
+          <Field label="Email" id="staff_email">
+            <Input id="staff_email" type="email" value={staffEmail}
+              onChange={e => setStaffEmail(e.target.value)}
+              placeholder="manager@example.com" required autoComplete="off" />
+          </Field>
+          <Field label="Password" id="staff_password">
+            <Input id="staff_password" type="password" value={staffPassword}
+              onChange={e => setStaffPassword(e.target.value)}
+              placeholder="Min 6 characters" required autoComplete="new-password" />
+          </Field>
+        </div>
+      </Section>
+
+      {/* Extra staff */}
+      <Section icon={UserPlus} title="Staff Accounts" desc="Optional additional staff members">
+        {extraStaff.length === 0 ? (
+          <p className="text-xs text-muted-foreground">No extra staff added yet.</p>
+        ) : (
+          <div className="space-y-3">
+            {extraStaff.map((s, i) => (
+              <div key={i} className="grid sm:grid-cols-2 gap-3 p-4 rounded-xl border border-border/40 bg-muted/20 relative">
+                <p className="absolute -top-2.5 left-3 text-xs font-medium px-1.5 bg-card text-muted-foreground">
+                  Staff {i + 1}
+                </p>
+                <Input type="email" placeholder="staff@example.com" value={s.email}
+                  onChange={e => setExtraStaff(prev => prev.map((x, j) => j === i ? { ...x, email: e.target.value } : x))}
+                  autoComplete="off" />
+                <div className="flex gap-2">
+                  <Input type="password" placeholder="Min 6 characters" value={s.password}
+                    onChange={e => setExtraStaff(prev => prev.map((x, j) => j === i ? { ...x, password: e.target.value } : x))}
+                    autoComplete="new-password" className="flex-1" />
+                  <button type="button"
+                    onClick={() => setExtraStaff(prev => prev.filter((_, j) => j !== i))}
+                    className="w-9 h-9 rounded-lg flex items-center justify-center border border-destructive/30 text-destructive hover:bg-destructive/10 transition-colors shrink-0">
+                    <Trash2 size={14} />
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+        <button type="button"
+          onClick={() => setExtraStaff(prev => [...prev, { email: "", password: "" }])}
+          className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-foreground border border-dashed border-border/60 hover:border-border px-3 py-2 rounded-lg transition-colors w-full justify-center">
+          <Plus size={13} />
+          Add staff member
+        </button>
+      </Section>
+
+      {/* submit */}
+      <div className="flex gap-3 pt-2">
+        <Button type="submit" disabled={pending}
+          className="gap-2 font-semibold"
+          style={{ background: "oklch(0.55 0.26 280)", color: "white", boxShadow: "0 4px 14px oklch(0.55 0.26 280 / 0.3)" }}>
+          {pending ? (
+            <span className="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />
+          ) : (
+            <Building2 size={15} />
+          )}
+          {pending ? "Creating…" : "Create Hall"}
+        </Button>
+        <Button type="button" variant="outline" onClick={() => router.back()}>
+          Cancel
         </Button>
       </div>
     </form>
