@@ -18,7 +18,7 @@ export const metadata: Metadata = { title: "Hall Details" };
 async function getHallById(hallId: string): Promise<Hall | null> {
   const supabase = await getServerClient();
   const { data } = await supabase
-    .from("halls").select("id, name, address, created_at")
+    .from("halls").select("id, name, address, working_hours, created_at")
     .eq("id", hallId).single();
   return data ?? null;
 }
