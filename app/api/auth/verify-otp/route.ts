@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { otpVerifySchema } from "@/schemas/otp";
 import { verifyOtp } from "@/lib/otp-hash";
-import { env } from "@/lib/env";
+import { getAppEnv } from "@/lib/env";
 import { getAdminClient } from "@/lib/supabase/admin";
 import {
   getLatestOtpRequest,
@@ -23,6 +23,7 @@ export async function POST(request: Request) {
   const { email, otp } = parsed.data;
 
   try {
+    const appEnv = getAppEnv();
     const record = await getLatestOtpRequest(email);
 
     if (!record) {
@@ -32,7 +33,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const valid = await verifyOtp(otp, record.otp_hash, env.OTP_SECRET);
+    const valid = await verifyOtp(otp, record.otp_hash, appEnv.otpSecret);
 
     if (!valid) {
       await incrementOtpAttempts(record.id);

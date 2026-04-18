@@ -1,7 +1,8 @@
 import { createClient } from "@supabase/supabase-js";
-import { supabaseEnv } from "@/lib/env";
+import { getSupabaseEnv } from "@/lib/env";
 
 export function getAdminClient() {
+  const supabaseEnv = getSupabaseEnv();
   return createClient(supabaseEnv.url, supabaseEnv.serviceRoleKey, {
     auth: {
       autoRefreshToken: false,

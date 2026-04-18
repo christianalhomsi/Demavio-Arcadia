@@ -1,10 +1,11 @@
-import { agentEnv } from "@/lib/env";
+import { getAgentEnv } from "@/lib/env";
 import type { AgentCommandPayload, AgentCommandResult } from "@/types/agent";
 import type { ServiceResult } from "@/types/reservation";
 
 export async function sendAgentCommand(
   payload: AgentCommandPayload
 ): Promise<ServiceResult<AgentCommandResult>> {
+  const agentEnv = getAgentEnv();
   let response: Response;
 
   try {

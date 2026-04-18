@@ -1,9 +1,9 @@
 import { Resend } from "resend";
-import { emailEnv } from "@/lib/env";
-
-const resend = new Resend(emailEnv.apiKey);
+import { getEmailEnv } from "@/lib/env";
 
 export async function sendOtpEmail(email: string, otp: string): Promise<void> {
+  const emailEnv = getEmailEnv();
+  const resend = new Resend(emailEnv.apiKey);
   const { error } = await resend.emails.send({
     from: emailEnv.from,
     to: email,

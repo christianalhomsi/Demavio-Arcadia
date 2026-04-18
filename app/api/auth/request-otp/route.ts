@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { otpRequestSchema } from "@/schemas/otp";
 import { generateOtp } from "@/lib/otp";
 import { hashOtp } from "@/lib/otp-hash";
-import { env } from "@/lib/env";
+import { getAppEnv } from "@/lib/env";
 import { storeOtpRequest } from "@/services/otp";
 import { sendOtpEmail } from "@/lib/email";
 
@@ -20,8 +20,9 @@ export async function POST(request: Request) {
   const { email } = parsed.data;
 
   try {
+    const appEnv = getAppEnv();
     const otp = generateOtp();
-    const hash = await hashOtp(otp, env.OTP_SECRET);
+    const hash = await hashOtp(otp, appEnv.otpSecret);
 
     await storeOtpRequest(email, hash);
     await sendOtpEmail(email, otp);

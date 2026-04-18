@@ -1,4 +1,4 @@
-import { emailEnv } from "@/lib/env";
+import { getEmailEnv } from "@/lib/env";
 
 export type ReservationReminderPayload = {
   user_id: string;
@@ -10,6 +10,7 @@ export type ReservationReminderPayload = {
 export async function sendReservationReminder(
   payload: ReservationReminderPayload
 ): Promise<void> {
+  const emailEnv = getEmailEnv();
   // Replace with your notification provider (email, SMS, push, etc.)
   // e.g. Resend, Twilio, Firebase Cloud Messaging
   console.log(
