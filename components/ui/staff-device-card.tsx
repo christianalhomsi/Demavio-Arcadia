@@ -10,7 +10,7 @@ import { Separator } from "@/components/ui/separator";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogBody } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { Monitor, Timer, Clock, WifiOff, LogIn, StopCircle, CheckCircle2, Calendar } from "lucide-react";
-import CalendarBooking from "@/app/(dashboard)/reservations/new/calendar-booking";
+import CalendarBooking from "@/components/ui/calendar-booking";
 
 export type StaffDeviceCardProps = {
   id: string;

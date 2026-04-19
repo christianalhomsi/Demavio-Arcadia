@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogBody } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { Monitor, CheckCircle2, Timer, Clock, WifiOff, CalendarPlus } from "lucide-react";
-import CalendarBooking from "@/app/(dashboard)/reservations/new/calendar-booking";
+import CalendarBooking from "@/components/ui/calendar-booking";
 
 const STATUS: Record<DeviceStatus, { cls: string; label: string; icon: React.ElementType }> = {
   available: { cls: "badge-available", label: "Available", icon: CheckCircle2 },
