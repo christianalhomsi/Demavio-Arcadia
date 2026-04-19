@@ -2,11 +2,14 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { getHalls } from "@/services/halls";
 import { getServerClient } from "@/lib/supabase/server";
-import { Building2, Plus, MapPin, LayoutDashboard, Monitor, Pencil } from "lucide-react";
+import { Building2, Plus, MapPin, Pencil } from "lucide-react";
+import { getTranslations } from "next-intl/server";
 
 export const metadata: Metadata = { title: "Admin — Halls" };
 
 export default async function AdminHallsPage() {
+  const t = await getTranslations('admin');
+  const tCommon = await getTranslations('common');
   const supabase = await getServerClient();
   const halls = await getHalls();
 
@@ -29,14 +32,14 @@ export default async function AdminHallsPage() {
       {/* header */}
       <div className="flex items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Halls</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">All gaming halls in the system.</p>
+          <h1 className="text-2xl font-bold tracking-tight">{t('halls')}</h1>
+          <p className="text-sm text-muted-foreground mt-0.5">{t('allHallsDesc')}</p>
         </div>
         <Link href="/admin/halls/new"
           className="inline-flex items-center gap-1.5 h-9 px-4 rounded-xl text-sm font-semibold text-white transition-all hover:opacity-90 shrink-0"
           style={{ background: "oklch(0.55 0.26 280)", boxShadow: "0 4px 14px oklch(0.55 0.26 280 / 0.3)" }}>
           <Plus size={15} />
-          New Hall
+          {t('newHall')}
         </Link>
       </div>
 
@@ -47,13 +50,13 @@ export default async function AdminHallsPage() {
             style={{ background: "oklch(0.55 0.26 280 / 0.08)", border: "1px solid oklch(0.55 0.26 280 / 0.15)" }}>
             <Building2 size={24} className="text-muted-foreground" />
           </div>
-          <p className="font-semibold text-foreground mb-1">No halls yet</p>
-          <p className="text-sm text-muted-foreground mb-4">Create your first hall to get started.</p>
+          <p className="font-semibold text-foreground mb-1">{t('noHalls')}</p>
+          <p className="text-sm text-muted-foreground mb-4">{t('createFirstHall')}</p>
           <Link href="/admin/halls/new"
             className="inline-flex items-center gap-1.5 h-8 px-3 rounded-lg text-xs font-semibold text-white"
             style={{ background: "oklch(0.55 0.26 280)" }}>
             <Plus size={13} />
-            Create hall
+            {t('createHall')}
           </Link>
         </div>
       ) : (
@@ -83,7 +86,6 @@ export default async function AdminHallsPage() {
 
                 {/* device count */}
                 <div className="hidden sm:flex items-center gap-1.5 text-xs text-muted-foreground shrink-0">
-                  <Monitor size={12} />
                   <span>
                     <span className="text-green-400 font-medium">{devices.available}</span>
                     <span className="text-muted-foreground/60">/{devices.total}</span>
@@ -95,12 +97,7 @@ export default async function AdminHallsPage() {
                   <Link href={`/admin/halls/${h.id}`}
                     className="inline-flex items-center gap-1.5 h-8 px-3 rounded-lg text-xs font-medium border border-border/60 text-muted-foreground hover:text-foreground hover:bg-muted transition-colors">
                     <Pencil size={12} />
-                    Edit
-                  </Link>
-                  <Link href={`/dashboard/${h.id}`}
-                    className="inline-flex items-center gap-1.5 h-8 px-3 rounded-lg text-xs font-medium border border-border/60 text-muted-foreground hover:text-foreground hover:bg-muted transition-colors">
-                    <LayoutDashboard size={12} />
-                    Dashboard
+                    {tCommon('edit')}
                   </Link>
                 </div>
               </div>

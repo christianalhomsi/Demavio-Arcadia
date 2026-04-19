@@ -39,6 +39,16 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: saErr.message }, { status: 500 });
   }
 
+  // Update user role in profiles table
+  const { error: profileRoleErr } = await admin
+    .from("profiles")
+    .update({ role })
+    .eq("id", userId);
+
+  if (profileRoleErr) {
+    console.error("[admin/staff-assignments] update profile role", profileRoleErr);
+  }
+
   const { error: legacyErr } = await admin.from("staff_hall_access").insert({
     user_id: userId,
     hall_id,

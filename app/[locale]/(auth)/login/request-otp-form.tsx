@@ -36,9 +36,9 @@ function GoogleButton() {
 
   return (
     <button type="button" onClick={handleGoogle} disabled={loading}
-      className="w-full flex items-center justify-center gap-2.5 h-10 rounded-lg bg-white/5 hover:bg-white/10 transition-colors text-sm font-medium disabled:opacity-60 cursor-pointer border border-white/10">
+      className="w-full flex items-center justify-center gap-2.5 h-10 rounded-lg bg-slate-900/50 hover:bg-slate-800/50 transition-colors text-sm font-medium disabled:opacity-60 cursor-pointer border border-slate-800">
       {loading ? (
-        <span className="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />
+        <span className="w-4 h-4 rounded-full border-2 border-slate-500 border-t-white animate-spin" />
       ) : (
         <svg width="16" height="16" viewBox="0 0 24 24">
           <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
@@ -56,9 +56,9 @@ function Divider() {
   const t = useTranslations('auth');
   return (
     <div className="flex items-center gap-3 my-5">
-      <div className="flex-1 h-px bg-white/10" />
-      <span className="text-xs text-white/40">{t('or')}</span>
-      <div className="flex-1 h-px bg-white/10" />
+      <div className="flex-1 h-px bg-slate-800" />
+      <span className="text-xs text-slate-500">{t('or')}</span>
+      <div className="flex-1 h-px bg-slate-800" />
     </div>
   );
 }
@@ -68,11 +68,11 @@ export default function AuthForm() {
   const t = useTranslations('auth');
 
   return (
-    <div className="min-h-screen w-full flex items-center justify-center bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 p-4">
+    <div className="min-h-screen w-full flex items-center justify-center bg-gradient-to-br from-slate-950 via-violet-950/30 to-slate-950 p-4">
       <div className="w-full max-w-md">
         {/* Logo/Title */}
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-white mb-1">Arcadia</h1>
+          <h1 className="text-3xl font-bold bg-gradient-to-r from-violet-400 to-cyan-400 bg-clip-text text-transparent mb-1">Arcadia</h1>
           <p className="text-slate-400 text-xs">Gaming Hub Management</p>
         </div>
 
@@ -82,9 +82,9 @@ export default function AuthForm() {
             <button key={tabKey} onClick={() => setTab(tabKey)} type="button"
               className="flex-1 py-2.5 rounded-lg text-sm font-medium transition-all duration-200"
               style={{
-                background: tab === tabKey ? "rgba(255,255,255,0.08)" : "transparent",
-                color: tab === tabKey ? "white" : "rgba(255,255,255,0.4)",
-                border: tab === tabKey ? "1px solid rgba(255,255,255,0.15)" : "1px solid transparent",
+                background: tab === tabKey ? "oklch(0.55 0.26 280 / 0.15)" : "transparent",
+                color: tab === tabKey ? "oklch(0.65 0.22 280)" : "rgba(255,255,255,0.4)",
+                border: tab === tabKey ? "1px solid oklch(0.55 0.26 280 / 0.3)" : "1px solid transparent",
               }}>
               {tabKey === "login" ? t("signIn") : t("signUp")}
             </button>
@@ -133,9 +133,9 @@ function LoginForm() {
       <Field label={tCommon('password')} id="password" type="password" placeholder="••••••••"
         icon={Lock} error={errors.password?.message} reg={register("password")} />
 
-      <Button type="submit" className="w-full gap-2 cursor-pointer font-semibold h-10 mt-5 bg-white text-black hover:bg-white/90" disabled={isSubmitting}>
+      <Button type="submit" className="w-full gap-2 cursor-pointer font-semibold h-10 mt-5 bg-primary text-primary-foreground hover:bg-primary/90" disabled={isSubmitting}>
         {isSubmitting ? (
-          <span className="w-4 h-4 rounded-full border-2 border-black/30 border-t-black animate-spin" />
+          <span className="w-4 h-4 rounded-full border-2 border-primary-foreground/30 border-t-primary-foreground animate-spin" />
         ) : (
           <LogIn size={16} />
         )}
@@ -180,9 +180,9 @@ function SignUpForm() {
       <Field label={t('confirmPassword')} id="signup-confirm" type="password" placeholder="••••••••"
         icon={Lock} error={errors.confirmPassword?.message} reg={register("confirmPassword")} />
 
-      <Button type="submit" className="w-full gap-2 cursor-pointer font-semibold h-10 mt-5 bg-white text-black hover:bg-white/90" disabled={isSubmitting}>
+      <Button type="submit" className="w-full gap-2 cursor-pointer font-semibold h-10 mt-5 bg-primary text-primary-foreground hover:bg-primary/90" disabled={isSubmitting}>
         {isSubmitting ? (
-          <span className="w-4 h-4 rounded-full border-2 border-black/30 border-t-black animate-spin" />
+          <span className="w-4 h-4 rounded-full border-2 border-primary-foreground/30 border-t-primary-foreground animate-spin" />
         ) : (
           <Send size={16} />
         )}
@@ -201,13 +201,13 @@ function Field({ label, id, type, placeholder, icon: Icon, error, reg }: {
 }) {
   return (
     <div className="space-y-1.5">
-      <Label htmlFor={id} className="text-xs font-medium text-white/80">
+      <Label htmlFor={id} className="text-xs font-medium text-slate-300">
         {label}
       </Label>
       <div className="relative">
-        <Icon size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-white/40 pointer-events-none" />
+        <Icon size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none" />
         <Input id={id} type={type} placeholder={placeholder} autoComplete="new-password"
-          className={`pl-12 h-10 bg-white/5 border-white/10 text-white placeholder:text-white/30 focus-visible:ring-white/20 focus-visible:border-white/30 ${error ? "border-red-500/50 focus-visible:ring-red-500/30" : ""}`}
+          className={`pl-12 h-10 bg-slate-900/50 border-slate-800 text-white placeholder:text-slate-500 focus-visible:ring-primary/30 focus-visible:border-primary/50 ${error ? "border-red-500/50 focus-visible:ring-red-500/30" : ""}`}
           {...reg} />
       </div>
       {error && (

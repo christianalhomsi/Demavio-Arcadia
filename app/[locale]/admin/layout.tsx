@@ -19,7 +19,7 @@ export default async function AdminLayout({ children, params }: { children: Reac
 
       {/* ── Top bar ── */}
       <header className="sticky top-0 z-50 border-b border-border/50 bg-background/80 backdrop-blur-md">
-        <div className="max-w-6xl mx-auto px-5 h-14 flex items-center gap-3">
+        <div className="px-6 h-14 flex items-center gap-3">
           {/* logo */}
           <Link href="/admin" className="flex items-center gap-2 group shrink-0">
             <div className="w-8 h-8 rounded-xl flex items-center justify-center transition-all group-hover:scale-105"
@@ -54,7 +54,7 @@ export default async function AdminLayout({ children, params }: { children: Reac
       </header>
 
       {/* ── Body ── */}
-      <div className="flex flex-1 max-w-6xl mx-auto w-full px-5 py-8 gap-8">
+      <div className="flex flex-1 w-full px-6 py-8 gap-8">
         {/* sidebar */}
         <aside className="w-52 shrink-0 hidden md:block">
           <AdminNav />

@@ -2,12 +2,14 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Check, X } from "lucide-react";
 
 export default function ReservationActions({ reservationId }: { reservationId: string }) {
   const router = useRouter();
+  const t = useTranslations("dashboard");
   const [pending, setPending] = useState<"confirmed" | "cancelled" | null>(null);
 
   async function updateStatus(status: "confirmed" | "cancelled") {
@@ -19,9 +21,9 @@ export default function ReservationActions({ reservationId }: { reservationId: s
     });
     const data = await res.json().catch(() => ({}));
     if (!res.ok) {
-      toast.error(typeof data.error === "string" ? data.error : "Failed to update");
+      toast.error(typeof data.error === "string" ? data.error : t("failedToUpdate"));
     } else {
-      toast.success(status === "confirmed" ? "Reservation confirmed" : "Reservation cancelled");
+      toast.success(status === "confirmed" ? t("reservationConfirmed") : t("reservationCancelled"));
       router.refresh();
     }
     setPending(null);

@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 import type { Metadata } from "next";
+import { getTranslations } from "next-intl/server";
 import { getServerClient } from "@/lib/supabase/server";
 import type { DeviceStatus } from "@/services/devices";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -20,6 +21,7 @@ const RES_STATUS: Record<string, string> = {
 
 async function OverviewContent({ hallId }: { hallId: string }) {
   const supabase = await getServerClient();
+  const t = await getTranslations("dashboard");
 
   // both queries in parallel
   const [devicesRes, reservationsRes] = await Promise.all([
@@ -35,11 +37,11 @@ async function OverviewContent({ hallId }: { hallId: string }) {
   const count = (s: DeviceStatus) => devices.filter(d => d.status === s).length;
 
   const stats = [
-    { label: "Total",     value: devices.length,    color: "text-foreground",       icon: Monitor },
-    { label: "Available", value: count("available"), color: "text-green-400",        icon: CheckCircle2 },
-    { label: "Active",    value: count("active"),    color: "text-blue-400",         icon: Play },
-    { label: "Reserved",  value: count("idle"),      color: "text-amber-400",        icon: Clock },
-    { label: "Offline",   value: count("offline"),   color: "text-muted-foreground", icon: WifiOff },
+    { label: t("total"),     value: devices.length,    color: "text-foreground",       icon: Monitor },
+    { label: t("available"), value: count("available"), color: "text-green-400",        icon: CheckCircle2 },
+    { label: t("active"),    value: count("active"),    color: "text-blue-400",         icon: Play },
+    { label: t("reserved"),  value: count("idle"),      color: "text-amber-400",        icon: Clock },
+    { label: t("offline"),   value: count("offline"),   color: "text-muted-foreground", icon: WifiOff },
   ];
 
   const rows = (reservationsRes.data ?? []) as unknown as {
@@ -67,20 +69,20 @@ async function OverviewContent({ hallId }: { hallId: string }) {
       {/* recent reservations */}
       <Card className="border-border/60">
         <CardHeader className="pb-3">
-          <CardTitle className="text-sm font-semibold">Recent Reservations</CardTitle>
+          <CardTitle className="text-sm font-semibold">{t("recentReservations")}</CardTitle>
         </CardHeader>
         <Separator className="opacity-40" />
         {rows.length === 0 ? (
           <CardContent className="py-10 text-center">
-            <p className="text-sm text-muted-foreground">No reservations yet.</p>
+            <p className="text-sm text-muted-foreground">{t("noReservations")}</p>
           </CardContent>
         ) : (
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto" dir="auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-border/40">
-                  {["Device", "Start", "End", "Status"].map((h) => (
-                    <th key={h} className="px-4 py-2.5 text-left section-heading">{h}</th>
+                  {[t("device"), t("start"), t("end"), t("status")].map((h) => (
+                    <th key={h} className="px-4 py-2.5 text-start section-heading">{h}</th>
                   ))}
                 </tr>
               </thead>
@@ -92,7 +94,7 @@ async function OverviewContent({ hallId }: { hallId: string }) {
                     <td className="px-4 py-3 text-muted-foreground whitespace-nowrap text-xs">{fmt(r.end_time)}</td>
                     <td className="px-4 py-3">
                       <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${RES_STATUS[r.status] ?? "badge-completed"}`}>
-                        {r.status.charAt(0).toUpperCase() + r.status.slice(1)}
+                        {t(r.status as any)}
                       </span>
                     </td>
                   </tr>
@@ -128,13 +130,14 @@ function OverviewSkeleton() {
 
 export default async function OverviewPage({ params }: { params: Promise<{ hallId: string }> }) {
   const { hallId } = await params;
+  const t = await getTranslations("dashboard");
   return (
     <div className="page-shell">
       <div className="flex items-center gap-2.5">
         <LayoutDashboard size={18} className="text-muted-foreground" />
         <div>
-          <h1 className="text-xl font-bold leading-none">Overview</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">Hall status at a glance</p>
+          <h1 className="text-xl font-bold leading-none">{t("overview")}</h1>
+          <p className="text-sm text-muted-foreground mt-0.5">{t("hallStatusGlance")}</p>
         </div>
       </div>
       <Suspense fallback={<OverviewSkeleton />}>

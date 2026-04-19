@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 import type { Metadata } from "next";
+import { getTranslations } from "next-intl/server";
 import { getServerClient } from "@/lib/supabase/server";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card } from "@/components/ui/card";
@@ -26,6 +27,7 @@ function fmt(iso: string) {
 
 async function ReservationsList({ hallId }: { hallId: string }) {
   const supabase = await getServerClient();
+  const t = await getTranslations("dashboard");
 
   // single query using join instead of 3 sequential queries
   const { data } = await supabase
@@ -37,7 +39,7 @@ async function ReservationsList({ hallId }: { hallId: string }) {
   const rows = (data ?? []) as unknown as ReservationRow[];
 
   if (rows.length === 0) {
-    return <p className="text-sm text-muted-foreground py-10 text-center">No reservations yet.</p>;
+    return <p className="text-sm text-muted-foreground py-10 text-center">{t("noReservations")}</p>;
   }
 
   const userIds = [...new Set(rows.map(r => r.user_id).filter(Boolean))];
@@ -49,12 +51,12 @@ async function ReservationsList({ hallId }: { hallId: string }) {
 
   return (
     <Card className="border-border/60 overflow-hidden">
-      <div className="overflow-x-auto">
+      <div className="overflow-x-auto" dir="auto">
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-border/40">
-              {["Device", "Player", "Start", "End", "Status", ""].map((h) => (
-                <th key={h} className="px-4 py-2.5 text-left section-heading">{h}</th>
+              {[t("device"), t("player"), t("start"), t("end"), t("status"), ""].map((h, idx) => (
+                <th key={h || idx} className="px-4 py-2.5 text-start section-heading">{h}</th>
               ))}
             </tr>
           </thead>
@@ -67,7 +69,7 @@ async function ReservationsList({ hallId }: { hallId: string }) {
                 <td className="px-4 py-3 text-muted-foreground text-xs whitespace-nowrap">{fmt(r.end_time)}</td>
                 <td className="px-4 py-3">
                   <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${STATUS_STYLE[r.status] ?? "badge-completed"}`}>
-                    {r.status.charAt(0).toUpperCase() + r.status.slice(1)}
+                    {t(r.status as any)}
                   </span>
                 </td>
                 <td className="px-4 py-3">
@@ -94,13 +96,14 @@ function ReservationsSkeleton() {
 
 export default async function ReservationsPage({ params }: { params: Promise<{ hallId: string }> }) {
   const { hallId } = await params;
+  const t = await getTranslations("dashboard");
   return (
     <div className="page-shell">
       <div className="flex items-center gap-2.5">
         <CalendarDays size={18} className="text-muted-foreground" />
         <div>
-          <h1 className="text-xl font-bold leading-none">Reservations</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">All bookings for this hall</p>
+          <h1 className="text-xl font-bold leading-none">{t("reservations")}</h1>
+          <p className="text-sm text-muted-foreground mt-0.5">{t("allBookings")}</p>
         </div>
       </div>
       <Separator className="opacity-40" />

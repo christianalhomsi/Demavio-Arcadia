@@ -192,32 +192,38 @@ const filterLabel: React.CSSProperties = {
 
 const selectStyle: React.CSSProperties = {
   padding: "0.4rem 0.625rem",
-  borderRadius: "0.375rem",
-  border: "1px solid #d1d5db",
+  borderRadius: "0.5rem",
+  border: "1px solid oklch(0.3 0.01 265 / 0.2)",
   fontSize: "0.8125rem",
-  background: "#fff",
+  background: "oklch(0.13 0.010 265)",
+  color: "oklch(0.85 0.005 265)",
   outline: "none",
   minWidth: "130px",
+  cursor: "pointer",
+  transition: "all 0.2s",
 };
 
 const inputStyle: React.CSSProperties = {
   padding: "0.4rem 0.625rem",
-  borderRadius: "0.375rem",
-  border: "1px solid #d1d5db",
+  borderRadius: "0.5rem",
+  border: "1px solid oklch(0.3 0.01 265 / 0.2)",
   fontSize: "0.8125rem",
-  background: "#fff",
+  background: "oklch(0.13 0.010 265)",
+  color: "oklch(0.85 0.005 265)",
   outline: "none",
+  cursor: "pointer",
 };
 
 const clearBtn: React.CSSProperties = {
   padding: "0.4rem 0.75rem",
-  borderRadius: "0.375rem",
-  border: "1px solid #d1d5db",
-  background: "#fff",
-  color: "#374151",
+  borderRadius: "0.5rem",
+  border: "1px solid oklch(0.3 0.01 265 / 0.2)",
+  background: "oklch(0.13 0.010 265)",
+  color: "oklch(0.85 0.005 265)",
   fontSize: "0.8125rem",
   cursor: "pointer",
   alignSelf: "flex-end",
+  transition: "all 0.2s",
 };
 
 const empty: React.CSSProperties = {

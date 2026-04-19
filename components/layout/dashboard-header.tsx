@@ -5,7 +5,7 @@ import { useTranslations } from "next-intl";
 import { Separator } from "@/components/ui/separator";
 import LogoutButton from "@/components/ui/logout-button";
 import { LanguageToggle } from "@/components/language-toggle";
-import { Gamepad2, ChevronRight, Wifi } from "lucide-react";
+import { Gamepad2, ChevronRight } from "lucide-react";
 
 interface BreadcrumbItem {
   label: string;
@@ -79,12 +79,6 @@ export default function DashboardHeader({ hallName, hallId, breadcrumbs }: Dashb
       </nav>
 
       <div className="flex-1" />
-
-      {/* Live indicator */}
-      <div className="hidden sm:flex items-center gap-1.5 text-xs text-muted-foreground">
-        <Wifi size={12} className="text-green-500" />
-        <span>Live</span>
-      </div>
 
       <LanguageToggle />
       <LogoutButton />

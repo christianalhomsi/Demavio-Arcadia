@@ -2,16 +2,19 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import NewHallForm from "./new-hall-form";
 import { ChevronLeft, Building2 } from "lucide-react";
+import { getTranslations } from "next-intl/server";
 
 export const metadata: Metadata = { title: "Admin — New Hall" };
 
-export default function AdminNewHallPage() {
+export default async function AdminNewHallPage() {
+  const t = await getTranslations('admin');
+  
   return (
     <div className="space-y-6">
       <Link href="/admin/halls"
         className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors px-2 py-1 rounded-lg hover:bg-muted -ml-2 w-fit">
         <ChevronLeft size={14} />
-        Back to halls
+        {t('backToHalls')}
       </Link>
 
       <div className="flex items-center gap-3">
@@ -20,9 +23,9 @@ export default function AdminNewHallPage() {
           <Building2 size={20} style={{ color: "oklch(0.65 0.22 280)" }} />
         </div>
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">New Hall</h1>
+          <h1 className="text-2xl font-bold tracking-tight">{t('newHall')}</h1>
           <p className="text-sm text-muted-foreground mt-0.5">
-            Create a hall, provision devices, and assign a staff member.
+            {t('hallInfoDesc')}
           </p>
         </div>
       </div>

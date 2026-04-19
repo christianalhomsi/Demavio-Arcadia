@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Building2, MapPin, Monitor, Hash, UserCog, UserPlus, Trash2, Plus, Clock } from "lucide-react";
 import WorkingHoursEditor from "@/components/ui/working-hours-editor";
 import type { WorkingHours } from "@/types/hall";
+import { useTranslations } from "next-intl";
 
 function Section({ icon: Icon, title, desc, children, accent = "oklch(0.55 0.26 280)" }: {
   icon: React.ElementType; title: string; desc?: string;
@@ -42,6 +43,8 @@ function Field({ label, id, children }: { label: string; id: string; children: R
 }
 
 export default function NewHallForm() {
+  const t = useTranslations('admin');
+  const tCommon = useTranslations('common');
   const router = useRouter();
   const [pending, setPending]           = useState(false);
   const [name, setName]                 = useState("");
@@ -115,16 +118,16 @@ export default function NewHallForm() {
     <form onSubmit={onSubmit} className="space-y-5 max-w-2xl">
 
       {/* Hall info */}
-      <Section icon={Building2} title="Hall Information" desc="Basic details about the hall">
+      <Section icon={Building2} title={t('hallInformation')} desc={t('hallInfoDesc')}>
         <div className="grid sm:grid-cols-2 gap-4">
-          <Field label="Hall name" id="name">
+          <Field label={t('hallName')} id="name">
             <div className="relative">
               <Building2 size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground/50 pointer-events-none" />
               <Input id="name" value={name} onChange={e => setName(e.target.value)}
                 placeholder="e.g. Downtown Arena" required autoComplete="off" className="pl-9" />
             </div>
           </Field>
-          <Field label="Address (optional)" id="address">
+          <Field label={t('addressOptional')} id="address">
             <div className="relative">
               <MapPin size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground/50 pointer-events-none" />
               <Input id="address" value={address} onChange={e => setAddress(e.target.value)}
@@ -135,9 +138,9 @@ export default function NewHallForm() {
       </Section>
 
       {/* Devices */}
-      <Section icon={Monitor} title="Devices" desc="Configure the devices for this hall">
+      <Section icon={Monitor} title={t('devices')} desc={t('devicesDesc')}>
         <div className="grid sm:grid-cols-2 gap-4">
-          <Field label="Number of devices" id="device_count">
+          <Field label={t('numberOfDevices')} id="device_count">
             <div className="relative">
               <Monitor size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground/50 pointer-events-none" />
               <Input id="device_count" type="number" min={1} max={500}
@@ -145,7 +148,7 @@ export default function NewHallForm() {
                 required className="pl-9" />
             </div>
           </Field>
-          <Field label="Device name prefix" id="prefix">
+          <Field label={t('deviceNamePrefix')} id="prefix">
             <div className="relative">
               <Hash size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground/50 pointer-events-none" />
               <Input id="prefix" value={prefix} onChange={e => setPrefix(e.target.value)}
@@ -154,47 +157,47 @@ export default function NewHallForm() {
           </Field>
         </div>
         <p className="text-xs text-muted-foreground">
-          Devices will be named: <span className="font-mono text-foreground">{prefix || "Station"} 1</span>, <span className="font-mono text-foreground">{prefix || "Station"} 2</span>…
+          {t('devicesWillBeNamed')} <span className="font-mono text-foreground">{prefix || "Station"} 1</span>, <span className="font-mono text-foreground">{prefix || "Station"} 2</span>…
         </p>
       </Section>
 
       {/* Working Hours */}
-      <Section icon={Clock} title="Working Hours" desc="Set opening hours for each day" accent="oklch(0.65 0.20 140)">
+      <Section icon={Clock} title={t('workingHours')} desc={t('workingHoursDesc')} accent="oklch(0.65 0.20 140)">
         <WorkingHoursEditor value={workingHours} onChange={setWorkingHours} />
       </Section>
 
       {/* Manager */}
-      <Section icon={UserCog} title="Hall Manager" desc="Primary manager account for this hall" accent="oklch(0.82 0.14 200)">
+      <Section icon={UserCog} title={t('hallManager')} desc={t('hallManagerDesc')} accent="oklch(0.82 0.14 200)">
         <div className="grid sm:grid-cols-2 gap-4">
-          <Field label="Email" id="staff_email">
+          <Field label={t('email')} id="staff_email">
             <Input id="staff_email" type="email" value={staffEmail}
               onChange={e => setStaffEmail(e.target.value)}
               placeholder="manager@example.com" required autoComplete="off" />
           </Field>
-          <Field label="Password" id="staff_password">
+          <Field label={t('password')} id="staff_password">
             <Input id="staff_password" type="password" value={staffPassword}
               onChange={e => setStaffPassword(e.target.value)}
-              placeholder="Min 6 characters" required autoComplete="new-password" />
+              placeholder={t('minCharacters')} required autoComplete="new-password" />
           </Field>
         </div>
       </Section>
 
       {/* Extra staff */}
-      <Section icon={UserPlus} title="Staff Accounts" desc="Optional additional staff members">
+      <Section icon={UserPlus} title={t('staffAccounts')} desc={t('staffAccountsDesc')}>
         {extraStaff.length === 0 ? (
-          <p className="text-xs text-muted-foreground">No extra staff added yet.</p>
+          <p className="text-xs text-muted-foreground">{t('noExtraStaff')}</p>
         ) : (
           <div className="space-y-3">
             {extraStaff.map((s, i) => (
               <div key={i} className="grid sm:grid-cols-2 gap-3 p-4 rounded-xl border border-border/40 bg-muted/20 relative">
                 <p className="absolute -top-2.5 left-3 text-xs font-medium px-1.5 bg-card text-muted-foreground">
-                  Staff {i + 1}
+                  {t('staff')} {i + 1}
                 </p>
                 <Input type="email" placeholder="staff@example.com" value={s.email}
                   onChange={e => setExtraStaff(prev => prev.map((x, j) => j === i ? { ...x, email: e.target.value } : x))}
                   autoComplete="off" />
                 <div className="flex gap-2">
-                  <Input type="password" placeholder="Min 6 characters" value={s.password}
+                  <Input type="password" placeholder={t('minCharacters')} value={s.password}
                     onChange={e => setExtraStaff(prev => prev.map((x, j) => j === i ? { ...x, password: e.target.value } : x))}
                     autoComplete="new-password" className="flex-1" />
                   <button type="button"
@@ -211,7 +214,7 @@ export default function NewHallForm() {
           onClick={() => setExtraStaff(prev => [...prev, { email: "", password: "" }])}
           className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-foreground border border-dashed border-border/60 hover:border-border px-3 py-2 rounded-lg transition-colors w-full justify-center">
           <Plus size={13} />
-          Add staff member
+          {t('addStaffMember')}
         </button>
       </Section>
 
@@ -225,10 +228,10 @@ export default function NewHallForm() {
           ) : (
             <Building2 size={15} />
           )}
-          {pending ? "Creating…" : "Create Hall"}
+          {pending ? t('creating') : t('createHall')}
         </Button>
         <Button type="button" variant="outline" onClick={() => router.back()}>
-          Cancel
+          {tCommon('cancel')}
         </Button>
       </div>
     </form>

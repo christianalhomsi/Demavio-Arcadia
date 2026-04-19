@@ -1,11 +1,13 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import type { Hall } from "@/types/hall";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Mail, Send, UserCheck, Building2, ShieldCheck, User, RefreshCw, UserPlus, Search } from "lucide-react";
 
 type ListedUser = { id: string; email: string | undefined; created_at: string; role: string };
@@ -33,6 +35,7 @@ function Section({ icon: Icon, title, desc, children, accent = "oklch(0.55 0.26 
 }
 
 export default function AdminUsersClient({ halls }: { halls: Hall[] }) {
+  const t = useTranslations("admin");
   const [users, setUsers]               = useState<ListedUser[]>([]);
   const [loading, setLoading]           = useState(true);
   const [search, setSearch]             = useState("");
@@ -49,10 +52,10 @@ export default function AdminUsersClient({ halls }: { halls: Hall[] }) {
     try {
       const res = await fetch("/api/admin/users?page=1&perPage=50");
       const data = await res.json();
-      if (!res.ok) { toast.error(data.error || "Failed to load users"); setUsers([]); return; }
+      if (!res.ok) { toast.error(data.error || t("failedToLoadUsers")); setUsers([]); return; }
       setUsers(data.users ?? []);
     } catch {
-      toast.error("Failed to load users"); setUsers([]);
+      toast.error(t("failedToLoadUsers")); setUsers([]);
     } finally {
       setLoading(false);
     }
@@ -70,13 +73,13 @@ export default function AdminUsersClient({ halls }: { halls: Hall[] }) {
         body: JSON.stringify({ email: inviteEmail.trim(), password: invitePassword }),
       });
       const data = await res.json().catch(() => ({}));
-      if (!res.ok) { toast.error(typeof data.error === "string" ? data.error : "Failed to create user"); return; }
-      toast.success("User created successfully.");
+      if (!res.ok) { toast.error(typeof data.error === "string" ? data.error : t("failedToCreateUser")); return; }
+      toast.success(t("userCreatedSuccess"));
       setInviteEmail("");
       setInvitePassword("");
       void loadUsers();
     } catch {
-      toast.error("Invite failed");
+      toast.error(t("inviteFailed"));
     } finally {
       setInvitePending(false);
     }
@@ -84,26 +87,25 @@ export default function AdminUsersClient({ halls }: { halls: Hall[] }) {
 
   async function onAssign(e: React.FormEvent) {
     e.preventDefault();
-    if (!assignHallId) { toast.error("Select a hall."); return; }
+    if (!assignHallId) { toast.error(t("selectHall")); return; }
     setAssignPending(true);
     try {
+      const roleValue = assignRole === "staff" ? "hall_staff" : "hall_manager";
       const res = await fetch("/api/admin/staff-assignments", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: assignEmail.trim(), hall_id: assignHallId, role: assignRole }),
+        body: JSON.stringify({ email: assignEmail.trim(), hall_id: assignHallId, role: roleValue }),
       });
       const data = await res.json().catch(() => ({}));
-      if (!res.ok) { toast.error(typeof data.error === "string" ? data.error : "Assignment failed"); return; }
-      toast.success("Staff assignment created.");
+      if (!res.ok) { toast.error(typeof data.error === "string" ? data.error : t("assignmentFailed")); return; }
+      toast.success(t("assignmentCreatedSuccess"));
       setAssignEmail("");
     } catch {
-      toast.error("Assignment failed");
+      toast.error(t("assignmentFailed"));
     } finally {
       setAssignPending(false);
     }
   }
-
-  const selectCls = "h-9 w-full rounded-lg border border-input bg-transparent px-3 text-sm outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/30 transition-colors";
 
   const filtered = search.trim()
     ? users.filter(u =>
@@ -112,15 +114,18 @@ export default function AdminUsersClient({ halls }: { halls: Hall[] }) {
       )
     : users;
 
+  const selectedHallName = halls.find(h => h.id === assignHallId)?.name || t("hall");
+  const selectedRoleName = assignRole === "staff" ? t("staffRole") : t("managerRole");
+
   return (
     <div className="space-y-5">
 
       <div className="grid gap-5 lg:grid-cols-2">
         {/* Invite */}
-        <Section icon={Mail} title="Create User" desc="Create a new player account">
+        <Section icon={Mail} title={t("createUser")} desc={t("createUserDesc")}>
           <form onSubmit={onInvite} className="space-y-4">
             <div className="space-y-1.5">
-              <Label htmlFor="invite_email" className="text-xs font-medium text-muted-foreground">Email address</Label>
+              <Label htmlFor="invite_email" className="text-xs font-medium text-muted-foreground">{t("emailAddress")}</Label>
               <div className="relative">
                 <Mail size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground/50 pointer-events-none" />
                 <Input id="invite_email" type="email" value={inviteEmail}
@@ -129,26 +134,26 @@ export default function AdminUsersClient({ halls }: { halls: Hall[] }) {
               </div>
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="invite_password" className="text-xs font-medium text-muted-foreground">Password</Label>
+              <Label htmlFor="invite_password" className="text-xs font-medium text-muted-foreground">{t("password")}</Label>
               <Input id="invite_password" type="password" value={invitePassword}
                 onChange={e => setInvitePassword(e.target.value)}
-                placeholder="Min 6 characters" required autoComplete="new-password" />
+                placeholder={t("minCharacters")} required autoComplete="new-password" />
             </div>
             <Button type="submit" disabled={invitePending} className="gap-2 w-full font-semibold"
               style={{ background: "oklch(0.55 0.26 280)", color: "white" }}>
               {invitePending
                 ? <span className="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />
                 : <UserPlus size={14} />}
-              {invitePending ? "Creating…" : "Create User"}
+              {invitePending ? t("creatingUser") : t("createUserButton")}
             </Button>
           </form>
         </Section>
 
         {/* Assign */}
-        <Section icon={UserCheck} title="Assign to Hall" desc="Grant a user access to a hall" accent="oklch(0.82 0.14 200)">
+        <Section icon={UserCheck} title={t("assignToHall")} desc={t("assignToHallDesc")} accent="oklch(0.82 0.14 200)">
           <form onSubmit={onAssign} className="space-y-4">
             <div className="space-y-1.5">
-              <Label htmlFor="assign_email" className="text-xs font-medium text-muted-foreground">User email</Label>
+              <Label htmlFor="assign_email" className="text-xs font-medium text-muted-foreground">{t("userEmail")}</Label>
               <div className="relative">
                 <Mail size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground/50 pointer-events-none" />
                 <Input id="assign_email" type="email" value={assignEmail}
@@ -160,24 +165,42 @@ export default function AdminUsersClient({ halls }: { halls: Hall[] }) {
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
                 <Label htmlFor="assign_hall" className="text-xs font-medium text-muted-foreground flex items-center gap-1">
-                  <Building2 size={11} /> Hall
+                  <Building2 size={11} /> {t("hall")}
                 </Label>
-                <select id="assign_hall" className={selectCls} value={assignHallId}
-                  onChange={e => setAssignHallId(e.target.value)} required>
-                  {halls.length === 0
-                    ? <option value="">No halls</option>
-                    : halls.map(h => <option key={h.id} value={h.id}>{h.name}</option>)}
-                </select>
+                <Select value={assignHallId} onValueChange={setAssignHallId}>
+                  <SelectTrigger className="h-9 w-full">
+                    <SelectValue>
+                      {selectedHallName}
+                    </SelectValue>
+                  </SelectTrigger>
+                  <SelectContent>
+                    {halls.map(h => (
+                      <SelectItem key={h.id} value={h.id} label={h.name}>
+                        {h.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               <div className="space-y-1.5">
                 <Label htmlFor="assign_role" className="text-xs font-medium text-muted-foreground flex items-center gap-1">
-                  <ShieldCheck size={11} /> Role
+                  <ShieldCheck size={11} /> {t("role")}
                 </Label>
-                <select id="assign_role" className={selectCls} value={assignRole}
-                  onChange={e => setAssignRole(e.target.value as "staff" | "manager")}>
-                  <option value="staff">Staff</option>
-                  <option value="manager">Manager</option>
-                </select>
+                <Select value={assignRole} onValueChange={(v) => setAssignRole(v as "staff" | "manager")}>
+                  <SelectTrigger className="h-9 w-full">
+                    <SelectValue>
+                      {selectedRoleName}
+                    </SelectValue>
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="staff" label={t("staffRole")}>
+                      {t("staffRole")}
+                    </SelectItem>
+                    <SelectItem value="manager" label={t("managerRole")}>
+                      {t("managerRole")}
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
             </div>
 
@@ -186,7 +209,7 @@ export default function AdminUsersClient({ halls }: { halls: Hall[] }) {
               {assignPending
                 ? <span className="w-4 h-4 rounded-full border-2 border-current/30 border-t-current animate-spin" />
                 : <UserCheck size={14} />}
-              {assignPending ? "Saving…" : "Assign"}
+              {assignPending ? t("saving") : t("assign")}
             </Button>
           </form>
         </Section>
@@ -197,7 +220,7 @@ export default function AdminUsersClient({ halls }: { halls: Hall[] }) {
         <div className="flex items-center justify-between px-5 py-4 border-b border-border/40">
           <div className="flex items-center gap-2">
             <User size={15} className="text-muted-foreground" />
-            <p className="text-sm font-semibold text-foreground">All Users</p>
+            <p className="text-sm font-semibold text-foreground">{t("allUsers")}</p>
             {!loading && (
               <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-muted text-muted-foreground">
                 {filtered.length}{search ? ` of ${users.length}` : ""}
@@ -218,7 +241,7 @@ export default function AdminUsersClient({ halls }: { halls: Hall[] }) {
               type="text"
               value={search}
               onChange={e => setSearch(e.target.value)}
-              placeholder="Search by email or role…"
+              placeholder={t("searchByEmailOrRole")}
               className="w-full h-9 pl-9 pr-3 rounded-lg border border-input bg-transparent text-sm outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/30 transition-colors placeholder:text-muted-foreground/50"
             />
           </div>
@@ -240,7 +263,7 @@ export default function AdminUsersClient({ halls }: { halls: Hall[] }) {
         ) : filtered.length === 0 ? (
           <div className="py-12 text-center">
             <p className="text-sm text-muted-foreground">
-              {search ? `No users matching "${search}"` : "No users found."}
+              {search ? `${t("noUsersMatching")} "${search}"` : t("noUsersFound")}
             </p>
           </div>
         ) : (
@@ -273,10 +296,17 @@ const ROLE_STYLE: Record<string, { label: string; cls: string }> = {
 };
 
 function RoleBadge({ role }: { role: string }) {
-  const s = ROLE_STYLE[role] ?? { label: role, cls: "bg-muted text-muted-foreground border border-border/50" };
+  const t = useTranslations("admin");
+  const defaultStyle = ROLE_STYLE[role];
+  const label = role === "super_admin" ? t("superAdminRole")
+    : role === "hall_manager" ? t("managerRole")
+    : role === "hall_staff" ? t("staffRole")
+    : role === "player" ? t("playerRole")
+    : role;
+  const s = defaultStyle ?? { label, cls: "bg-muted text-muted-foreground border border-border/50" };
   return (
     <span className={`text-xs font-medium px-2.5 py-0.5 rounded-full shrink-0 ${s.cls}`}>
-      {s.label}
+      {label}
     </span>
   );
 }
