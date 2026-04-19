@@ -200,8 +200,6 @@ export default function StaffDeviceCard(props: StaffDeviceCardProps) {
                     hallId={hallId}
                     selectedDate={new Date(bookingDate)}
                     onSelectSlot={(start, end) => setSelectedSlot({ start, end })}
-                    selectedStart={selectedSlot?.start}
-                    selectedEnd={selectedSlot?.end}
                   />
                 </div>
               )}
