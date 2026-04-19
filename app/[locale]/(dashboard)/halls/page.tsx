@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { useTranslations } from 'next-intl';
 import { getTranslations } from 'next-intl/server';
-import { redirect } from "@/lib/navigation";
+import { redirect } from "next/navigation";
 import { getServerClient } from "@/lib/supabase/server";
 import { getHalls } from "@/services/halls";
 import { isSuperAdmin } from "@/services/access";
@@ -76,11 +76,12 @@ function HallsGridSkeleton() {
   );
 }
 
-export default async function HallsPage() {
+export default async function HallsPage({ params }: { params: Promise<{ locale: string }> }) {
+  const { locale } = await params;
   const t = await getTranslations();
   const supabase = await getServerClient();
   const { data: { user } } = await supabase.auth.getUser();
-  if (!user) redirect("/login");
+  if (!user) redirect(`/${locale}/login`);
 
   const [showAdmin, profile] = await Promise.all([
     isSuperAdmin(user.id),

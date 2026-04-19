@@ -1,5 +1,4 @@
-import { notFound } from "next/navigation";
-import { redirect } from "next-intl/server";
+import { notFound, redirect } from "next/navigation";
 import { getServerClient } from "@/lib/supabase/server";
 import { verifyStaffHallAccess } from "@/services/staff";
 import DashboardHeader from "@/components/layout/dashboard-header";
@@ -16,7 +15,7 @@ export default async function DashboardLayout({
   const supabase = await getServerClient();
 
   const { data: { user } } = await supabase.auth.getUser();
-  if (!user) redirect({ href: "/login", locale });
+  if (!user) redirect(`/${locale}/login`);
 
   const access = await verifyStaffHallAccess(user.id, hallId);
   if (!access.success) notFound();

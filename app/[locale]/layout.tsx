@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { GeistSans } from "geist/font/sans";
 import { GeistMono } from "geist/font/mono";
-import { Cairo } from "next/font/google";
 import { NextIntlClientProvider } from 'next-intl';
 import { getMessages } from 'next-intl/server';
 import ReactQueryProvider from "@/lib/query/provider";
@@ -10,13 +9,6 @@ import { Toaster } from "@/components/ui/sonner";
 import { NavigationLoader } from "@/components/navigation-loader";
 import { QueryLoadingBar } from "@/components/query-loading-bar";
 import "../globals.css";
-
-const cairo = Cairo({ 
-  subsets: ['arabic', 'latin'],
-  weight: ['300', '400', '500', '600', '700'],
-  variable: '--font-cairo',
-  display: 'swap'
-});
 
 export const metadata: Metadata = {
   title: { default: "Arcadia", template: "%s | Arcadia" },
@@ -34,7 +26,7 @@ export default async function RootLayout({
   const messages = await getMessages();
 
   return (
-    <html lang={locale} className={`${GeistSans.variable} ${GeistMono.variable} ${cairo.variable}`} suppressHydrationWarning>
+    <html lang={locale} className={`${GeistSans.variable} ${GeistMono.variable}`} suppressHydrationWarning>
       <body>
         <NextIntlClientProvider messages={messages}>
           <ThemeProvider>

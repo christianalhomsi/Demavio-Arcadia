@@ -169,8 +169,6 @@ export default function BookingForm({ halls }: { halls: Hall[] }) {
                 hallId={selectedHallId}
                 selectedDate={new Date(bookingDate)}
                 onSelectSlot={handleSelectSlot}
-                selectedStart={selectedSlot?.start}
-                selectedEnd={selectedSlot?.end}
               />
             </div>
           )}

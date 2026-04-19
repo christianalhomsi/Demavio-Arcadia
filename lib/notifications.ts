@@ -16,13 +16,13 @@ export async function sendReservationReminder(
   console.log(
     `[notify] Reminder for reservation ${payload.reservation_id}`,
     `starting at ${payload.start_time}`,
-    `from ${emailEnv.from}`
+    `from ${emailEnv.fromEmail}`
   );
 
   // Example with Resend:
   // const resend = new Resend(emailEnv.apiKey);
   // await resend.emails.send({
-  //   from: emailEnv.from,
+  //   from: emailEnv.fromEmail,
   //   to: await resolveUserEmail(payload.user_id),
   //   subject: "Your session starts soon",
   //   text: `Your booking starts at ${payload.start_time}.`,

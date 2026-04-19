@@ -1,7 +1,7 @@
 import { Suspense } from "react";
 import type { Metadata } from "next";
 import Link from "next/link";
-import { redirect } from "next-intl/server";
+import { redirect } from "next/navigation";
 import { getServerClient } from "@/lib/supabase/server";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -29,7 +29,7 @@ function fmt(iso: string) {
 async function ReservationsList({ locale }: { locale: string }) {
   const supabase = await getServerClient();
   const { data: { user } } = await supabase.auth.getUser();
-  if (!user) redirect({ href: "/login", locale });
+  if (!user) redirect(`/${locale}/login`);
 
   const { data, error } = await supabase
     .from("reservations")
