@@ -1,4 +1,5 @@
-import { notFound, redirect } from "next/navigation";
+import { notFound } from "next/navigation";
+import { redirect } from "next-intl/server";
 import { getServerClient } from "@/lib/supabase/server";
 import { verifyStaffHallAccess } from "@/services/staff";
 import DashboardHeader from "@/components/layout/dashboard-header";
@@ -9,13 +10,13 @@ export default async function DashboardLayout({
   params,
 }: {
   children: React.ReactNode;
-  params: Promise<{ hallId: string }>;
+  params: Promise<{ hallId: string; locale: string }>;
 }) {
-  const { hallId } = await params;
+  const { hallId, locale } = await params;
   const supabase = await getServerClient();
 
   const { data: { user } } = await supabase.auth.getUser();
-  if (!user) redirect("/login");
+  if (!user) redirect({ href: "/login", locale });
 
   const access = await verifyStaffHallAccess(user.id, hallId);
   if (!access.success) notFound();

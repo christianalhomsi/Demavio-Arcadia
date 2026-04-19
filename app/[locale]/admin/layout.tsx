@@ -1,6 +1,6 @@
 import Link from "next/link";
-import { redirect } from "next/navigation";
-import { getTranslations } from 'next-intl/server';
+import { redirect } from "next-intl/server";
+import { getTranslations, getLocale } from 'next-intl/server';
 import { getServerClient } from "@/lib/supabase/server";
 import { isSuperAdmin } from "@/services/access";
 import { LanguageToggle } from "@/components/language-toggle";
@@ -8,10 +8,11 @@ import AdminNav from "./admin-nav";
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const t = await getTranslations('nav');
+  const locale = await getLocale();
   const supabase = await getServerClient();
   const { data: { user } } = await supabase.auth.getUser();
-  if (!user) redirect("/login");
-  if (!(await isSuperAdmin(user.id))) redirect("/halls");
+  if (!user) redirect({ href: "/login", locale });
+  if (!(await isSuperAdmin(user.id))) redirect({ href: "/halls", locale });
 
   return (
     <div className="min-h-screen bg-background flex flex-col">

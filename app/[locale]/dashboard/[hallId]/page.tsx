@@ -1,6 +1,6 @@
-import { redirect } from "next/navigation";
+import { redirect } from "next-intl/server";
 
-export default async function DashboardRootPage({ params }: { params: Promise<{ hallId: string }> }) {
-  const { hallId } = await params;
-  redirect(`/dashboard/${hallId}/overview`);
+export default async function DashboardRootPage({ params }: { params: Promise<{ hallId: string; locale: string }> }) {
+  const { hallId, locale } = await params;
+  redirect({ href: `/dashboard/${hallId}/overview`, locale });
 }

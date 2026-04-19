@@ -1,4 +1,4 @@
-import { redirect } from "next/navigation";
+import { redirect } from "next-intl/server";
 
 export default async function LocalePage({
   params
@@ -6,5 +6,5 @@ export default async function LocalePage({
   params: Promise<{ locale: string }>;
 }) {
   const { locale } = await params;
-  redirect(`/${locale}/login`);
+  redirect({ href: "/login", locale });
 }

@@ -1,7 +1,7 @@
 import { Suspense } from "react";
 import type { Metadata } from "next";
 import Link from "next/link";
-import { redirect } from "next/navigation";
+import { redirect } from "next-intl/server";
 import { getServerClient } from "@/lib/supabase/server";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -26,10 +26,10 @@ function fmt(iso: string) {
   return new Date(iso).toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" });
 }
 
-async function ReservationsList() {
+async function ReservationsList({ locale }: { locale: string }) {
   const supabase = await getServerClient();
   const { data: { user } } = await supabase.auth.getUser();
-  if (!user) redirect("/login");
+  if (!user) redirect({ href: "/login", locale });
 
   const { data, error } = await supabase
     .from("reservations")
@@ -112,7 +112,8 @@ function ReservationsSkeleton() {
   );
 }
 
-export default function ReservationsPage() {
+export default async function ReservationsPage({ params }: { params: Promise<{ locale: string }> }) {
+  const { locale } = await params;
   return (
     <div className="min-h-screen bg-background">
       <header className="flex items-center gap-3 px-5 h-14 border-b border-border/60 bg-card/80 backdrop-blur-sm sticky top-0 z-50">
@@ -155,7 +156,7 @@ export default function ReservationsPage() {
         </div>
         <Separator className="opacity-40" />
         <Suspense fallback={<ReservationsSkeleton />}>
-          <ReservationsList />
+          <ReservationsList locale={locale} />
         </Suspense>
       </div>
     </div>
