@@ -4,10 +4,13 @@ import { getServerClient } from "@/lib/supabase/server";
 import { getAdminClient } from "@/lib/supabase/admin";
 import { getHalls } from "@/services/halls";
 import { Building2, Users, Plus, ArrowRight, ShieldCheck, LayoutDashboard } from "lucide-react";
+import { useTranslations } from "next-intl";
+import { getTranslations } from "next-intl/server";
 
 export const metadata: Metadata = { title: "Admin" };
 
 export default async function AdminHomePage() {
+  const t = await getTranslations('admin');
   const supabase = await getServerClient();
   const admin = getAdminClient();
 
@@ -17,25 +20,25 @@ export default async function AdminHomePage() {
   ]);
 
   const stats = [
-    { label: "Total Halls",  value: halls.length,    icon: Building2,  color: "text-violet-400",  bg: "oklch(0.55 0.26 280 / 0.1)",  border: "oklch(0.55 0.26 280 / 0.2)" },
-    { label: "Players",       value: userCount ?? 0,  icon: Users,      color: "text-cyan-400",    bg: "oklch(0.82 0.14 200 / 0.1)",  border: "oklch(0.82 0.14 200 / 0.2)" },
+    { label: t('totalHalls'),  value: halls.length,    icon: Building2,  color: "text-violet-400",  bg: "oklch(0.55 0.26 280 / 0.1)",  border: "oklch(0.55 0.26 280 / 0.2)" },
+    { label: t('players'),       value: userCount ?? 0,  icon: Users,      color: "text-cyan-400",    bg: "oklch(0.82 0.14 200 / 0.1)",  border: "oklch(0.82 0.14 200 / 0.2)" },
   ];
 
   const actions = [
     {
-      title: "Halls",
-      desc: "Create and manage gaming halls with devices and staff assignments.",
+      title: t('halls'),
+      desc: t('hallsDesc'),
       icon: Building2,
       href: "/admin/halls",
-      cta: "Manage halls",
+      cta: t('manageHallsAction'),
       accent: "oklch(0.55 0.26 280)",
     },
     {
-      title: "Users",
-      desc: "Invite users and assign them to halls with a specific role.",
+      title: t('users'),
+      desc: t('usersDesc'),
       icon: Users,
       href: "/admin/users",
-      cta: "Manage users",
+      cta: t('manageUsers'),
       accent: "oklch(0.82 0.14 200)",
     },
   ];
@@ -50,8 +53,8 @@ export default async function AdminHomePage() {
           <ShieldCheck size={20} style={{ color: "oklch(0.65 0.22 280)" }} />
         </div>
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Super Admin</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">Manage halls, devices, and staff access.</p>
+          <h1 className="text-2xl font-bold tracking-tight">{t('superAdmin')}</h1>
+          <p className="text-sm text-muted-foreground mt-0.5">{t('manageHalls')}</p>
         </div>
       </div>
 
@@ -74,7 +77,7 @@ export default async function AdminHomePage() {
 
       {/* quick actions */}
       <div>
-        <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-4">Quick Actions</p>
+        <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-4">{t('quickActions')}</p>
         <div className="grid gap-4 sm:grid-cols-2">
           {actions.map(({ title, desc, icon: Icon, href, cta, accent }) => (
             <div key={href} className="group rounded-2xl border border-border/50 bg-card p-5 hover:border-primary/30 transition-all duration-200 hover:shadow-lg hover:shadow-primary/5">
@@ -103,8 +106,8 @@ export default async function AdminHomePage() {
       {halls.length > 0 && (
         <div>
           <div className="flex items-center justify-between mb-4">
-            <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Recent Halls</p>
-            <Link href="/admin/halls" className="text-xs text-primary hover:underline">View all</Link>
+            <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">{t('recentHalls')}</p>
+            <Link href="/admin/halls" className="text-xs text-primary hover:underline">{t('viewAll')}</Link>
           </div>
           <div className="rounded-2xl border border-border/50 bg-card overflow-hidden">
             {halls.slice(0, 5).map((h, i) => (
@@ -123,7 +126,7 @@ export default async function AdminHomePage() {
                 <Link href={`/dashboard/${h.id}`}
                   className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors shrink-0 ml-3">
                   <LayoutDashboard size={12} />
-                  Dashboard
+                  {t('dashboard')}
                 </Link>
               </div>
             ))}

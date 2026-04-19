@@ -4,23 +4,25 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { LayoutDashboard, Building2, Users, Plus } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 const NAV = [
-  { label: "Overview",   href: "/admin",           icon: LayoutDashboard, exact: true },
-  { label: "Halls",      href: "/admin/halls",      icon: Building2 },
-  { label: "New Hall",   href: "/admin/halls/new",  icon: Plus },
-  { label: "Users",      href: "/admin/users",      icon: Users },
+  { labelKey: "overview",   href: "/admin",           icon: LayoutDashboard, exact: true },
+  { labelKey: "halls",      href: "/admin/halls",      icon: Building2 },
+  { labelKey: "newHall",   href: "/admin/halls/new",  icon: Plus },
+  { labelKey: "users",      href: "/admin/users",      icon: Users },
 ];
 
 export default function AdminNav() {
   const pathname = usePathname();
+  const t = useTranslations('admin');
 
   return (
     <nav className="space-y-0.5">
       <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground px-3 mb-3">
-        Admin Panel
+        {t('adminPanel')}
       </p>
-      {NAV.map(({ label, href, icon: Icon, exact }) => {
+      {NAV.map(({ labelKey, href, icon: Icon, exact }) => {
         const active = exact ? pathname === href : pathname === href || pathname.startsWith(href + "/");
         return (
           <Link key={href} href={href}
@@ -31,7 +33,7 @@ export default function AdminNav() {
                 : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
             )}>
             <Icon size={15} className="shrink-0" />
-            {label}
+            {t(labelKey)}
           </Link>
         );
       })}

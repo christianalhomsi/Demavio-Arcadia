@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import { Separator } from "@/components/ui/separator";
 import LogoutButton from "@/components/ui/logout-button";
 import { LanguageToggle } from "@/components/language-toggle";
@@ -18,6 +19,7 @@ interface DashboardHeaderProps {
 }
 
 export default function DashboardHeader({ hallName, hallId, breadcrumbs }: DashboardHeaderProps) {
+  const t = useTranslations("nav");
   return (
     <header className="flex items-center gap-3 px-5 h-14 shrink-0 border-b border-border/60 bg-card/80 backdrop-blur-sm sticky top-0 z-50">
       {/* Logo */}
@@ -40,10 +42,10 @@ export default function DashboardHeader({ hallName, hallId, breadcrumbs }: Dashb
       <nav className="flex items-center gap-1 text-sm overflow-hidden" aria-label="Breadcrumb">
         {hallId ? (
           <Link href="/halls" className="text-muted-foreground hover:text-foreground transition-colors shrink-0">
-            Halls
+            {t("halls")}
           </Link>
         ) : (
-          <span className="text-muted-foreground shrink-0">Halls</span>
+          <span className="text-muted-foreground shrink-0">{t("halls")}</span>
         )}
 
         {hallId && (

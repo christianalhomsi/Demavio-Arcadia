@@ -14,7 +14,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
-import CalendarBooking from "./calendar-booking";
+import CalendarBooking from "@/components/ui/calendar-booking";
 
 const formSchema = z.object({
   hall_id:    z.string().min(1, "Select a hall"),

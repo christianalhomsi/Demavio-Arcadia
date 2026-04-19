@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 import type { Metadata } from "next";
+import { getTranslations } from "next-intl/server";
 import { getServerClient } from "@/lib/supabase/server";
 import type { Device } from "@/services/devices";
 import StaffDeviceCard, { type StaffDeviceCardProps } from "@/components/ui/staff-device-card";
@@ -43,10 +44,11 @@ async function fetchPageData(hallId: string): Promise<{
 
 async function DevicesGrid({ hallId }: { hallId: string }) {
   const { devices, sessions, reservations } = await fetchPageData(hallId);
+  const t = await getTranslations("devices");
 
   if (devices.length === 0) {
     return (
-      <p className="text-sm text-muted-foreground py-10 text-center">No devices found for this hall.</p>
+      <p className="text-sm text-muted-foreground py-10 text-center">{t("noDevices")}</p>
     );
   }
 
@@ -85,15 +87,17 @@ function DevicesGridSkeleton() {
   );
 }
 
-export default async function DevicesPage({ params }: { params: Promise<{ hallId: string }> }) {
+export default async function DevicesPage({ params }: { params: Promise<{ hallId: string; locale: string }> }) {
   const { hallId } = await params;
+  const t = await getTranslations("devices");
+  const tn = await getTranslations("nav");
   return (
     <div className="page-shell">
       <div className="flex items-center gap-2.5">
         <Monitor size={18} className="text-muted-foreground" />
         <div>
-          <h1 className="text-xl font-bold leading-none">Devices</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">Manage hall devices</p>
+          <h1 className="text-xl font-bold leading-none">{tn("devices")}</h1>
+          <p className="text-sm text-muted-foreground mt-0.5">{t("manageDevices")}</p>
         </div>
       </div>
       <Suspense fallback={<DevicesGridSkeleton />}>

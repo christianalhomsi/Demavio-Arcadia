@@ -1,15 +1,18 @@
 import { Suspense } from "react";
 import type { Metadata } from "next";
 import Link from "next/link";
+import { getTranslations } from "next-intl/server";
 import { getServerClient } from "@/lib/supabase/server";
 import { calculateExpectedBalance } from "@/lib/cash-register";
 import type { CashRegister } from "@/types/cash-register";
+import { Card, CardContent } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
+import { Skeleton } from "@/components/ui/skeleton";
+import { ChevronLeft } from "lucide-react";
 import OpenRegisterForm from "./open-register-form";
 import CloseRegisterForm from "./close-register-form";
 
 export const metadata: Metadata = { title: "Cash Register | Arcadia" };
-
-// ─── data ─────────────────────────────────────────────────────────────────────
 
 async function getOpenRegister(hallId: string): Promise<CashRegister | null> {
   const supabase = await getServerClient();
@@ -33,207 +36,86 @@ async function getTotalIncome(hallId: string): Promise<number> {
   return ((data ?? []) as { amount: number }[]).reduce((sum, p) => sum + p.amount, 0);
 }
 
-// ─── inner async component ────────────────────────────────────────────────────
-
-async function RegisterContent({ hallId }: { hallId: string }) {
-  const [register, totalIncome] = await Promise.all([
-    getOpenRegister(hallId),
-    getTotalIncome(hallId),
-  ]);
-
-  if (!register) {
-    return (
-      <div style={card}>
-        <div style={statusRow}>
-          <span style={{ ...statusBadge, background: "#f3f4f6", color: "#6b7280" }}>
-            Closed
-          </span>
-          <p style={statusNote}>No register is currently open for this hall.</p>
-        </div>
-        <OpenRegisterForm hallId={hallId} />
-      </div>
-    );
-  }
-
-  const expectedBalance = calculateExpectedBalance(
-    register.opening_balance,
-    totalIncome,
-    0 // total_outflows — no outflow tracking in current schema
-  );
-
-  return (
-    <div style={card}>
-      <div style={statusRow}>
-        <span style={{ ...statusBadge, background: "#dcfce7", color: "#15803d" }}>
-          Open
-        </span>
-        <p style={statusNote}>
-          Opened {new Date(register.opened_at).toLocaleString(undefined, {
-            dateStyle: "medium",
-            timeStyle: "short",
-          })}
-        </p>
-      </div>
-
-      <div style={infoGrid}>
-        <InfoRow label="Opening balance"  value={`$${fmt(register.opening_balance)}`} />
-        <InfoRow label="Total income"     value={`$${fmt(totalIncome)}`} />
-        <InfoRow label="Expected balance" value={`$${fmt(expectedBalance)}`} accent />
-      </div>
-
-      <CloseRegisterForm
-        registerId={register.id}
-        hallId={hallId}
-        expectedBalance={expectedBalance}
-      />
-    </div>
-  );
-}
-
-function InfoRow({
-  label,
-  value,
-  accent,
-}: {
-  label: string;
-  value: string;
-  accent?: boolean;
-}) {
-  return (
-    <div style={infoRow}>
-      <span style={infoLabel}>{label}</span>
-      <span style={{ ...infoValue, fontWeight: accent ? 700 : 500 }}>{value}</span>
-    </div>
-  );
-}
-
-function RegisterSkeleton() {
-  return (
-    <div style={card}>
-      <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
-        {Array.from({ length: 4 }).map((_, i) => (
-          <div key={i} style={{ ...skel, height: "36px" }} />
-        ))}
-      </div>
-    </div>
-  );
-}
-
-// ─── page ─────────────────────────────────────────────────────────────────────
-
-export default function RegisterPage({
-  params,
-}: {
-  params: { hallId: string };
-}) {
-  return (
-    <div style={page}>
-      <div style={pageHeader}>
-        <p style={pageHeading}>Cash register</p>
-        <Link href={`/dashboard/${params.hallId}/finance`} style={backLink}>
-          ← Finance overview
-        </Link>
-      </div>
-      <Suspense fallback={<RegisterSkeleton />}>
-        <RegisterContent hallId={params.hallId} />
-      </Suspense>
-    </div>
-  );
-}
-
-// ─── helpers ──────────────────────────────────────────────────────────────────
-
 function fmt(n: number) {
   return n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
-// ─── styles ───────────────────────────────────────────────────────────────────
+async function RegisterContent({ hallId }: { hallId: string }) {
+  const [register, totalIncome, t] = await Promise.all([
+    getOpenRegister(hallId),
+    getTotalIncome(hallId),
+    getTranslations("dashboard"),
+  ]);
 
-const page: React.CSSProperties = {
-  display: "flex",
-  flexDirection: "column",
-  gap: "1.5rem",
-  maxWidth: "520px",
-  fontFamily: "system-ui, sans-serif",
-};
+  if (!register) {
+    return (
+      <Card className="border-border/60 max-w-lg">
+        <CardContent className="pt-5 space-y-4">
+          <div className="flex items-center gap-2.5">
+            <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-muted text-muted-foreground">
+              {t("closed")}
+            </span>
+            <p className="text-sm text-muted-foreground">{t("noRegisterOpen")}</p>
+          </div>
+          <Separator className="opacity-40" />
+          <OpenRegisterForm hallId={hallId} />
+        </CardContent>
+      </Card>
+    );
+  }
 
-const pageHeader: React.CSSProperties = {
-  display: "flex",
-  alignItems: "baseline",
-  justifyContent: "space-between",
-  gap: "1rem",
-};
+  const expectedBalance = calculateExpectedBalance(register.opening_balance, totalIncome, 0);
 
-const pageHeading: React.CSSProperties = {
-  margin: 0,
-  fontSize: "1.25rem",
-  fontWeight: 700,
-  color: "#111827",
-};
+  return (
+    <Card className="border-border/60 max-w-lg">
+      <CardContent className="pt-5 space-y-4">
+        <div className="flex items-center gap-2.5">
+          <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-green-500/15 text-green-400">
+            {t("open")}
+          </span>
+          <p className="text-sm text-muted-foreground">
+            {t("opened")} {new Date(register.opened_at).toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" })}
+          </p>
+        </div>
+        <Separator className="opacity-40" />
+        <div className="rounded-lg bg-muted/40 p-4 space-y-2.5">
+          {[
+            { label: t("openingBalance"),  value: `$${fmt(register.opening_balance)}` },
+            { label: t("totalIncome"),     value: `$${fmt(totalIncome)}` },
+            { label: t("expectedBalance"), value: `$${fmt(expectedBalance)}`, accent: true },
+          ].map(({ label, value, accent }) => (
+            <div key={label} className="flex justify-between items-center">
+              <span className="text-sm text-muted-foreground">{label}</span>
+              <span className={`text-sm tabular-nums ${accent ? "font-bold text-foreground" : "font-medium"}`}>{value}</span>
+            </div>
+          ))}
+        </div>
+        <CloseRegisterForm registerId={register.id} hallId={hallId} expectedBalance={expectedBalance} />
+      </CardContent>
+    </Card>
+  );
+}
 
-const backLink: React.CSSProperties = {
-  fontSize: "0.875rem",
-  color: "#6b7280",
-  textDecoration: "none",
-};
+function RegisterSkeleton() {
+  return <Skeleton className="h-64 max-w-lg rounded-xl skeleton-shimmer" />;
+}
 
-const card: React.CSSProperties = {
-  background: "#fff",
-  borderRadius: "0.75rem",
-  boxShadow: "0 1px 4px rgba(0,0,0,0.08)",
-  padding: "1.75rem",
-  display: "flex",
-  flexDirection: "column",
-  gap: "1.25rem",
-};
-
-const statusRow: React.CSSProperties = {
-  display: "flex",
-  alignItems: "center",
-  gap: "0.75rem",
-};
-
-const statusBadge: React.CSSProperties = {
-  fontSize: "0.75rem",
-  fontWeight: 600,
-  padding: "0.25rem 0.75rem",
-  borderRadius: "9999px",
-};
-
-const statusNote: React.CSSProperties = {
-  margin: 0,
-  fontSize: "0.875rem",
-  color: "#6b7280",
-};
-
-const infoGrid: React.CSSProperties = {
-  display: "flex",
-  flexDirection: "column",
-  gap: "0.5rem",
-  padding: "1rem",
-  background: "#f9fafb",
-  borderRadius: "0.5rem",
-};
-
-const infoRow: React.CSSProperties = {
-  display: "flex",
-  justifyContent: "space-between",
-  alignItems: "center",
-};
-
-const infoLabel: React.CSSProperties = {
-  fontSize: "0.875rem",
-  color: "#6b7280",
-};
-
-const infoValue: React.CSSProperties = {
-  fontSize: "0.875rem",
-  color: "#111827",
-  fontVariantNumeric: "tabular-nums",
-};
-
-const skel: React.CSSProperties = {
-  borderRadius: "0.375rem",
-  background: "#e5e7eb",
-  width: "100%",
-};
+export default async function RegisterPage({ params }: { params: Promise<{ hallId: string }> }) {
+  const { hallId } = await params;
+  const t = await getTranslations("dashboard");
+  return (
+    <div className="page-shell">
+      <div className="flex items-center justify-between">
+        <h1 className="text-xl font-bold">{t("cashRegister")}</h1>
+        <Link href={`/dashboard/${hallId}/finance`}
+          className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors px-2 py-1 rounded-lg hover:bg-muted">
+          <ChevronLeft size={15} />
+          {t("financeOverview")}
+        </Link>
+      </div>
+      <Suspense fallback={<RegisterSkeleton />}>
+        <RegisterContent hallId={hallId} />
+      </Suspense>
+    </div>
+  );
+}

@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 import type { Metadata } from "next";
+import { getTranslations } from "next-intl/server";
 import { getServerClient } from "@/lib/supabase/server";
 import type { TransactionType } from "@/types/transaction";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -31,16 +32,19 @@ const TX_STYLE: Record<TransactionType, string> = {
   refund:         "bg-amber-500/15 text-amber-400",
   adjustment:     "bg-slate-500/15 text-slate-400",
 };
-const TX_LABEL: Record<TransactionType, string> = {
-  session_income: "Income", expense: "Expense", refund: "Refund", adjustment: "Adjustment",
-};
+// TX_LABEL is now built from translations inside the async component
 const TX_ICON: Record<TransactionType, React.ElementType> = {
   session_income: TrendingUp, expense: TrendingDown, refund: RefreshCw, adjustment: SlidersHorizontal,
 };
 
 async function FinanceContent({ hallId }: { hallId: string }) {
   const supabase = await getServerClient();
+  const t = await getTranslations("dashboard");
   const { start, end } = todayRange();
+
+  const TX_LABEL: Record<TransactionType, string> = {
+    session_income: t("income"), expense: t("expense"), refund: t("refund"), adjustment: t("adjustment"),
+  };
 
   // all queries in parallel
   const [paymentsRes, sessionCountRes, allPaymentsRes] = await Promise.all([
@@ -80,8 +84,8 @@ async function FinanceContent({ hallId }: { hallId: string }) {
   }
 
   const stats = [
-    { label: "Today's Revenue", value: `$${fmtCurrency(revenue)}`, color: "text-primary",  icon: DollarSign },
-    { label: "Total Sessions",  value: String(sessionCount),        color: "text-cyan-400", icon: Gamepad2 },
+    { label: t("todayRevenue"),  value: `$${fmtCurrency(revenue)}`, color: "text-primary",  icon: DollarSign },
+    { label: t("totalSessions"), value: String(sessionCount),        color: "text-cyan-400", icon: Gamepad2 },
   ];
 
   return (
@@ -102,19 +106,19 @@ async function FinanceContent({ hallId }: { hallId: string }) {
 
       <Card className="border-border/60 overflow-hidden">
         <CardHeader className="pb-3">
-          <CardTitle className="text-sm font-semibold">Recent Transactions</CardTitle>
+          <CardTitle className="text-sm font-semibold">{t("recentTransactions")}</CardTitle>
         </CardHeader>
         <Separator className="opacity-40" />
         {transactions.length === 0 ? (
           <CardContent className="py-10 text-center">
-            <p className="text-sm text-muted-foreground">No transactions recorded yet.</p>
+            <p className="text-sm text-muted-foreground">{t("noTransactions")}</p>
           </CardContent>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-border/40">
-                  {["Type", "Amount", "Note", "Date"].map((h) => (
+                  {[t("type"), t("amount"), t("note"), t("date")].map((h) => (
                     <th key={h} className="px-4 py-2.5 text-left section-heading">{h}</th>
                   ))}
                 </tr>
@@ -163,13 +167,14 @@ function FinanceSkeleton() {
 
 export default async function FinancePage({ params }: { params: Promise<{ hallId: string }> }) {
   const { hallId } = await params;
+  const t = await getTranslations("dashboard");
   return (
     <div className="page-shell">
       <div className="flex items-center gap-2.5">
         <DollarSign size={18} className="text-muted-foreground" />
         <div>
-          <h1 className="text-xl font-bold leading-none">Finance</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">Revenue & transactions</p>
+          <h1 className="text-xl font-bold leading-none">{t("finance")}</h1>
+          <p className="text-sm text-muted-foreground mt-0.5">{t("revenueTransactions")}</p>
         </div>
       </div>
       <Separator className="opacity-40" />

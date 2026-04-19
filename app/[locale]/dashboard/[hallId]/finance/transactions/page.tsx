@@ -1,8 +1,8 @@
 import { Suspense } from "react";
 import type { Metadata } from "next";
 import Link from "next/link";
+import { getTranslations } from "next-intl/server";
 import { getServerClient } from "@/lib/supabase/server";
-import type { TransactionType } from "@/types/transaction";
 import TransactionsTable, { type TransactionRow } from "./transactions-table";
 
 export const metadata: Metadata = { title: "Transactions | Arcadia" };
@@ -56,23 +56,21 @@ function TableSkeleton() {
 
 // ─── page ─────────────────────────────────────────────────────────────────────
 
-export default function TransactionsPage({
-  params,
-}: {
-  params: { hallId: string };
-}) {
+export default async function TransactionsPage({ params }: { params: Promise<{ hallId: string }> }) {
+  const { hallId } = await params;
+  const t = await getTranslations("dashboard");
   return (
     <div className="page-shell">
       <div className="flex items-center justify-between">
-        <h1 className="text-xl font-bold">Transactions</h1>
-        <Link href={`/dashboard/${params.hallId}/finance`}
+        <h1 className="text-xl font-bold">{t("transactions")}</h1>
+        <Link href={`/dashboard/${hallId}/finance`}
           className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors px-2 py-1 rounded-lg hover:bg-muted">
-          ← Finance overview
+          ← {t("financeOverview")}
         </Link>
       </div>
       <div className="rounded-2xl border border-border/50 bg-card p-5">
         <Suspense fallback={<TableSkeleton />}>
-          <TransactionsLoader hallId={params.hallId} />
+          <TransactionsLoader hallId={hallId} />
         </Suspense>
       </div>
     </div>

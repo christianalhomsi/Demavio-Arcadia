@@ -263,7 +263,17 @@
     @apply bg-primary text-primary-foreground shadow-sm;
   }
 
-  /* ── Table row hover ── */
+  /* Fix browser autofill background */
+  input:-webkit-autofill,
+  input:-webkit-autofill:hover,
+  input:-webkit-autofill:focus,
+  input:-webkit-autofill:active {
+    -webkit-box-shadow: 0 0 0 999px oklch(0.19 0.015 265) inset !important;
+    -webkit-text-fill-color: oklch(0.96 0.006 265) !important;
+    caret-color: oklch(0.96 0.006 265) !important;
+  }
+
+  /* Table row hover */
   .table-row-hover {
     @apply transition-colors hover:bg-accent/50;
   }

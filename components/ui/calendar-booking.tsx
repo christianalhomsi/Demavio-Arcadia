@@ -17,17 +17,20 @@ type Props = {
   hallId: string;
   selectedDate: Date;
   onSelectSlot: (start: Date, end: Date) => void;
-  selectedStart?: Date;
-  selectedEnd?: Date;
 };
 
-export default function CalendarBooking({ deviceId, hallId, selectedDate, onSelectSlot, selectedStart, selectedEnd }: Props) {
+export default function CalendarBooking({ deviceId, hallId, selectedDate, onSelectSlot }: Props) {
   const [slots, setSlots] = useState<TimeSlot[]>([]);
   const [loading, setLoading] = useState(true);
   const [localStart, setLocalStart] = useState<Date | null>(null);
   const [localEnd, setLocalEnd] = useState<Date | null>(null);
 
   useEffect(() => {
+    setLocalStart(null);
+    setLocalEnd(null);
+  }, [selectedDate]);
+
+  useEffect(() {
     if (!deviceId || !hallId) return;
     
     const fetchSlots = async () => {
@@ -35,11 +38,17 @@ export default function CalendarBooking({ deviceId, hallId, selectedDate, onSele
       const supabase = getBrowserClient();
       
       // Get hall working hours
-      const { data: hall } = await supabase
+      const { data: hall, error: hallError } = await supabase
         .from("halls")
         .select("working_hours")
         .eq("id", hallId)
         .single();
+
+      if (hallError || !hall) {
+        setSlots([]);
+        setLoading(false);
+        return;
+      }
 
       const workingHours = hall?.working_hours as WorkingHours[] | null;
       const dayOfWeek = selectedDate.getDay();
@@ -56,13 +65,19 @@ export default function CalendarBooking({ deviceId, hallId, selectedDate, onSele
       const endOfDay = new Date(selectedDate);
       endOfDay.setHours(23, 59, 59, 999);
 
-      const { data: reservations } = await supabase
+      const { data: reservations, error: resError } = await supabase
         .from("reservations")
         .select("start_time, end_time")
         .eq("device_id", deviceId)
         .gte("start_time", startOfDay.toISOString())
         .lte("end_time", endOfDay.toISOString())
         .in("status", ["confirmed", "active"]);
+
+      if (resError) {
+        setSlots([]);
+        setLoading(false);
+        return;
+      }
 
       const timeSlots: TimeSlot[] = [];
       const [openHour, openMin] = daySchedule.open_time.split(":").map(Number);
@@ -83,7 +98,7 @@ export default function CalendarBooking({ deviceId, hallId, selectedDate, onSele
         const isBooked = reservations?.some((r) => {
           const rStart = new Date(r.start_time);
           const rEnd = new Date(r.end_time);
-          return slotTime >= rStart && slotTime < rEnd;
+          return slotTime < rEnd && rStart < slotEnd;
         });
 
         timeSlots.push({
