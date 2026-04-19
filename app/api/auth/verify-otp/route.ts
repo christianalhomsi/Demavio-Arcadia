@@ -42,9 +42,48 @@ export async function POST(request: Request) {
 
     await markOtpVerified(record.id);
 
-    // Upsert user then generate a one-time session link
     const admin = getAdminClient();
 
+    // If password exists, create user with password
+    if (record.password_hash) {
+      const { data: authData, error: signupError } = await admin.auth.admin.createUser({
+        email,
+        password: record.password_hash,
+        email_confirm: true,
+      });
+
+      if (signupError) {
+        console.error("[verify-otp] createUser error", signupError);
+        return NextResponse.json(
+          { error: "Failed to create account" },
+          { status: 500 }
+        );
+      }
+
+      // Set role to player
+      await admin.from("profiles").update({ role: "player" }).eq("id", authData.user.id);
+
+      // Generate session link
+      const { data: linkData, error: linkError } = await admin.auth.admin.generateLink({
+        type: "magiclink",
+        email,
+      });
+
+      if (linkError || !linkData.properties) {
+        console.error("[verify-otp] generateLink error", linkError);
+        return NextResponse.json(
+          { error: "Failed to create session" },
+          { status: 500 }
+        );
+      }
+
+      return NextResponse.json(
+        { token_hash: linkData.properties.hashed_token },
+        { status: 200 }
+      );
+    }
+
+    // Original OTP login flow
     const { data: linkData, error: linkError } =
       await admin.auth.admin.generateLink({
         type: "magiclink",
@@ -60,8 +99,6 @@ export async function POST(request: Request) {
       );
     }
 
-    // Return the hashed_token for the client to exchange into a full session
-    // via supabase.auth.verifyOtp({ token_hash, type: "magiclink" })
     return NextResponse.json(
       { token_hash: linkData.properties.hashed_token },
       { status: 200 }

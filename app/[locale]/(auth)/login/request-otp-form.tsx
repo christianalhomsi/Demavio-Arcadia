@@ -7,7 +7,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
 import { useTranslations } from 'next-intl';
-import { otpRequestSchema, type OtpRequestInput } from "@/schemas/otp";
+import { signupSchema, type SignupInput } from "@/schemas/otp";
 import { getBrowserClient } from "@/lib/supabase/client";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -22,6 +22,7 @@ type LoginInput = z.infer<typeof loginSchema>;
 
 function GoogleButton() {
   const [loading, setLoading] = useState(false);
+  const t = useTranslations('auth');
 
   async function handleGoogle() {
     setLoading(true);
@@ -35,9 +36,9 @@ function GoogleButton() {
 
   return (
     <button type="button" onClick={handleGoogle} disabled={loading}
-      className="w-full flex items-center justify-center gap-2.5 h-10 rounded-xl border border-border/60 bg-muted/30 hover:bg-muted/60 transition-colors text-sm font-medium disabled:opacity-60 cursor-pointer">
+      className="w-full flex items-center justify-center gap-2.5 h-10 rounded-lg bg-white/5 hover:bg-white/10 transition-colors text-sm font-medium disabled:opacity-60 cursor-pointer border border-white/10">
       {loading ? (
-        <span className="w-4 h-4 rounded-full border-2 border-muted-foreground/30 border-t-muted-foreground animate-spin" />
+        <span className="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />
       ) : (
         <svg width="16" height="16" viewBox="0 0 24 24">
           <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
@@ -46,17 +47,18 @@ function GoogleButton() {
           <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
         </svg>
       )}
-      Continue with Google
+      {t('continueWithGoogle')}
     </button>
   );
 }
 
 function Divider() {
+  const t = useTranslations('auth');
   return (
-    <div className="flex items-center gap-3">
-      <div className="flex-1 h-px bg-border/50" />
-      <span className="text-xs text-muted-foreground/60">or</span>
-      <div className="flex-1 h-px bg-border/50" />
+    <div className="flex items-center gap-3 my-5">
+      <div className="flex-1 h-px bg-white/10" />
+      <span className="text-xs text-white/40">{t('or')}</span>
+      <div className="flex-1 h-px bg-white/10" />
     </div>
   );
 }
@@ -66,32 +68,33 @@ export default function AuthForm() {
   const t = useTranslations('auth');
 
   return (
-    <div className="rounded-2xl border border-border/60 bg-card overflow-hidden"
-      style={{ boxShadow: "0 25px 50px -12px oklch(0 0 0 / 0.4)" }}>
+    <div className="min-h-screen w-full flex items-center justify-center bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 p-4">
+      <div className="w-full max-w-md">
+        {/* Logo/Title */}
+        <div className="text-center mb-8">
+          <h1 className="text-3xl font-bold text-white mb-1">Arcadia</h1>
+          <p className="text-slate-400 text-xs">Gaming Hub Management</p>
+        </div>
 
-      {/* top accent line */}
-      <div className="h-px w-full"
-        style={{ background: "linear-gradient(90deg, transparent, oklch(0.55 0.26 280 / 0.6), oklch(0.82 0.14 200 / 0.4), transparent)" }} />
-
-      {/* tab switcher */}
-      <div className="p-4 pb-0">
-        <div className="flex p-1 rounded-xl gap-1 bg-muted/60">
+        {/* Tab Switcher */}
+        <div className="flex gap-2 mb-6">
           {(["login", "signup"] as const).map((tabKey) => (
-            <button key={tabKey} onClick={() => setTab(tabKey)}
-              className="flex-1 py-2 rounded-lg text-sm font-medium transition-all duration-200 cursor-pointer"
+            <button key={tabKey} onClick={() => setTab(tabKey)} type="button"
+              className="flex-1 py-2.5 rounded-lg text-sm font-medium transition-all duration-200"
               style={{
-                background: tab === tabKey ? "oklch(0.55 0.26 280)" : "transparent",
-                color: tab === tabKey ? "white" : "var(--color-muted-foreground)",
-                boxShadow: tab === tabKey ? "0 2px 8px oklch(0.55 0.26 280 / 0.3)" : "none",
+                background: tab === tabKey ? "rgba(255,255,255,0.08)" : "transparent",
+                color: tab === tabKey ? "white" : "rgba(255,255,255,0.4)",
+                border: tab === tabKey ? "1px solid rgba(255,255,255,0.15)" : "1px solid transparent",
               }}>
-              {tabKey === "login" ? t("signIn") : "Sign Up"}
+              {tabKey === "login" ? t("signIn") : t("signUp")}
             </button>
           ))}
         </div>
-      </div>
 
-      <div className="p-6 pt-5">
-        {tab === "login" ? <LoginForm /> : <SignUpForm />}
+        {/* Form */}
+        <div>
+          {tab === "login" ? <LoginForm /> : <SignUpForm />}
+        </div>
       </div>
     </div>
   );
@@ -99,6 +102,7 @@ export default function AuthForm() {
 
 function LoginForm() {
   const t = useTranslations("auth");
+  const tCommon = useTranslations("common");
   const router = useRouter();
   const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<LoginInput>({
     resolver: zodResolver(loginSchema),
@@ -108,7 +112,7 @@ function LoginForm() {
     const supabase = getBrowserClient();
     const { data: authData, error } = await supabase.auth.signInWithPassword({ email: data.email, password: data.password });
     if (error) { toast.error(error.message); return; }
-    toast.success("Welcome back!");
+    toast.success(t('welcomeBackMessage'));
     await supabase.auth.getSession();
     const { data: profile } = await supabase.from("profiles").select("role").eq("id", authData.user.id).maybeSingle();
     const role = profile?.role;
@@ -124,24 +128,18 @@ function LoginForm() {
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-4">
-      <div className="space-y-1 mb-5">
-        <h2 className="text-lg font-semibold">{t('welcomeBack')}</h2>
-        <p className="text-sm text-muted-foreground">{t('signIn')}</p>
-      </div>
-
-      <Field label="Email" id="email" type="email" placeholder="you@example.com"
+      <Field label={tCommon('email')} id="email" type="email" placeholder="you@example.com"
         icon={Mail} error={errors.email?.message} reg={register("email")} />
-      <Field label="Password" id="password" type="password" placeholder="••••••••"
+      <Field label={tCommon('password')} id="password" type="password" placeholder="••••••••"
         icon={Lock} error={errors.password?.message} reg={register("password")} />
 
-      <Button type="submit" className="w-full gap-2 cursor-pointer font-semibold mt-2" disabled={isSubmitting}
-        style={{ background: "oklch(0.55 0.26 280)", color: "white", boxShadow: "0 4px 14px oklch(0.55 0.26 280 / 0.35)" }}>
+      <Button type="submit" className="w-full gap-2 cursor-pointer font-semibold h-10 mt-5 bg-white text-black hover:bg-white/90" disabled={isSubmitting}>
         {isSubmitting ? (
-          <span className="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />
+          <span className="w-4 h-4 rounded-full border-2 border-black/30 border-t-black animate-spin" />
         ) : (
-          <LogIn size={15} />
+          <LogIn size={16} />
         )}
-        {isSubmitting ? "Signing in…" : "Sign In"}
+        {isSubmitting ? t('signingIn') : t('signIn')}
       </Button>
 
       <Divider />
@@ -151,55 +149,44 @@ function LoginForm() {
 }
 
 function SignUpForm() {
-  const [success, setSuccess] = useState(false);
-  const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<OtpRequestInput>({
-    resolver: zodResolver(otpRequestSchema),
+  const router = useRouter();
+  const t = useTranslations('auth');
+  const tCommon = useTranslations('common');
+  const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<SignupInput>({
+    resolver: zodResolver(signupSchema),
   });
 
-  async function onSubmit(data: OtpRequestInput) {
-    const res = await fetch("/api/auth/request-otp", {
+  async function onSubmit(data: SignupInput) {
+    const res = await fetch("/api/auth/signup", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(data),
     });
-    if (res.ok) { setSuccess(true); return; }
+    if (res.ok) {
+      toast.success(t('otpSent'));
+      router.push(`/verify-otp?email=${encodeURIComponent(data.email)}`);
+      return;
+    }
     const json = await res.json().catch(() => ({}));
     toast.error(json?.error ?? "Something went wrong.");
   }
 
-  if (success) {
-    return (
-      <div className="py-8 text-center space-y-3">
-        <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl mx-auto"
-          style={{ background: "oklch(0.64 0.20 145 / 0.12)", border: "1px solid oklch(0.64 0.20 145 / 0.25)" }}>
-          <MailCheck size={26} style={{ color: "oklch(0.64 0.20 145)" }} />
-        </div>
-        <div>
-          <p className="font-semibold text-sm text-foreground">Check your email</p>
-          <p className="text-xs text-muted-foreground mt-1">We sent you a one-time password.</p>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-4">
-      <div className="space-y-1 mb-5">
-        <h2 className="text-lg font-semibold">Create account</h2>
-        <p className="text-sm text-muted-foreground">We'll send you a one-time password</p>
-      </div>
-
-      <Field label="Email" id="signup-email" type="email" placeholder="you@example.com"
+      <Field label={tCommon('email')} id="signup-email" type="email" placeholder="you@example.com"
         icon={Mail} error={errors.email?.message} reg={register("email")} />
+      <Field label={tCommon('password')} id="signup-password" type="password" placeholder="••••••••"
+        icon={Lock} error={errors.password?.message} reg={register("password")} />
+      <Field label={t('confirmPassword')} id="signup-confirm" type="password" placeholder="••••••••"
+        icon={Lock} error={errors.confirmPassword?.message} reg={register("confirmPassword")} />
 
-      <Button type="submit" className="w-full gap-2 cursor-pointer font-semibold mt-2" disabled={isSubmitting}
-        style={{ background: "oklch(0.55 0.26 280)", color: "white", boxShadow: "0 4px 14px oklch(0.55 0.26 280 / 0.35)" }}>
+      <Button type="submit" className="w-full gap-2 cursor-pointer font-semibold h-10 mt-5 bg-white text-black hover:bg-white/90" disabled={isSubmitting}>
         {isSubmitting ? (
-          <span className="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />
+          <span className="w-4 h-4 rounded-full border-2 border-black/30 border-t-black animate-spin" />
         ) : (
-          <Send size={15} />
+          <Send size={16} />
         )}
-        {isSubmitting ? "Sending…" : "Send OTP"}
+        {isSubmitting ? t('sending') : t('signUp')}
       </Button>
 
       <Divider />
@@ -214,17 +201,17 @@ function Field({ label, id, type, placeholder, icon: Icon, error, reg }: {
 }) {
   return (
     <div className="space-y-1.5">
-      <Label htmlFor={id} className="text-xs font-medium text-muted-foreground">
+      <Label htmlFor={id} className="text-xs font-medium text-white/80">
         {label}
       </Label>
       <div className="relative">
-        <Icon size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground/60 pointer-events-none" />
+        <Icon size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-white/40 pointer-events-none" />
         <Input id={id} type={type} placeholder={placeholder} autoComplete="new-password"
-          className={`pl-9 ${error ? "border-destructive focus-visible:ring-destructive/30" : ""}`}
+          className={`pl-12 h-10 bg-white/5 border-white/10 text-white placeholder:text-white/30 focus-visible:ring-white/20 focus-visible:border-white/30 ${error ? "border-red-500/50 focus-visible:ring-red-500/30" : ""}`}
           {...reg} />
       </div>
       {error && (
-        <p className="text-xs text-destructive flex items-center gap-1.5">
+        <p className="text-xs text-red-400 flex items-center gap-1.5 mt-1">
           <AlertCircle size={11} />
           {error}
         </p>

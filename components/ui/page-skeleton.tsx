@@ -1,56 +1,58 @@
 import { Skeleton } from "./skeleton";
-import { Monitor, MapPin } from "lucide-react";
+import { Gamepad2, MapPin, Wifi } from "lucide-react";
 
-// Skeleton لبطاقة القاعة - يطابق HallCard تماماً
+// Skeleton لبطاقة القاعة - يطابق HallCard الجديد
 function HallCardSkeleton() {
   return (
-    <div className="relative rounded-2xl border border-border/50 bg-card overflow-hidden">
-      {/* top accent line */}
-      <div className="absolute inset-x-0 top-0 h-px"
-        style={{ background: "linear-gradient(90deg, transparent, oklch(0.55 0.26 280 / 0.6), oklch(0.82 0.14 200 / 0.3), transparent)" }} />
-      
-      {/* bg glow */}
-      <div className="absolute inset-0 opacity-[0.035] pointer-events-none"
-        style={{ backgroundImage: "radial-gradient(circle at 15% 50%, oklch(0.55 0.26 280) 0%, transparent 55%), radial-gradient(circle at 85% 10%, oklch(0.82 0.14 200) 0%, transparent 45%)" }} />
-      
-      <div className="relative p-5 flex flex-col gap-4">
+    <div className="relative rounded-2xl bg-gradient-to-br from-slate-900 via-purple-900/20 to-slate-900 p-[1px] overflow-hidden">
+      <div className="relative rounded-2xl bg-slate-950 p-6 space-y-5">
+        
         {/* Header */}
         <div className="flex items-start justify-between gap-3">
-          <div className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0"
-            style={{ background: "oklch(0.55 0.26 280 / 0.12)", border: "1px solid oklch(0.55 0.26 280 / 0.22)" }}>
-            <Monitor size={22} style={{ color: "oklch(0.65 0.22 280)" }} />
-          </div>
-          <Skeleton className="w-16 h-6 rounded-full" />
-        </div>
-
-        {/* Name & address */}
-        <div>
-          <Skeleton className="w-3/4 h-5 mb-2" />
-          <div className="flex items-center gap-1">
-            <MapPin size={11} className="shrink-0 text-muted-foreground/60" />
-            <Skeleton className="w-full h-3" />
-          </div>
-        </div>
-
-        {/* Device stats */}
-        <div className="space-y-2.5">
-          <div className="flex items-center justify-between text-xs mb-1">
-            <Skeleton className="w-20 h-3" />
-            <Skeleton className="w-12 h-3" />
-          </div>
-          <div className="h-1.5 rounded-full bg-muted overflow-hidden">
-            <Skeleton className="h-full w-2/3" style={{ background: "linear-gradient(90deg, oklch(0.64 0.20 145), oklch(0.72 0.17 160))" }} />
-          </div>
           <div className="flex items-center gap-3">
-            <Skeleton className="w-16 h-3" />
-            <Skeleton className="w-16 h-3" />
+            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500/20 to-blue-500/20 flex items-center justify-center border border-purple-500/30">
+              <Gamepad2 size={24} className="text-purple-400 opacity-50" />
+            </div>
+            <div className="space-y-2">
+              <Skeleton className="w-32 h-5 bg-slate-800" />
+              <div className="flex items-center gap-1">
+                <MapPin size={10} className="text-slate-600" />
+                <Skeleton className="w-24 h-3 bg-slate-800" />
+              </div>
+            </div>
+          </div>
+          
+          <Skeleton className="w-16 h-7 rounded-full bg-slate-800" />
+        </div>
+
+        {/* Stats Grid */}
+        <div className="grid grid-cols-3 gap-3">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="bg-slate-900/50 rounded-lg p-3 border border-slate-800">
+              <Skeleton className="w-8 h-7 mb-2 bg-slate-800" />
+              <Skeleton className="w-12 h-3 bg-slate-800" />
+            </div>
+          ))}
+        </div>
+
+        {/* Progress Bar */}
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <Skeleton className="w-16 h-3 bg-slate-800" />
+            <Skeleton className="w-12 h-3 bg-slate-800" />
+          </div>
+          <div className="h-2 rounded-full bg-slate-800 overflow-hidden">
+            <Skeleton className="h-full w-2/3 bg-gradient-to-r from-purple-500/50 to-blue-500/50" />
           </div>
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-between pt-3 border-t border-border/30">
-          <Skeleton className="w-24 h-3" />
-          <Skeleton className="w-20 h-3" />
+        <div className="flex items-center justify-between pt-3 border-t border-slate-800">
+          <div className="flex items-center gap-1.5">
+            <Wifi size={12} className="text-slate-600" />
+            <Skeleton className="w-16 h-3 bg-slate-800" />
+          </div>
+          <Skeleton className="w-20 h-4 bg-slate-800" />
         </div>
       </div>
     </div>

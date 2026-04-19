@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { Hall } from "@/types/hall";
-import { MapPin, ArrowRight, Monitor, CheckCircle2, Timer, WifiOff } from "lucide-react";
+import { MapPin, ArrowRight, Gamepad2, Wifi } from "lucide-react";
 
 type DeviceStats = { total: number; available: number; active: number; offline: number };
 
@@ -9,99 +9,78 @@ export default function HallCard({ hall, stats }: { hall: Hall; stats: DeviceSta
 
   return (
     <Link href={`/halls/${hall.id}`} className="group block">
-      <div className="relative rounded-2xl border border-border/50 bg-card overflow-hidden transition-all duration-300 hover:border-primary/40 hover:shadow-2xl hover:shadow-primary/10 hover:-translate-y-1">
-
-        {/* top accent line */}
-        <div className="absolute inset-x-0 top-0 h-px"
-          style={{ background: "linear-gradient(90deg, transparent, oklch(0.55 0.26 280 / 0.6), oklch(0.82 0.14 200 / 0.3), transparent)" }} />
-
-        {/* bg glow */}
-        <div className="absolute inset-0 opacity-[0.035] pointer-events-none"
-          style={{ backgroundImage: "radial-gradient(circle at 15% 50%, oklch(0.55 0.26 280) 0%, transparent 55%), radial-gradient(circle at 85% 10%, oklch(0.82 0.14 200) 0%, transparent 45%)" }} />
-
-        <div className="relative p-5 flex flex-col gap-4">
-
-          {/* ── Header ── */}
+      <div className="relative rounded-2xl bg-gradient-to-br from-slate-900 via-purple-900/20 to-slate-900 p-[1px] overflow-hidden transition-all duration-300 hover:scale-[1.02]">
+        
+        {/* Animated border gradient */}
+        <div className="absolute inset-0 bg-gradient-to-r from-purple-500/0 via-purple-500/50 to-purple-500/0 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+        
+        <div className="relative rounded-2xl bg-slate-950 p-6 space-y-5">
+          
+          {/* Header */}
           <div className="flex items-start justify-between gap-3">
-            <div className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0 transition-transform duration-300 group-hover:scale-105"
-              style={{ background: "oklch(0.55 0.26 280 / 0.12)", border: "1px solid oklch(0.55 0.26 280 / 0.22)" }}>
-              <Monitor size={22} style={{ color: "oklch(0.65 0.22 280)" }} />
-            </div>
-            <span className="inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full shrink-0 badge-available">
-              <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
-              Open
-            </span>
-          </div>
-
-          {/* ── Name & address ── */}
-          <div>
-            <h3 className="font-bold text-base text-foreground truncate transition-colors duration-200 group-hover:text-primary">
-              {hall.name}
-            </h3>
-            {hall.address ? (
-              <p className="text-xs text-muted-foreground flex items-center gap-1 mt-1 truncate">
-                <MapPin size={11} className="shrink-0 text-muted-foreground/60" />
-                {hall.address}
-              </p>
-            ) : (
-              <p className="text-xs text-muted-foreground/50 mt-1 italic">No address</p>
-            )}
-          </div>
-
-          {/* ── Device stats ── */}
-          <div className="space-y-2.5">
-            <div className="flex items-center justify-between text-xs mb-1">
-              <span className="text-muted-foreground">Availability</span>
-              <span className="font-semibold tabular-nums" style={{
-                color: availablePct > 50
-                  ? "oklch(0.64 0.20 145)"
-                  : availablePct > 0
-                  ? "oklch(0.78 0.18 75)"
-                  : "oklch(0.63 0.24 25)",
-              }}>
-                {stats.available}/{stats.total}
-              </span>
-            </div>
-            <div className="h-1.5 rounded-full bg-muted overflow-hidden">
-              <div className="h-full rounded-full transition-all duration-500"
-                style={{
-                  width: `${availablePct}%`,
-                  background: availablePct > 50
-                    ? "linear-gradient(90deg, oklch(0.64 0.20 145), oklch(0.72 0.17 160))"
-                    : availablePct > 0
-                    ? "linear-gradient(90deg, oklch(0.78 0.18 75), oklch(0.82 0.16 90))"
-                    : "oklch(0.63 0.24 25 / 0.5)",
-                }} />
-            </div>
             <div className="flex items-center gap-3">
-              <span className="flex items-center gap-1 text-xs text-green-400">
-                <CheckCircle2 size={11} />
-                {stats.available} free
-              </span>
-              {stats.active > 0 && (
-                <span className="flex items-center gap-1 text-xs text-blue-400">
-                  <Timer size={11} />
-                  {stats.active} active
-                </span>
-              )}
-              {stats.offline > 0 && (
-                <span className="flex items-center gap-1 text-xs text-muted-foreground/60">
-                  <WifiOff size={11} />
-                  {stats.offline} offline
-                </span>
-              )}
+              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500/20 to-blue-500/20 flex items-center justify-center border border-purple-500/30">
+                <Gamepad2 size={24} className="text-purple-400" />
+              </div>
+              <div>
+                <h3 className="font-bold text-lg text-white group-hover:text-purple-300 transition-colors">
+                  {hall.name}
+                </h3>
+                {hall.address && (
+                  <p className="text-xs text-slate-400 flex items-center gap-1 mt-0.5">
+                    <MapPin size={10} />
+                    {hall.address}
+                  </p>
+                )}
+              </div>
+            </div>
+            
+            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-green-500/10 border border-green-500/30">
+              <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
+              <span className="text-xs font-medium text-green-400">Open</span>
             </div>
           </div>
 
-          {/* ── Footer ── */}
-          <div className="flex items-center justify-between pt-3 border-t border-border/30">
-            <span className="text-xs text-muted-foreground/50">
-              {stats.total} device{stats.total !== 1 ? "s" : ""} total
-            </span>
-            <span className="flex items-center gap-1 text-xs font-semibold text-primary translate-x-1 opacity-0 group-hover:translate-x-0 group-hover:opacity-100 transition-all duration-200">
-              Book now
-              <ArrowRight size={13} />
-            </span>
+          {/* Stats Grid */}
+          <div className="grid grid-cols-3 gap-3">
+            <div className="bg-slate-900/50 rounded-lg p-3 border border-slate-800">
+              <div className="text-2xl font-bold text-white">{stats.available}</div>
+              <div className="text-xs text-slate-400 mt-1">Available</div>
+            </div>
+            <div className="bg-slate-900/50 rounded-lg p-3 border border-slate-800">
+              <div className="text-2xl font-bold text-blue-400">{stats.active}</div>
+              <div className="text-xs text-slate-400 mt-1">Active</div>
+            </div>
+            <div className="bg-slate-900/50 rounded-lg p-3 border border-slate-800">
+              <div className="text-2xl font-bold text-slate-500">{stats.offline}</div>
+              <div className="text-xs text-slate-400 mt-1">Offline</div>
+            </div>
+          </div>
+
+          {/* Progress Bar */}
+          <div className="space-y-2">
+            <div className="flex items-center justify-between text-xs">
+              <span className="text-slate-400">Capacity</span>
+              <span className="font-semibold text-white">{stats.available}/{stats.total}</span>
+            </div>
+            <div className="h-2 rounded-full bg-slate-800 overflow-hidden">
+              <div 
+                className="h-full rounded-full bg-gradient-to-r from-purple-500 to-blue-500 transition-all duration-500"
+                style={{ width: `${availablePct}%` }}
+              />
+            </div>
+          </div>
+
+          {/* Footer */}
+          <div className="flex items-center justify-between pt-3 border-t border-slate-800">
+            <div className="flex items-center gap-1.5 text-xs text-slate-400">
+              <Wifi size={12} />
+              <span>{stats.total} Devices</span>
+            </div>
+            <div className="flex items-center gap-1.5 text-sm font-semibold text-purple-400 opacity-0 group-hover:opacity-100 transition-opacity">
+              <span>Book Now</span>
+              <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
+            </div>
           </div>
         </div>
       </div>
