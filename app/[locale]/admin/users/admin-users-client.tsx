@@ -167,7 +167,7 @@ export default function AdminUsersClient({ halls }: { halls: Hall[] }) {
                 <Label htmlFor="assign_hall" className="text-xs font-medium text-muted-foreground flex items-center gap-1">
                   <Building2 size={11} /> {t("hall")}
                 </Label>
-                <Select value={assignHallId} onValueChange={setAssignHallId}>
+                <Select value={assignHallId} onValueChange={(v) => v && setAssignHallId(v)}>
                   <SelectTrigger className="h-9 w-full">
                     <SelectValue>
                       {selectedHallName}
@@ -186,7 +186,7 @@ export default function AdminUsersClient({ halls }: { halls: Hall[] }) {
                 <Label htmlFor="assign_role" className="text-xs font-medium text-muted-foreground flex items-center gap-1">
                   <ShieldCheck size={11} /> {t("role")}
                 </Label>
-                <Select value={assignRole} onValueChange={(v) => setAssignRole(v as "staff" | "manager")}>
+                <Select value={assignRole} onValueChange={(v) => v && setAssignRole(v as "staff" | "manager")}>
                   <SelectTrigger className="h-9 w-full">
                     <SelectValue>
                       {selectedRoleName}
@@ -278,7 +278,7 @@ export default function AdminUsersClient({ halls }: { halls: Hall[] }) {
                   <p className="text-sm font-medium text-foreground truncate">{u.email ?? "—"}</p>
                   <p className="text-xs text-muted-foreground font-mono truncate">{u.id}</p>
                 </div>
-                <RoleBadge role={u.role} />
+                <RoleBadge role={u.role} t={t} />
               </div>
             ))}
           </div>
@@ -295,8 +295,7 @@ const ROLE_STYLE: Record<string, { label: string; cls: string }> = {
   player:       { label: "Player",       cls: "bg-green-500/15 text-green-400 border border-green-500/25" },
 };
 
-function RoleBadge({ role }: { role: string }) {
-  const t = useTranslations("admin");
+function RoleBadge({ role, t }: { role: string; t: any }) {
   const defaultStyle = ROLE_STYLE[role];
   const label = role === "super_admin" ? t("superAdminRole")
     : role === "hall_manager" ? t("managerRole")
