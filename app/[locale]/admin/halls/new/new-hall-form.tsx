@@ -6,9 +6,11 @@ import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { Building2, MapPin, Monitor, Hash, UserCog, UserPlus, Trash2, Plus, Clock } from "lucide-react";
+import { Building2, MapPin, Monitor, UserCog, UserPlus, Trash2, Plus, Clock } from "lucide-react";
 import WorkingHoursEditor from "@/components/ui/working-hours-editor";
+import DeviceTypeSelector from "@/components/ui/device-type-selector";
 import type { WorkingHours } from "@/types/hall";
+import type { DeviceType } from "@/types/device-type";
 import { useTranslations } from "next-intl";
 
 function Section({ icon: Icon, title, desc, children, accent = "oklch(0.55 0.26 280)" }: {
@@ -42,15 +44,14 @@ function Field({ label, id, children }: { label: string; id: string; children: R
   );
 }
 
-export default function NewHallForm() {
+export default function NewHallForm({ deviceTypes, locale }: { deviceTypes: DeviceType[]; locale: string }) {
   const t = useTranslations('admin');
   const tCommon = useTranslations('common');
   const router = useRouter();
   const [pending, setPending]           = useState(false);
   const [name, setName]                 = useState("");
   const [address, setAddress]           = useState("");
-  const [deviceCount, setDeviceCount]   = useState("4");
-  const [prefix, setPrefix]             = useState("Station");
+  const [devices, setDevices]           = useState<{ device_type_id: string; quantity: number }[]>([]);
   const [staffEmail, setStaffEmail]     = useState("");
   const [staffPassword, setStaffPassword] = useState("");
   const [extraStaff, setExtraStaff]     = useState<{ email: string; password: string }[]>([]);
@@ -68,24 +69,28 @@ export default function NewHallForm() {
     e.preventDefault();
     setPending(true);
     try {
-      const device_count = Number(deviceCount);
-      if (!Number.isFinite(device_count) || device_count < 1) {
-        toast.error("Device count must be at least 1."); setPending(false); return;
+      if (devices.length === 0) {
+        toast.error(locale === "ar" ? "يجب إضافة نوع جهاز واحد على الأقل" : "At least one device type is required");
+        setPending(false);
+        return;
       }
       if (staffPassword.length < 6) {
-        toast.error("Manager password must be at least 6 characters."); setPending(false); return;
+        toast.error("Manager password must be at least 6 characters.");
+        setPending(false);
+        return;
       }
       for (const s of extraStaff.filter(s => s.email.trim())) {
         if (s.password.length < 6) {
-          toast.error(`Password for ${s.email} must be at least 6 characters.`); setPending(false); return;
+          toast.error(`Password for ${s.email} must be at least 6 characters.`);
+          setPending(false);
+          return;
         }
       }
 
       const body: Record<string, unknown> = {
         name: name.trim(),
         address: address.trim() || null,
-        device_count,
-        device_name_prefix: prefix.trim() || "Station",
+        devices,
         working_hours: workingHours,
         staff: { email: staffEmail.trim(), password: staffPassword, role: "hall_manager" },
       };
@@ -138,27 +143,13 @@ export default function NewHallForm() {
       </Section>
 
       {/* Devices */}
-      <Section icon={Monitor} title={t('devices')} desc={t('devicesDesc')}>
-        <div className="grid sm:grid-cols-2 gap-4">
-          <Field label={t('numberOfDevices')} id="device_count">
-            <div className="relative">
-              <Monitor size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground/50 pointer-events-none" />
-              <Input id="device_count" type="number" min={1} max={500}
-                value={deviceCount} onChange={e => setDeviceCount(e.target.value)}
-                required className="pl-9" />
-            </div>
-          </Field>
-          <Field label={t('deviceNamePrefix')} id="prefix">
-            <div className="relative">
-              <Hash size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground/50 pointer-events-none" />
-              <Input id="prefix" value={prefix} onChange={e => setPrefix(e.target.value)}
-                placeholder="Station" className="pl-9" />
-            </div>
-          </Field>
-        </div>
-        <p className="text-xs text-muted-foreground">
-          {t('devicesWillBeNamed')} <span className="font-mono text-foreground">{prefix || "Station"} 1</span>, <span className="font-mono text-foreground">{prefix || "Station"} 2</span>…
-        </p>
+      <Section icon={Monitor} title={t('devices')} desc={locale === "ar" ? "اختر أنواع الأجهزة والكمية لكل نوع" : "Select device types and quantity for each"}>
+        <DeviceTypeSelector
+          deviceTypes={deviceTypes}
+          value={devices}
+          onChange={setDevices}
+          locale={locale}
+        />
       </Section>
 
       {/* Working Hours */}

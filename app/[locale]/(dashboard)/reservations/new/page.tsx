@@ -6,12 +6,13 @@ import BookingForm from "./booking-form";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
 import { Gamepad2, ChevronRight, ChevronLeft, CalendarPlus } from "lucide-react";
+import { getTranslations } from "next-intl/server";
 
 export const metadata: Metadata = { title: "New Reservation" };
 
-async function BookingFormLoader() {
+async function BookingFormLoader({ locale }: { locale: string }) {
   const halls = await getHalls();
-  return <BookingForm halls={halls} />;
+  return <BookingForm halls={halls} locale={locale} />;
 }
 
 function BookingFormSkeleton() {
@@ -28,7 +29,9 @@ function BookingFormSkeleton() {
   );
 }
 
-export default function NewReservationPage() {
+export default async function NewReservationPage({ params }: { params: Promise<{ locale: string }> }) {
+  const { locale } = await params;
+  const t = await getTranslations("reservations");
   return (
     <div className="min-h-screen bg-background">
       <header className="flex items-center gap-3 px-5 h-14 border-b border-border/60 bg-card/80 backdrop-blur-sm sticky top-0 z-50">
@@ -46,11 +49,11 @@ export default function NewReservationPage() {
         </Link>
         <Separator orientation="vertical" className="h-5 opacity-30" />
         <nav className="flex items-center gap-1 text-sm overflow-hidden">
-          <Link href="/halls" className="text-muted-foreground hover:text-foreground transition-colors shrink-0">Halls</Link>
-          <ChevronRight size={13} className="text-border shrink-0" />
-          <Link href="/reservations" className="text-muted-foreground hover:text-foreground transition-colors shrink-0">Reservations</Link>
-          <ChevronRight size={13} className="text-border shrink-0" />
-          <span className="text-foreground font-medium truncate">New</span>
+          <Link href="/halls" className="text-muted-foreground hover:text-foreground transition-colors shrink-0">{t("halls")}</Link>
+          <ChevronRight size={13} className="text-border shrink-0 rtl:rotate-180" />
+          <Link href="/reservations" className="text-muted-foreground hover:text-foreground transition-colors shrink-0">{t("title")}</Link>
+          <ChevronRight size={13} className="text-border shrink-0 rtl:rotate-180" />
+          <span className="text-foreground font-medium truncate">{t("new")}</span>
         </nav>
       </header>
 
@@ -59,20 +62,20 @@ export default function NewReservationPage() {
           href="/halls"
           className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors px-2 py-1 rounded-lg hover:bg-muted -ml-2 w-fit"
         >
-          <ChevronLeft size={14} />
-          Back to halls
+          <ChevronLeft size={14} className="rtl:rotate-180" />
+          {t("backToHalls")}
         </Link>
 
         <div className="flex items-center gap-2.5">
           <CalendarPlus size={18} className="text-muted-foreground" />
           <div>
-            <h1 className="text-2xl font-bold tracking-tight leading-none">New Reservation</h1>
-            <p className="text-sm text-muted-foreground mt-0.5">Book a gaming device</p>
+            <h1 className="text-2xl font-bold tracking-tight leading-none">{t("newReservation")}</h1>
+            <p className="text-sm text-muted-foreground mt-0.5">{t("bookDevice")}</p>
           </div>
         </div>
 
         <Suspense fallback={<BookingFormSkeleton />}>
-          <BookingFormLoader />
+          <BookingFormLoader locale={locale} />
         </Suspense>
       </div>
     </div>

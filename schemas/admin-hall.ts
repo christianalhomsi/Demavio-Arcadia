@@ -5,8 +5,10 @@ const staffHallRoleSchema = z.enum(["hall_staff", "hall_manager"]);
 export const hallBootstrapSchema = z.object({
   name: z.string().min(1).max(200),
   address: z.string().max(500).optional().nullable(),
-  device_count: z.coerce.number().int().min(1).max(500),
-  device_name_prefix: z.string().min(1).max(80).optional().default("Station"),
+  devices: z.array(z.object({
+    device_type_id: z.string().uuid(),
+    quantity: z.coerce.number().int().min(1).max(500),
+  })).min(1),
   working_hours: z.array(z.object({
     day: z.number().int().min(0).max(6),
     open_time: z.string(),

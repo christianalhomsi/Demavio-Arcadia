@@ -8,6 +8,7 @@ import type { Device } from "@/services/devices";
 import DeviceCard from "@/components/ui/device-card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
+import { getTranslations } from "next-intl/server";
 import {
   Gamepad2, ChevronRight, ChevronLeft, Building2,
   MapPin, Monitor, Plus, CheckCircle2, Timer, Clock, WifiOff,
@@ -26,19 +27,20 @@ async function getHallById(hallId: string): Promise<Hall | null> {
 async function getDevicesByHall(hallId: string): Promise<Device[]> {
   const supabase = await getServerClient();
   const { data } = await supabase
-    .from("devices").select("id, hall_id, name, status, last_heartbeat")
+    .from("devices").select("id, hall_id, name, status, last_heartbeat, device_type_id")
     .eq("hall_id", hallId).order("name", { ascending: true });
   return data ?? [];
 }
 
-const STATUS_META: Record<string, { cls: string; icon: React.ElementType }> = {
-  available: { cls: "badge-available", icon: CheckCircle2 },
-  active:    { cls: "badge-active",    icon: Timer },
-  offline:   { cls: "badge-offline",   icon: WifiOff },
-  idle:      { cls: "badge-idle",      icon: Clock },
+const STATUS_META: Record<string, { cls: string; icon: React.ElementType; tKey: string }> = {
+  available: { cls: "badge-available", icon: CheckCircle2, tKey: "statusAvailable" },
+  active:    { cls: "badge-active",    icon: Timer,        tKey: "statusActive" },
+  offline:   { cls: "badge-offline",   icon: WifiOff,      tKey: "statusOffline" },
+  idle:      { cls: "badge-idle",      icon: Clock,        tKey: "statusIdle" },
 };
 
-async function HallContent({ hallId }: { hallId: string }) {
+async function HallContent({ hallId, locale }: { hallId: string; locale: string }) {
+  const t = await getTranslations("halls");
   const [hall, devices] = await Promise.all([getHallById(hallId), getDevicesByHall(hallId)]);
   if (!hall) notFound();
 
@@ -51,19 +53,16 @@ async function HallContent({ hallId }: { hallId: string }) {
 
   return (
     <>
-      {/* Hall hero banner */}
       <div className="relative rounded-2xl overflow-hidden border border-border/50 bg-card mb-8">
         <div className="absolute inset-0 opacity-[0.04]"
           style={{ backgroundImage: "radial-gradient(circle at 10% 50%, oklch(0.55 0.26 280) 0%, transparent 50%), radial-gradient(circle at 90% 20%, oklch(0.82 0.14 200) 0%, transparent 40%)" }} />
         <div className="absolute inset-x-0 top-0 h-px"
           style={{ background: "linear-gradient(90deg, transparent, oklch(0.55 0.26 280 / 0.4), transparent)" }} />
-
         <div className="relative p-6 sm:p-8 flex flex-col sm:flex-row sm:items-center gap-5">
           <div className="w-14 h-14 rounded-2xl flex items-center justify-center shrink-0"
             style={{ background: "oklch(0.55 0.26 280 / 0.12)", border: "1px solid oklch(0.55 0.26 280 / 0.25)" }}>
             <Building2 size={26} style={{ color: "oklch(0.65 0.22 280)" }} />
           </div>
-
           <div className="flex-1 min-w-0">
             <h1 className="text-2xl font-bold tracking-tight">{hall.name}</h1>
             {hall.address && (
@@ -73,8 +72,6 @@ async function HallContent({ hallId }: { hallId: string }) {
               </p>
             )}
           </div>
-
-          {/* status pills */}
           <div className="flex flex-wrap gap-2 shrink-0">
             {Object.entries(counts).filter(([, v]) => v > 0).map(([status, count]) => {
               const meta = STATUS_META[status];
@@ -82,7 +79,7 @@ async function HallContent({ hallId }: { hallId: string }) {
               return (
                 <span key={status} className={`inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-full ${meta?.cls ?? ""}`}>
                   <Icon size={11} />
-                  {count} {status}
+                  {count} {t(meta.tKey as any)}
                 </span>
               );
             })}
@@ -90,10 +87,9 @@ async function HallContent({ hallId }: { hallId: string }) {
         </div>
       </div>
 
-      {/* Devices */}
       <div className="flex items-center justify-between mb-5">
         <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
-          Devices · {devices.length}
+          {t("devices")} · {devices.length}
         </p>
       </div>
 
@@ -103,7 +99,7 @@ async function HallContent({ hallId }: { hallId: string }) {
             style={{ background: "oklch(0.55 0.26 280 / 0.08)", border: "1px solid oklch(0.55 0.26 280 / 0.15)" }}>
             <Monitor size={24} className="text-muted-foreground" />
           </div>
-          <p className="text-sm text-muted-foreground">No devices in this hall.</p>
+          <p className="text-sm text-muted-foreground">{t("noDevices")}</p>
         </div>
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
@@ -127,8 +123,9 @@ function HallContentSkeleton() {
   );
 }
 
-export default async function HallDetailPage({ params }: { params: Promise<{ hallId: string }> }) {
-  const { hallId } = await params;
+export default async function HallDetailPage({ params }: { params: Promise<{ hallId: string; locale: string }> }) {
+  const { hallId, locale } = await params;
+  const t = await getTranslations("halls");
   return (
     <div className="min-h-screen bg-background">
       <header className="sticky top-0 z-50 border-b border-border/50 bg-background/80 backdrop-blur-md">
@@ -145,16 +142,16 @@ export default async function HallDetailPage({ params }: { params: Promise<{ hal
           </Link>
           <Separator orientation="vertical" className="h-5 opacity-30" />
           <nav className="flex items-center gap-1 text-sm">
-            <Link href="/halls" className="text-muted-foreground hover:text-foreground transition-colors">Halls</Link>
-            <ChevronRight size={13} className="text-border" />
-            <span className="text-foreground font-medium">Details</span>
+            <Link href="/halls" className="text-muted-foreground hover:text-foreground transition-colors">{t("title")}</Link>
+            <ChevronRight size={13} className="text-border rtl:rotate-180" />
+            <span className="text-foreground font-medium">{t("details")}</span>
           </nav>
           <div className="flex-1" />
           <Link href="/reservations/new"
             className="inline-flex items-center gap-1.5 h-8 px-3 rounded-lg text-xs font-semibold text-white transition-all hover:opacity-90"
             style={{ background: "oklch(0.55 0.26 280)" }}>
             <Plus size={13} />
-            Book Device
+            {t("bookDevice")}
           </Link>
         </div>
       </header>
@@ -162,12 +159,12 @@ export default async function HallDetailPage({ params }: { params: Promise<{ hal
       <main className="max-w-6xl mx-auto px-5 py-8">
         <Link href="/halls"
           className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors px-2 py-1 rounded-lg hover:bg-muted -ml-2 mb-6 w-fit">
-          <ChevronLeft size={14} />
-          Back to halls
+          <ChevronLeft size={14} className="rtl:rotate-180" />
+          {t("backToHalls")}
         </Link>
 
         <Suspense fallback={<HallContentSkeleton />}>
-          <HallContent hallId={hallId} />
+          <HallContent hallId={hallId} locale={locale} />
         </Suspense>
       </main>
     </div>

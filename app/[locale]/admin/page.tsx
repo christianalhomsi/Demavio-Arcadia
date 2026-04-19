@@ -14,14 +14,16 @@ export default async function AdminHomePage() {
   const supabase = await getServerClient();
   const admin = getAdminClient();
 
-  const [halls, { count: userCount }] = await Promise.all([
+  const [halls, { count: playerCount }, { count: totalUsers }] = await Promise.all([
     getHalls(),
     admin.from("profiles").select("id", { count: "exact", head: true }).eq("role", "player"),
+    admin.from("profiles").select("id", { count: "exact", head: true }),
   ]);
 
   const stats = [
-    { label: t('totalHalls'),  value: halls.length,    icon: Building2,  color: "text-violet-400",  bg: "oklch(0.55 0.26 280 / 0.1)",  border: "oklch(0.55 0.26 280 / 0.2)" },
-    { label: t('players'),       value: userCount ?? 0,  icon: Users,      color: "text-cyan-400",    bg: "oklch(0.82 0.14 200 / 0.1)",  border: "oklch(0.82 0.14 200 / 0.2)" },
+    { label: t('totalHalls'),  value: halls.length,      icon: Building2,  color: "text-violet-400",  bg: "oklch(0.55 0.26 280 / 0.1)",  border: "oklch(0.55 0.26 280 / 0.2)" },
+    { label: t('players'),     value: playerCount ?? 0,  icon: Users,      color: "text-cyan-400",    bg: "oklch(0.82 0.14 200 / 0.1)",  border: "oklch(0.82 0.14 200 / 0.2)" },
+    { label: t('totalUsers'),  value: totalUsers ?? 0,   icon: Users,      color: "text-emerald-400", bg: "oklch(0.65 0.20 140 / 0.1)",  border: "oklch(0.65 0.20 140 / 0.2)" },
   ];
 
   const actions = [
@@ -59,7 +61,7 @@ export default async function AdminHomePage() {
       </div>
 
       {/* stats */}
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-3 gap-4">
         {stats.map(({ label, value, icon: Icon, color, bg, border }) => (
           <div key={label} className="rounded-2xl border bg-card p-5"
             style={{ borderColor: border, background: `color-mix(in oklch, ${bg}, var(--card))` }}>

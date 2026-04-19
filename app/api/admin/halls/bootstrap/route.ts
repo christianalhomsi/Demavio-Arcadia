@@ -6,6 +6,7 @@ import { getAdminClient } from "@/lib/supabase/admin";
 
 async function rollbackHall(admin: SupabaseClient, hallId: string) {
   await admin.from("devices").delete().eq("hall_id", hallId);
+  await admin.from("hall_devices").delete().eq("hall_id", hallId);
   await admin.from("staff_assignments").delete().eq("hall_id", hallId);
   await admin.from("staff_hall_access").delete().eq("hall_id", hallId);
   await admin.from("halls").delete().eq("id", hallId);
@@ -24,7 +25,7 @@ export async function POST(request: Request) {
     );
   }
 
-  const { name, address, device_count, device_name_prefix, staff, extra_staff } = parsed.data;
+  const { name, address, devices, staff, extra_staff } = parsed.data;
   const admin = getAdminClient();
 
   const { data: hallRow, error: hallErr } = await admin
@@ -44,17 +45,48 @@ export async function POST(request: Request) {
 
   const hallId = hallRow.id as string;
 
-  const devices = Array.from({ length: device_count }, (_, i) => ({
-    hall_id: hallId,
-    name: `${device_name_prefix} ${i + 1}`,
-    status: "available" as const,
-  }));
+  // إنشاء الأجهزة حسب النوع
+  const allDevices = [];
+  const hallDevicesRecords = [];
+  
+  // جلب أسماء أنواع الأجهزة
+  const { data: deviceTypesData } = await admin
+    .from("device_types")
+    .select("id, name_en")
+    .in("id", devices.map(d => d.device_type_id));
+  
+  const typeNamesMap = new Map((deviceTypesData || []).map(dt => [dt.id, dt.name_en]));
+  
+  for (const deviceGroup of devices) {
+    const typeName = typeNamesMap.get(deviceGroup.device_type_id) || "Device";
+    for (let i = 0; i < deviceGroup.quantity; i++) {
+      allDevices.push({
+        hall_id: hallId,
+        name: `${typeName} ${i + 1}`,
+        status: "available" as const,
+        device_type_id: deviceGroup.device_type_id,
+      });
+    }
+    
+    hallDevicesRecords.push({
+      hall_id: hallId,
+      device_type_id: deviceGroup.device_type_id,
+      quantity: deviceGroup.quantity,
+    });
+  }
 
-  const { error: devErr } = await admin.from("devices").insert(devices);
+  const { error: devErr } = await admin.from("devices").insert(allDevices);
   if (devErr) {
     console.error("[admin/halls/bootstrap] devices insert", devErr);
     await rollbackHall(admin, hallId);
     return NextResponse.json({ error: "Failed to create devices" }, { status: 500 });
+  }
+
+  const { error: hallDevErr } = await admin.from("hall_devices").insert(hallDevicesRecords);
+  if (hallDevErr) {
+    console.error("[admin/halls/bootstrap] hall_devices insert", hallDevErr);
+    await rollbackHall(admin, hallId);
+    return NextResponse.json({ error: "Failed to create hall devices" }, { status: 500 });
   }
 
   if (staff) {

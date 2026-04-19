@@ -9,6 +9,7 @@ export type Device = {
   name: string;
   status: DeviceStatus;
   last_heartbeat: string | null;
+  device_type_id: string;
 };
 
 export async function getDevice(deviceId: string): Promise<ServiceResult<Device>> {
@@ -16,7 +17,7 @@ export async function getDevice(deviceId: string): Promise<ServiceResult<Device>
 
   const { data, error } = await supabase
     .from("devices")
-    .select("id, hall_id, name, status, last_heartbeat")
+    .select("id, hall_id, name, status, last_heartbeat, device_type_id")
     .eq("id", deviceId)
     .neq("status", "offline")
     .single();

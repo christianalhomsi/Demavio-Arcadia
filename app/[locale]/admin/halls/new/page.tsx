@@ -3,11 +3,14 @@ import Link from "next/link";
 import NewHallForm from "./new-hall-form";
 import { ChevronLeft, Building2 } from "lucide-react";
 import { getTranslations } from "next-intl/server";
+import { getDeviceTypes } from "@/services/device-types";
 
 export const metadata: Metadata = { title: "Admin — New Hall" };
 
-export default async function AdminNewHallPage() {
+export default async function AdminNewHallPage({ params }: { params: Promise<{ locale: string }> }) {
+  const { locale } = await params;
   const t = await getTranslations('admin');
+  const deviceTypes = await getDeviceTypes();
   
   return (
     <div className="space-y-6">
@@ -30,7 +33,7 @@ export default async function AdminNewHallPage() {
         </div>
       </div>
 
-      <NewHallForm />
+      <NewHallForm deviceTypes={deviceTypes} locale={locale} />
     </div>
   );
 }

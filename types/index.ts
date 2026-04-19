@@ -8,4 +8,5 @@ export type { CashRegister, CashRegisterStatus, OpenCashRegisterInput, CloseCash
 export type { AuditAction, AuditLogEntry, WriteAuditLogInput } from "./audit";
 export type { AgentCommand, AgentCommandPayload, AgentCommandResult } from "./agent";
 export type { AppUserRole } from "./user-role";
+export type { DeviceType, HallDevice } from "./device-type";
 export { PROFILE_SUPER_ADMIN, HALL_DASHBOARD_ROLES, isHallDashboardRole } from "./user-role";
