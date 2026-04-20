@@ -137,7 +137,7 @@ export default function DeviceCalendarView({ deviceId, deviceName, hallId, open,
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent onClose={onClose} className="max-w-3xl max-h-[85vh]">
+      <DialogContent onClose={onClose} className="max-w-4xl max-h-[90vh]">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2.5">
             <div
@@ -147,7 +147,7 @@ export default function DeviceCalendarView({ deviceId, deviceName, hallId, open,
               <Calendar size={16} style={{ color: "oklch(0.65 0.22 280)" }} />
             </div>
             <div>
-              <p className="text-base font-bold">{deviceName}</p>
+              <p className="text-lg font-bold">{deviceName}</p>
               <p className="text-xs text-muted-foreground font-normal">تقويم الحجوزات</p>
             </div>
           </DialogTitle>
@@ -207,7 +207,7 @@ export default function DeviceCalendarView({ deviceId, deviceName, hallId, open,
               </CardContent>
             </Card>
           ) : (
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 max-h-[450px] overflow-y-auto pr-1">
+            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2 max-h-[500px] overflow-y-auto pr-1">
               {slots.map((slot, i) => {
                 const isPast = slot.time < new Date();
                 const isBooked = !!slot.reservation;
@@ -227,9 +227,9 @@ export default function DeviceCalendarView({ deviceId, deviceName, hallId, open,
                         : "border-green-500/50 bg-green-500/10"
                     )}
                   >
-                    <CardContent className="p-2.5 space-y-1.5">
-                      <div className="flex items-center justify-between gap-1.5">
-                        <span className="text-xs font-bold">
+                    <CardContent className="p-2 space-y-1">
+                      <div className="flex flex-col gap-1">
+                        <span className="text-xs font-bold text-center">
                           {slot.time.toLocaleTimeString("en-US", {
                             hour: "2-digit",
                             minute: "2-digit",
@@ -238,34 +238,31 @@ export default function DeviceCalendarView({ deviceId, deviceName, hallId, open,
                         </span>
                         <span
                           className={cn(
-                            "text-[9px] font-semibold px-1.5 py-0.5 rounded-full whitespace-nowrap",
+                            "text-[9px] font-semibold px-1.5 py-0.5 rounded-full text-center",
                             isBooked
                               ? isPending
-                                ? "bg-yellow-500/25 text-yellow-600 dark:text-yellow-400"
-                                : "bg-purple-500/25 text-purple-600 dark:text-purple-400"
+                                ? "bg-yellow-500/30 text-yellow-700 dark:text-yellow-300"
+                                : "bg-purple-500/30 text-purple-700 dark:text-purple-300"
                               : isPast
                               ? "bg-muted text-muted-foreground"
-                              : "bg-green-500/25 text-green-600 dark:text-green-400"
+                              : "bg-green-500/30 text-green-700 dark:text-green-300"
                           )}
                         >
                           {isBooked ? (isPending ? "انتظار" : "محجوز") : isPast ? "انتهى" : "متاح"}
                         </span>
                       </div>
                       {isBooked && slot.reservation?.user ? (
-                        <div className="flex items-start gap-1.5 text-[10px] pt-1 border-t border-border/40">
-                          <User size={11} className="mt-0.5 shrink-0 text-muted-foreground" />
+                        <div className="flex items-start gap-1 text-[9px] pt-1 border-t border-border/40">
+                          <User size={10} className="mt-0.5 shrink-0 text-muted-foreground" />
                           <div className="min-w-0 flex-1">
                             <p className="font-semibold text-foreground truncate leading-tight">
                               {slot.reservation.user.full_name}
                             </p>
-                            <p className="text-[9px] text-muted-foreground truncate mt-0.5">
-                              {slot.reservation.user.email}
-                            </p>
                           </div>
                         </div>
                       ) : !isBooked && !isPast ? (
-                        <p className="text-[9px] text-muted-foreground text-center pt-1 border-t border-border/40">
-                          جاهز للحجز
+                        <p className="text-[8px] text-muted-foreground text-center pt-1 border-t border-border/40">
+                          جاهز
                         </p>
                       ) : null}
                     </CardContent>
