@@ -3,7 +3,6 @@
 import { useState, useEffect } from "react";
 import { getBrowserClient } from "@/lib/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import type { WorkingHours } from "@/types/hall";
 
@@ -139,7 +138,6 @@ export default function CalendarBooking(props: Props) {
     if (!slot.available) return;
 
     if (!localStart) {
-      // أول ضغطة: تحديد البداية فقط
       setLocalStart(slot.time);
       const singleEnd = new Date(slot.time);
       singleEnd.setMinutes(singleEnd.getMinutes() + 30);
@@ -147,12 +145,10 @@ export default function CalendarBooking(props: Props) {
       forceUpdate(n => n + 1);
       onSelectSlot(slot.time, singleEnd);
     } else {
-      // ضغطة ثانية: تحديد النطاق
       const clickedTime = slot.time.getTime();
       const startTime = localStart.getTime();
 
       if (clickedTime === startTime) {
-        // إذا ضغط على نفس الوقت، إلغاء التحديد
         setLocalStart(null);
         setLocalEnd(null);
         forceUpdate(n => n + 1);
@@ -164,18 +160,15 @@ export default function CalendarBooking(props: Props) {
       let rangeEnd: Date;
 
       if (clickedTime < startTime) {
-        // إذا اختار وقت قبل البداية
         rangeStart = slot.time;
         rangeEnd = new Date(localStart);
         rangeEnd.setMinutes(rangeEnd.getMinutes() + 30);
       } else {
-        // إذا اختار وقت بعد البداية
         rangeStart = localStart;
         rangeEnd = new Date(slot.time);
         rangeEnd.setMinutes(rangeEnd.getMinutes() + 30);
       }
 
-      // تحقق من أن جميع الجلسات في النطاق متاحة
       const rangeStartTime = rangeStart.getTime();
       const rangeEndTime = rangeEnd.getTime();
       const slotsInRange = slots.filter(function (s) {
@@ -188,7 +181,6 @@ export default function CalendarBooking(props: Props) {
       });
 
       if (!allAvailable) {
-        // إذا كان هناك حجز في النطاق، ابدأ من جديد بالجلسة الجديدة
         setLocalStart(slot.time);
         const singleEnd = new Date(slot.time);
         singleEnd.setMinutes(singleEnd.getMinutes() + 30);
@@ -230,27 +222,29 @@ export default function CalendarBooking(props: Props) {
   }
 
   return (
-    <Card className="border-border/60">
-      <CardContent className="p-3 sm:p-4">
+    <Card className="border-border/60 overflow-hidden">
+      <CardContent className="p-4">
         {pricePerHour > 0 && (
-          <div className="mb-3 p-2 rounded-lg bg-primary/5 text-xs text-center">
-            <span className="text-muted-foreground">
-              {locale === "ar" ? "سعر الجلسة (30 دقيقة):" : "Session Price (30 min):"}
-            </span>
-            <span className="font-bold mx-1" style={{ color: "oklch(0.55 0.26 280)" }}>
-              {(pricePerHour / 2).toFixed(2)}
-            </span>
-            <span className="text-muted-foreground">
-              {locale === "ar" ? "ل.س" : "SYP"}
-            </span>
+          <div className="mb-4 p-3 rounded-lg bg-primary/10 border border-primary/30">
+            <div className="flex items-center justify-center gap-2 text-sm">
+              <span className="text-muted-foreground">
+                {locale === "ar" ? "سعر الجلسة (30 دقيقة):" : "Session Price (30 min):"}
+              </span>
+              <span className="font-bold text-lg" style={{ color: "oklch(0.55 0.26 280)" }}>
+                {(pricePerHour / 2).toFixed(2)}
+              </span>
+              <span className="text-muted-foreground">
+                {locale === "ar" ? "ل.س" : "SYP"}
+              </span>
+            </div>
           </div>
         )}
-        <p className="text-xs text-muted-foreground mb-3">
+        <p className="text-sm text-muted-foreground mb-4 text-center leading-relaxed">
           {locale === "ar" 
             ? "اضغط على وقت البداية، ثم اضغط على وقت النهاية (أو اترك جلسة واحدة)"
             : "Click start time, then click end time (or leave as single session)"}
         </p>
-        <div className="grid grid-cols-3 sm:grid-cols-4 gap-1.5 sm:gap-2">
+        <div className="grid grid-cols-4 sm:grid-cols-5 lg:grid-cols-6 gap-2.5">
           {slots.map(function (slot, i) {
             const slotTime = slot.time.getTime();
             
@@ -268,23 +262,32 @@ export default function CalendarBooking(props: Props) {
                   handleSlotClick(slot);
                 }}
                 className={cn(
-                  "h-10 sm:h-12 text-[10px] sm:text-xs rounded-md border transition-all",
-                  !slot.available && "opacity-30 cursor-not-allowed",
-                  !isInRange && "border-input bg-background hover:bg-accent hover:text-accent-foreground"
+                  "h-14 rounded-lg border-2 transition-all flex flex-col items-center justify-center gap-0.5 overflow-hidden",
+                  !slot.available && "opacity-40 cursor-not-allowed bg-muted/30 border-border/50",
+                  slot.available && !isInRange && "border-border bg-card hover:border-primary/60 hover:bg-primary/5 cursor-pointer",
+                  isInRange && "border-primary bg-primary/15 shadow-md"
                 )}
-                style={isInRange ? {
-                  borderWidth: '2px',
-                  borderColor: 'oklch(0.55 0.26 280)',
-                  background: 'oklch(0.55 0.26 280 / 0.15)',
-                  color: 'oklch(0.55 0.26 280)',
-                  fontWeight: '600'
-                } : {}}
               >
-                {slot.time.toLocaleTimeString("en-US", {
-                  hour: "2-digit",
-                  minute: "2-digit",
-                  hour12: false,
-                })}
+                <span className={cn(
+                  "text-sm font-bold",
+                  isInRange ? "text-primary" : "text-foreground"
+                )}>
+                  {slot.time.toLocaleTimeString("en-US", {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                    hour12: false,
+                  })}
+                </span>
+                <span className={cn(
+                  "text-[10px] font-medium",
+                  !slot.available ? "text-muted-foreground" :
+                  isInRange ? "text-primary" : "text-muted-foreground"
+                )}>
+                  {!slot.available 
+                    ? (locale === "ar" ? "انتهى" : "Past")
+                    : (locale === "ar" ? "متاح" : "Available")
+                  }
+                </span>
               </button>
             );
           })}

@@ -153,7 +153,7 @@ export default function BookingForm({ halls, locale }: { halls: Hall[]; locale: 
   return (
     <Card className="border-border/60">
       <CardHeader className="px-4 sm:px-6">
-        <CardTitle className="text-base font-cairo">{t("bookingDetails")}</CardTitle>
+        <CardTitle className="text-lg font-bold">{t("bookingDetails")}</CardTitle>
         <CardDescription className="text-xs sm:text-sm">{t("fillDetails")}</CardDescription>
       </CardHeader>
       <Separator className="opacity-40" />

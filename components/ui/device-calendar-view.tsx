@@ -137,7 +137,7 @@ export default function DeviceCalendarView({ deviceId, deviceName, hallId, open,
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent onClose={onClose} className="max-w-4xl max-h-[90vh]">
+      <DialogContent onClose={onClose} className="max-w-[98vw] w-full max-h-[96vh] h-full">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2.5">
             <div
@@ -152,10 +152,10 @@ export default function DeviceCalendarView({ deviceId, deviceName, hallId, open,
             </div>
           </DialogTitle>
         </DialogHeader>
-        <DialogBody className="space-y-4">
+        <DialogBody className="space-y-3 h-full flex flex-col">
           {/* Date Navigation */}
-          <Card className="border-border/60">
-            <CardContent className="p-4">
+          <Card className="border-border/60 shrink-0">
+            <CardContent className="p-3">
               <div className="flex items-center justify-between gap-3">
                 <Button
                   size="sm"
@@ -193,21 +193,22 @@ export default function DeviceCalendarView({ deviceId, deviceName, hallId, open,
           </Card>
 
           {/* Time Slots */}
+          <div className="flex-1 min-h-0">
           {loading ? (
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
-              {Array.from({ length: 12 }).map((_, i) => (
-                <div key={i} className="h-24 rounded-lg bg-muted/50 animate-pulse" />
+            <div className="grid grid-cols-6 sm:grid-cols-8 md:grid-cols-10 lg:grid-cols-12 xl:grid-cols-14 gap-2 h-full">
+              {Array.from({ length: 42 }).map((_, i) => (
+                <div key={i} className="h-20 rounded-lg bg-muted/50 animate-pulse" />
               ))}
             </div>
           ) : slots.length === 0 ? (
-            <Card className="border-border/60">
+            <Card className="border-border/60 h-full flex items-center justify-center">
               <CardContent className="p-10 text-center">
                 <Clock size={32} className="mx-auto mb-3 text-muted-foreground opacity-50" />
                 <p className="text-sm font-medium text-muted-foreground">الصالة مغلقة في هذا اليوم</p>
               </CardContent>
             </Card>
           ) : (
-            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2 max-h-[500px] overflow-y-auto pr-1">
+            <div className="grid grid-cols-6 sm:grid-cols-8 md:grid-cols-10 lg:grid-cols-12 xl:grid-cols-14 gap-2 h-full overflow-y-auto pr-1">
               {slots.map((slot, i) => {
                 const isPast = slot.time < new Date();
                 const isBooked = !!slot.reservation;
@@ -271,8 +272,9 @@ export default function DeviceCalendarView({ deviceId, deviceName, hallId, open,
               })}
             </div>
           )}
+          </div>
 
-          <div className="flex justify-end pt-2 border-t border-border/40">
+          <div className="flex justify-end pt-2 border-t border-border/40 shrink-0">
             <Button variant="outline" onClick={onClose} className="cursor-pointer">
               إغلاق
             </Button>
