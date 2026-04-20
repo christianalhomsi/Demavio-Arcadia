@@ -200,25 +200,28 @@
 
   /* ── Status badges ── */
   .badge-available {
-    @apply bg-green-500/15 text-green-400 border border-green-500/20;
+    @apply bg-green-500/15 text-green-400 border border-green-500/30;
+    box-shadow: 0 0 8px oklch(0.64 0.20 145 / 0.15);
   }
   .badge-active {
-    @apply bg-blue-500/15 text-blue-400 border border-blue-500/20;
+    @apply bg-blue-500/15 text-blue-400 border border-blue-500/30;
+    box-shadow: 0 0 8px oklch(0.65 0.18 230 / 0.15);
   }
   .badge-offline {
-    @apply bg-slate-500/15 text-slate-400 border border-slate-500/20;
+    @apply bg-slate-500/15 text-slate-400 border border-slate-500/30;
   }
   .badge-idle {
-    @apply bg-amber-500/15 text-amber-400 border border-amber-500/20;
+    @apply bg-amber-500/15 text-amber-400 border border-amber-500/30;
+    box-shadow: 0 0 8px oklch(0.78 0.18 75 / 0.15);
   }
   .badge-confirmed {
-    @apply bg-green-500/15 text-green-400 border border-green-500/20;
+    @apply bg-green-500/15 text-green-400 border border-green-500/30;
   }
   .badge-cancelled {
-    @apply bg-red-500/15 text-red-400 border border-red-500/20;
+    @apply bg-red-500/15 text-red-400 border border-red-500/30;
   }
   .badge-completed {
-    @apply bg-slate-500/15 text-slate-400 border border-slate-500/20;
+    @apply bg-slate-500/15 text-slate-400 border border-slate-500/30;
   }
 
   /* ── Page shell ── */

@@ -3,32 +3,68 @@ import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
 import { getServerClient } from "@/lib/supabase/server";
 import type { Device } from "@/services/devices";
-import StaffDeviceCard, { type StaffDeviceCardProps } from "@/components/ui/staff-device-card";
-import { Skeleton } from "@/components/ui/skeleton";
+import type { DeviceType } from "@/types/device-type";
+import DevicesGridClient from "@/components/ui/devices-grid-client";
 import { Monitor } from "lucide-react";
 
 export const metadata: Metadata = { title: "Devices | Gaming Hub" };
+
+type DeviceWithType = Device & { device_type?: DeviceType };
 
 type ActiveSession = { id: string; device_id: string; started_at: string };
 type PendingReservation = { id: string; device_id: string };
 
 async function fetchPageData(hallId: string): Promise<{
-  devices: Device[];
+  devices: DeviceWithType[];
+  deviceTypes: DeviceType[];
   sessions: ActiveSession[];
   reservations: PendingReservation[];
 }> {
   const supabase = await getServerClient();
 
+  // Fetch devices with device types
   const { data: deviceData } = await supabase
     .from("devices")
-    .select("id, hall_id, name, status, last_heartbeat")
+    .select(`
+      id, 
+      hall_id, 
+      name, 
+      status, 
+      last_heartbeat,
+      device_type_id,
+      device_types:device_type_id (
+        id,
+        name,
+        name_ar,
+        name_en,
+        created_at
+      )
+    `)
     .eq("hall_id", hallId)
     .order("name", { ascending: true });
 
-  const devices = (deviceData ?? []) as Device[];
+  const devices = (deviceData ?? []).map(d => ({
+    id: d.id,
+    hall_id: d.hall_id,
+    name: d.name,
+    status: d.status,
+    last_heartbeat: d.last_heartbeat,
+    device_type_id: d.device_type_id,
+    device_type: Array.isArray(d.device_types) ? d.device_types[0] : d.device_types
+  })) as DeviceWithType[];
+
+  // Get unique device types
+  const deviceTypesMap = new Map<string, DeviceType>();
+  devices.forEach(d => {
+    if (d.device_type) {
+      deviceTypesMap.set(d.device_type.id, d.device_type);
+    }
+  });
+  const deviceTypes = Array.from(deviceTypesMap.values());
+
   const deviceIds = devices.map((d) => d.id);
 
-  if (deviceIds.length === 0) return { devices, sessions: [], reservations: [] };
+  if (deviceIds.length === 0) return { devices, deviceTypes, sessions: [], reservations: [] };
 
   const [sessionsRes, reservationsRes] = await Promise.all([
     supabase.from("sessions").select("id, device_id, started_at").is("ended_at", null).in("device_id", deviceIds),
@@ -37,52 +73,42 @@ async function fetchPageData(hallId: string): Promise<{
 
   return {
     devices,
+    deviceTypes,
     sessions: (sessionsRes.data ?? []) as ActiveSession[],
     reservations: (reservationsRes.data ?? []) as PendingReservation[],
   };
 }
 
-async function DevicesGrid({ hallId }: { hallId: string }) {
-  const { devices, sessions, reservations } = await fetchPageData(hallId);
-  const t = await getTranslations("devices");
-
-  if (devices.length === 0) {
-    return (
-      <p className="text-sm text-muted-foreground py-10 text-center">{t("noDevices")}</p>
-    );
-  }
-
-  const sessionByDevice = new Map(sessions.map((s) => [s.device_id, s]));
-  const reservationByDevice = new Map(reservations.map((r) => [r.device_id, r]));
-
-  const cards: StaffDeviceCardProps[] = devices.map((d) => ({
-    id: d.id,
-    name: d.name,
-    status: d.status,
-    hallId,
-    activeSession: sessionByDevice.get(d.id)
-      ? { id: sessionByDevice.get(d.id)!.id, started_at: sessionByDevice.get(d.id)!.started_at }
-      : null,
-    pendingReservation: reservationByDevice.get(d.id)
-      ? { id: reservationByDevice.get(d.id)!.id }
-      : null,
-  }));
+async function DevicesContent({ hallId }: { hallId: string }) {
+  const { devices, deviceTypes, sessions, reservations } = await fetchPageData(hallId);
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-      {cards.map((props) => (
-        <StaffDeviceCard key={props.id} {...props} />
-      ))}
-    </div>
+    <DevicesGridClient
+      devices={devices}
+      deviceTypes={deviceTypes}
+      sessions={sessions}
+      reservations={reservations}
+      hallId={hallId}
+    />
   );
 }
 
-function DevicesGridSkeleton() {
+function DevicesContentSkeleton() {
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-      {Array.from({ length: 8 }).map((_, i) => (
-        <Skeleton key={i} className="h-32 rounded-xl skeleton-shimmer" />
-      ))}
+    <div className="space-y-6">
+      {/* Filter Skeleton */}
+      <div className="flex gap-2">
+        {Array.from({ length: 4 }).map((_, i) => (
+          <div key={i} className="h-9 w-24 rounded-lg border border-border/60 bg-card animate-pulse" />
+        ))}
+      </div>
+      
+      {/* Devices Grid Skeleton */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+        {Array.from({ length: 8 }).map((_, i) => (
+          <div key={i} className="h-44 rounded-xl border border-border/60 bg-card animate-pulse" />
+        ))}
+      </div>
     </div>
   );
 }
@@ -91,18 +117,35 @@ export default async function DevicesPage({ params }: { params: Promise<{ hallId
   const { hallId } = await params;
   const t = await getTranslations("devices");
   const tn = await getTranslations("nav");
+  
   return (
-    <div className="page-shell">
-      <div className="flex items-center gap-2.5">
-        <Monitor size={18} className="text-muted-foreground" />
-        <div>
-          <h1 className="text-xl font-bold leading-none">{tn("devices")}</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">{t("manageDevices")}</p>
+    <div className="min-h-screen bg-background">
+      {/* Header */}
+      <div className="sticky top-0 z-40 border-b border-border/60 bg-card/80 backdrop-blur-sm">
+        <div className="page-shell py-4">
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <div
+                className="w-10 h-10 rounded-xl flex items-center justify-center"
+                style={{ background: "oklch(0.55 0.26 280 / 0.15)", border: "1px solid oklch(0.55 0.26 280 / 0.3)" }}
+              >
+                <Monitor size={20} style={{ color: "oklch(0.65 0.22 280)" }} />
+              </div>
+              <div>
+                <h1 className="text-xl font-bold leading-none">{tn("devices")}</h1>
+                <p className="text-xs text-muted-foreground mt-1">{t("manageDevices")}</p>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
-      <Suspense fallback={<DevicesGridSkeleton />}>
-        <DevicesGrid hallId={hallId} />
-      </Suspense>
+
+      {/* Content */}
+      <div className="page-shell py-6">
+        <Suspense fallback={<DevicesContentSkeleton />}>
+          <DevicesContent hallId={hallId} />
+        </Suspense>
+      </div>
     </div>
   );
 }

@@ -27,9 +27,10 @@ function GoogleButton() {
   async function handleGoogle() {
     setLoading(true);
     const supabase = getBrowserClient();
+    const locale = window.location.pathname.split('/')[1] || 'ar';
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
-      options: { redirectTo: `${location.origin}/auth/callback` },
+      options: { redirectTo: `${location.origin}/${locale}/auth/callback` },
     });
     if (error) { toast.error(error.message); setLoading(false); }
   }

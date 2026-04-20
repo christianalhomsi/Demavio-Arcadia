@@ -6,11 +6,9 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Separator } from "@/components/ui/separator";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogBody } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { Monitor, Timer, Clock, WifiOff, LogIn, StopCircle, CheckCircle2, Calendar } from "lucide-react";
-import CalendarBooking from "@/components/ui/calendar-booking";
+import DeviceCalendarView from "@/components/ui/device-calendar-view";
 
 export type StaffDeviceCardProps = {
   id: string;
@@ -22,10 +20,10 @@ export type StaffDeviceCardProps = {
 };
 
 const STATUS: Record<DeviceStatus, { cls: string; label: string; icon: React.ElementType }> = {
-  available: { cls: "badge-available", label: "Available", icon: CheckCircle2 },
-  active:    { cls: "badge-active",    label: "Active",    icon: Timer },
-  offline:   { cls: "badge-offline",   label: "Offline",   icon: WifiOff },
-  idle:      { cls: "badge-idle",      label: "Reserved",  icon: Clock },
+  available: { cls: "badge-available", label: "متاح", icon: CheckCircle2 },
+  active:    { cls: "badge-active",    label: "نشط",    icon: Timer },
+  offline:   { cls: "badge-offline",   label: "غير متصل",   icon: WifiOff },
+  idle:      { cls: "badge-idle",      label: "محجوز",  icon: Clock },
 };
 
 function elapsed(startedAt: string): string {
@@ -41,9 +39,7 @@ export default function StaffDeviceCard(props: StaffDeviceCardProps) {
   const [reservation, setReservation] = useState(pendingReservation);
   const [ratePerHour, setRatePerHour] = useState("");
   const [showEndForm, setShowEndForm] = useState(false);
-  const [showBooking, setShowBooking] = useState(false);
-  const [bookingDate, setBookingDate] = useState(new Date().toISOString().split('T')[0]);
-  const [selectedSlot, setSelectedSlot] = useState<{ start: Date; end: Date } | null>(null);
+  const [showCalendar, setShowCalendar] = useState(false);
   const [loading, setLoading]         = useState(false);
 
   async function handleCheckIn() {
@@ -90,65 +86,53 @@ export default function StaffDeviceCard(props: StaffDeviceCardProps) {
     }
   }
 
-  async function handleBookDevice() {
-    if (!selectedSlot) {
-      toast.error("Please select a time slot");
-      return;
-    }
-    setLoading(true);
-    const res = await fetch("/api/reservations", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        hall_id: hallId,
-        device_id: id,
-        start_time: selectedSlot.start.toISOString(),
-        end_time: selectedSlot.end.toISOString(),
-      }),
-    });
-    setLoading(false);
-    if (res.status === 201) {
-      toast.success("Device booked successfully!");
-      setShowBooking(false);
-      setSelectedSlot(null);
-    } else {
-      const json = await res.json().catch(() => ({} as { error?: string }));
-      const errMsg = (json?.error as string) ?? "Something went wrong.";
-      if (errMsg === "OVERLAP") toast.error("Time slot already taken.");
-      else toast.error(errMsg);
-    }
-  }
+
 
   const s = STATUS[status] ?? STATUS.offline;
   const StatusIcon = s.icon;
 
   return (
-    <Card className="border-border/60 hover:border-border transition-colors">
-      <CardContent className="pt-4 space-y-3">
+    <>
+    <Card className="border-border/60 hover:border-primary/50 transition-all hover:shadow-xl group relative overflow-hidden">
+      {/* Gradient overlay on hover */}
+      <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
+      
+      <CardContent className="pt-5 pb-4 space-y-3 relative">
         {/* header */}
-        <div className="flex items-start justify-between gap-2">
-          <div className="flex items-center gap-2 min-w-0">
-            <Monitor size={15} className="text-muted-foreground shrink-0" />
-            <p className="text-sm font-semibold text-foreground truncate">{name}</p>
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex items-center gap-3 min-w-0 flex-1">
+            <div
+              className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform duration-300"
+              style={{ background: "oklch(0.55 0.26 280 / 0.15)", border: "1.5px solid oklch(0.55 0.26 280 / 0.4)" }}
+            >
+              <Monitor size={18} style={{ color: "oklch(0.65 0.22 280)" }} />
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-bold text-foreground truncate">{name}</p>
+              <p className="text-xs text-muted-foreground">ID: {id.slice(0, 8)}</p>
+            </div>
           </div>
-          <span className={`flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full shrink-0 ${s.cls}`}>
-            <StatusIcon size={11} />
-            {s.label}
+          <span className={`flex items-center justify-center w-8 h-8 rounded-full shrink-0 ${s.cls}`}>
+            <StatusIcon size={16} />
           </span>
         </div>
 
         {/* session info */}
         {status === "active" && session && (
-          <p className="text-xs text-muted-foreground flex items-center gap-1.5">
-            <span className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-pulse shrink-0" />
-            Running · {elapsed(session.started_at)}
-          </p>
+          <div className="flex items-center gap-2 p-2.5 rounded-lg bg-blue-500/10 border border-blue-500/20">
+            <span className="w-2 h-2 rounded-full bg-blue-400 animate-pulse shrink-0" />
+            <p className="text-xs font-medium text-blue-400">
+              Running · {elapsed(session.started_at)}
+            </p>
+          </div>
         )}
         {status === "idle" && reservation && (
-          <p className="text-xs text-muted-foreground flex items-center gap-1.5">
-            <span className="w-1.5 h-1.5 rounded-full bg-amber-400 shrink-0" />
-            Confirmed reservation waiting
-          </p>
+          <div className="flex items-center gap-2 p-2.5 rounded-lg bg-amber-500/10 border border-amber-500/20">
+            <span className="w-2 h-2 rounded-full bg-amber-400 shrink-0" />
+            <p className="text-xs font-medium text-amber-400">
+              Confirmed reservation waiting
+            </p>
+          </div>
         )}
 
         {/* check-in */}
@@ -164,77 +148,18 @@ export default function StaffDeviceCard(props: StaffDeviceCardProps) {
           </Button>
         )}
 
-        {/* book device */}
-        {status === "available" && !showBooking && (
+        {/* calendar view */}
+        {!showEndForm && (
           <Button
             size="sm"
             variant="outline"
-            className="w-full text-xs cursor-pointer gap-1.5"
-            onClick={() => setShowBooking(true)}
+            className="w-full text-xs font-semibold cursor-pointer gap-2 border-primary/50 text-primary hover:bg-primary/15 hover:border-primary transition-all"
+            onClick={() => setShowCalendar(true)}
           >
-            <Calendar size={13} />
-            Book device
+            <Calendar size={14} />
+            عرض التقويم
           </Button>
         )}
-
-        <Dialog open={showBooking} onOpenChange={setShowBooking}>
-          <DialogContent onClose={() => setShowBooking(false)}>
-            <DialogHeader>
-              <DialogTitle>Book {name}</DialogTitle>
-            </DialogHeader>
-            <DialogBody className="space-y-4">
-              <div className="space-y-1.5">
-                <Label className="text-xs text-muted-foreground">Booking Date</Label>
-                <Input
-                  type="date"
-                  value={bookingDate}
-                  onChange={(e) => setBookingDate(e.target.value)}
-                  className="h-9"
-                />
-              </div>
-              {bookingDate && (
-                <div className="space-y-1.5">
-                  <Label className="text-xs text-muted-foreground">Select Time Slot (30 min)</Label>
-                  <CalendarBooking
-                    deviceId={id}
-                    hallId={hallId}
-                    selectedDate={new Date(bookingDate)}
-                    onSelectSlot={(start, end) => {
-                      if (start && end) setSelectedSlot({ start, end });
-                    }}
-                  />
-                </div>
-              )}
-              {selectedSlot && (
-                <div className="p-3 rounded-lg bg-muted/50 text-sm">
-                  <span className="text-muted-foreground">Selected: </span>
-                  <span className="font-medium">
-                    {selectedSlot.start.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", hour12: false })}
-                    {" - "}
-                    {selectedSlot.end.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", hour12: false })}
-                  </span>
-                </div>
-              )}
-              <div className="flex gap-3 pt-2">
-                <Button
-                  className="flex-1 cursor-pointer"
-                  disabled={loading || !selectedSlot}
-                  style={{ background: "oklch(0.55 0.26 280)", color: "white" }}
-                  onClick={handleBookDevice}
-                >
-                  {loading ? "Booking…" : "Confirm Booking"}
-                </Button>
-                <Button
-                  variant="outline"
-                  className="flex-1 cursor-pointer"
-                  onClick={() => { setShowBooking(false); setSelectedSlot(null); }}
-                >
-                  Cancel
-                </Button>
-              </div>
-            </DialogBody>
-          </DialogContent>
-        </Dialog>
 
         {/* end session */}
         {status === "active" && session && !showEndForm && (
@@ -287,5 +212,14 @@ export default function StaffDeviceCard(props: StaffDeviceCardProps) {
         )}
       </CardContent>
     </Card>
+    
+    <DeviceCalendarView
+      deviceId={id}
+      deviceName={name}
+      hallId={hallId}
+      open={showCalendar}
+      onClose={() => setShowCalendar(false)}
+    />
+    </>
   );
 }
