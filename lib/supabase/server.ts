@@ -1,8 +1,9 @@
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
+import { NextResponse } from "next/server";
 import { getSupabaseEnv } from "@/lib/env";
 
-export async function getServerClient() {
+export async function getServerClient(response?: NextResponse) {
   const cookieStore = await cookies();
   const supabaseEnv = getSupabaseEnv();
 
@@ -18,9 +19,12 @@ export async function getServerClient() {
         return cookieStore.getAll();
       },
       setAll(cookiesToSet: { name: string; value: string; options?: Record<string, unknown> }[]) {
-        cookiesToSet.forEach(({ name, value, options }: { name: string; value: string; options?: Record<string, unknown> }) =>
-          cookieStore.set(name, value, options)
-        );
+        cookiesToSet.forEach(({ name, value, options }: { name: string; value: string; options?: Record<string, unknown> }) => {
+          cookieStore.set(name, value, options);
+          if (response) {
+            response.cookies.set(name, value, options);
+          }
+        });
       },
     },
   });

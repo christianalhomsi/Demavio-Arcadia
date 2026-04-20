@@ -21,12 +21,26 @@ export async function GET(request: Request, { params }: { params: Promise<{ loca
     return NextResponse.redirect(`${origin}/${locale}/auth/login`);
   }
 
-  const supabase = await getServerClient();
+  const authRedirectResponse = NextResponse.redirect(`${origin}/${locale}/halls`);
+  const supabase = await getServerClient(authRedirectResponse);
   const { data: sessionData, error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
   
   if (exchangeError) {
     console.error('❌ Exchange Error:', exchangeError);
-    return NextResponse.redirect(`${origin}/${locale}/auth/login?error=${exchangeError.message}`);
+    const fallbackUrl = new URL(`${origin}/${locale}/auth/login`);
+    fallbackUrl.searchParams.set("error", exchangeError.message);
+    fallbackUrl.searchParams.set("oauth_code", code);
+    return NextResponse.redirect(fallbackUrl.toString());
+  }
+
+  if (sessionData?.session) {
+    const { error: setSessionError } = await supabase.auth.setSession({
+      access_token: sessionData.session.access_token,
+      refresh_token: sessionData.session.refresh_token,
+    });
+    if (setSessionError) {
+      console.error("❌ setSession Error:", setSessionError);
+    }
   }
 
   console.log('✅ Session exchanged successfully');
@@ -82,5 +96,6 @@ export async function GET(request: Request, { params }: { params: Promise<{ loca
 
   console.log('🔄 Redirecting to:', redirectUrl);
 
-  return NextResponse.redirect(redirectUrl);
+  authRedirectResponse.headers.set("location", redirectUrl);
+  return authRedirectResponse;
 }

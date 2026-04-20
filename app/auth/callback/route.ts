@@ -14,9 +14,22 @@ export async function GET(request: Request) {
   if (error) return NextResponse.redirect(`${origin}/${locale}/auth/login?error=${error}`);
   if (!code) return NextResponse.redirect(`${origin}/${locale}/auth/login`);
 
-  const supabase = await getServerClient();
-  const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
-  if (exchangeError) return NextResponse.redirect(`${origin}/${locale}/auth/login?error=${exchangeError.message}`);
+  const authRedirectResponse = NextResponse.redirect(`${origin}/${locale}/halls`);
+  const supabase = await getServerClient(authRedirectResponse);
+  const { data: sessionData, error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
+  if (exchangeError) {
+    const fallbackUrl = new URL(`${origin}/${locale}/auth/login`);
+    fallbackUrl.searchParams.set("error", exchangeError.message);
+    fallbackUrl.searchParams.set("oauth_code", code);
+    return NextResponse.redirect(fallbackUrl.toString());
+  }
+
+  if (sessionData?.session) {
+    await supabase.auth.setSession({
+      access_token: sessionData.session.access_token,
+      refresh_token: sessionData.session.refresh_token,
+    });
+  }
 
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.redirect(`${origin}/${locale}/auth/login`);
@@ -41,13 +54,18 @@ export async function GET(request: Request) {
   const { data: profile } = await supabase.from("profiles").select("role").eq("id", user.id).maybeSingle();
   const role = profile?.role;
 
-  if (role === "super_admin") return NextResponse.redirect(`${origin}/${locale}/admin`);
+  if (role === "super_admin") {
+    authRedirectResponse.headers.set("location", `${origin}/${locale}/admin`);
+    return authRedirectResponse;
+  }
 
   if (role === "hall_manager" || role === "hall_staff") {
     const { data: assignment } = await supabase
       .from("staff_assignments").select("hall_id").eq("user_id", user.id).maybeSingle();
-    return NextResponse.redirect(`${origin}/${locale}${assignment?.hall_id ? `/dashboard/${assignment.hall_id}` : "/halls"}`);
+    authRedirectResponse.headers.set("location", `${origin}/${locale}${assignment?.hall_id ? `/dashboard/${assignment.hall_id}` : "/halls"}`);
+    return authRedirectResponse;
   }
 
-  return NextResponse.redirect(`${origin}/${locale}/halls`);
+  authRedirectResponse.headers.set("location", `${origin}/${locale}/halls`);
+  return authRedirectResponse;
 }

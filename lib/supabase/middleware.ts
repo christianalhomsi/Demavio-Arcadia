@@ -32,7 +32,10 @@ export async function updateSession(request: NextRequest, response?: NextRespons
   const locale = pathname.split('/')[1];
   const localePrefix = ['ar', 'en'].includes(locale) ? `/${locale}` : '';
   
-  const isAuthPage = pathname.includes("/auth/login") || pathname.includes("/auth/verify-otp");
+  const isAuthPage =
+    pathname.includes("/auth/login") ||
+    pathname.includes("/auth/verify-otp") ||
+    pathname.includes("/auth/callback");
 
   if (!user && !isAuthPage) {
     return NextResponse.redirect(new URL(`${localePrefix}/auth/login`, request.url));

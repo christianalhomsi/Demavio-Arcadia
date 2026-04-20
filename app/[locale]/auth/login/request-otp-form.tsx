@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useSearchParams } from "next/navigation";
+import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -105,9 +107,61 @@ function LoginForm() {
   const t = useTranslations("auth");
   const tCommon = useTranslations("common");
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<LoginInput>({
     resolver: zodResolver(loginSchema),
   });
+
+  useEffect(() => {
+    const error = searchParams.get("error");
+    const oauthCode = searchParams.get("oauth_code");
+    
+    if (error) {
+      toast.error(`OAuth Error: ${error}`);
+      console.error('🔴 OAuth Error from URL:', error);
+      return;
+    }
+    
+    if (!oauthCode) return;
+
+    let cancelled = false;
+    const run = async () => {
+      console.log('🔵 Client-side: Attempting to exchange code...');
+      const supabase = getBrowserClient();
+      const { data, error } = await supabase.auth.exchangeCodeForSession(oauthCode);
+      if (cancelled) return;
+      if (error || !data?.session?.user) {
+        console.error('🔴 Client exchange failed:', error);
+        toast.error(error?.message || "Google login failed. Please try again.");
+        return;
+      }
+
+      console.log('🟢 Client exchange success:', data.session.user.email);
+      const userId = data.session.user.id;
+      const { data: profile } = await supabase.from("profiles").select("role").eq("id", userId).maybeSingle();
+      const role = profile?.role;
+
+      if (role === "super_admin") {
+        router.replace("/admin");
+        return;
+      }
+      if (role === "hall_manager" || role === "hall_staff") {
+        const { data: assignment } = await supabase
+          .from("staff_assignments")
+          .select("hall_id")
+          .eq("user_id", userId)
+          .maybeSingle();
+        router.replace(assignment?.hall_id ? `/dashboard/${assignment.hall_id}` : "/halls");
+        return;
+      }
+      router.replace("/halls");
+    };
+
+    run();
+    return () => {
+      cancelled = true;
+    };
+  }, [router, searchParams]);
 
   async function onSubmit(data: LoginInput) {
     const supabase = getBrowserClient();
