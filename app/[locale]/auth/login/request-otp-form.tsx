@@ -164,7 +164,7 @@ function SignUpForm() {
     });
     if (res.ok) {
       toast.success(t('otpSent'));
-      router.push(`/verify-otp?email=${encodeURIComponent(data.email)}`);
+      router.push(`/auth/verify-otp?email=${encodeURIComponent(data.email)}`);
       return;
     }
     const json = await res.json().catch(() => ({}));

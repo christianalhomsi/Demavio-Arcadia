@@ -32,13 +32,13 @@ export async function updateSession(request: NextRequest, response?: NextRespons
   const locale = pathname.split('/')[1];
   const localePrefix = ['ar', 'en'].includes(locale) ? `/${locale}` : '';
   
-  const isAuthPage = pathname.includes("/login") || pathname.includes("/verify-otp") || pathname.includes("/auth/");
+  const isAuthPage = pathname.includes("/auth/login") || pathname.includes("/auth/verify-otp");
 
   if (!user && !isAuthPage) {
-    return NextResponse.redirect(new URL(`${localePrefix}/login`, request.url));
+    return NextResponse.redirect(new URL(`${localePrefix}/auth/login`, request.url));
   }
 
-  if (user && (pathname.includes("/login") || pathname.includes("/verify-otp"))) {
+  if (user && (pathname.includes("/auth/login") || pathname.includes("/auth/verify-otp"))) {
     // check role to redirect to correct place
     const { data: profile } = await supabase
       .from("profiles")
