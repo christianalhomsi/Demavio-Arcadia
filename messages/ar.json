@@ -29,7 +29,8 @@
     "devices": "الأجهزة",
     "finance": "المالية",
     "agent": "الوكيل",
-    "playerApp": "تطبيق اللاعبين"
+    "playerApp": "تطبيق اللاعبين",
+    "settings": "الإعدادات"
   },
   "auth": {
     "welcomeBack": "مرحباً بعودتك",
@@ -256,5 +257,15 @@
     "invalidEmail": "البريد الإلكتروني غير صالح",
     "required": "هذا الحقل مطلوب",
     "somethingWrong": "حدث خطأ ما"
+  },
+  "settings": {
+    "title": "الإعدادات",
+    "description": "إدارة إعدادات الصالة",
+    "devicePricing": "أسعار الأجهزة",
+    "devicePricingDesc": "حدد سعر الساعة لكل نوع جهاز",
+    "saveChanges": "حفظ التغييرات",
+    "saving": "جاري الحفظ...",
+    "updateError": "فشل تحديث الأسعار",
+    "requestFailed": "فشل الطلب"
   }
 }

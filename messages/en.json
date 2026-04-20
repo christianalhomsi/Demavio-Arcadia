@@ -29,7 +29,8 @@
     "devices": "Devices",
     "finance": "Finance",
     "agent": "Agent",
-    "playerApp": "Player App"
+    "playerApp": "Player App",
+    "settings": "Settings"
   },
   "auth": {
     "welcomeBack": "Welcome Back",
@@ -255,5 +256,15 @@
     "invalidEmail": "Invalid email address",
     "required": "This field is required",
     "somethingWrong": "Something went wrong"
+  },
+  "settings": {
+    "title": "Settings",
+    "description": "Manage hall settings",
+    "devicePricing": "Device Pricing",
+    "devicePricingDesc": "Set price per hour for each device type",
+    "saveChanges": "Save Changes",
+    "saving": "Saving...",
+    "updateError": "Failed to update prices",
+    "requestFailed": "Request failed"
   }
 }

@@ -24,16 +24,19 @@ export default async function EditHallPage({ params }: { params: Promise<{ hallI
 
   const deviceTypes = await getDeviceTypes();
   const hallDevices = await getHallDevices(hallId);
+  
+  console.log("📊 Device Types:", deviceTypes.length);
+  console.log("🎮 Hall Devices:", hallDevices.length, hallDevices);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 pb-8">
       <Link href="/admin/halls"
         className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors px-2 py-1 rounded-lg hover:bg-muted -ml-2 w-fit">
         <ChevronLeft size={14} />
         {t("backToHalls")}
       </Link>
 
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-3 mb-2">
         <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
           style={{ background: "oklch(0.55 0.26 280 / 0.12)", border: "1px solid oklch(0.55 0.26 280 / 0.25)" }}>
           <Pencil size={18} style={{ color: "oklch(0.65 0.22 280)" }} />

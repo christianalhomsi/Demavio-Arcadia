@@ -9,6 +9,7 @@ import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
 import { NavigationLoader } from "@/components/navigation-loader";
 import { QueryLoadingBar } from "@/components/query-loading-bar";
+import { SessionMonitor } from "@/components/session-monitor";
 import "../globals.css";
 
 const cairo = Cairo({ 
@@ -40,6 +41,7 @@ export default async function RootLayout({
         <NextIntlClientProvider messages={messages}>
           <ThemeProvider>
             <ReactQueryProvider>
+              <SessionMonitor />
               <QueryLoadingBar />
               <NavigationLoader>
                 {children}

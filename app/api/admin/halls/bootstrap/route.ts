@@ -72,6 +72,7 @@ export async function POST(request: Request) {
       hall_id: hallId,
       device_type_id: deviceGroup.device_type_id,
       quantity: deviceGroup.quantity,
+      price_per_hour: deviceGroup.price_per_hour || 0,
     });
   }
 

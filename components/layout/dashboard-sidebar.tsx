@@ -4,13 +4,14 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
-import { LayoutDashboard, Monitor, CalendarDays, DollarSign, ChevronLeft } from "lucide-react";
+import { LayoutDashboard, Monitor, CalendarDays, DollarSign, ChevronLeft, Settings } from "lucide-react";
 
 const NAV_ITEMS = [
   { key: "overview",     segment: "overview",     icon: LayoutDashboard },
   { key: "devices",      segment: "devices",      icon: Monitor },
   { key: "reservations", segment: "reservations", icon: CalendarDays },
   { key: "finance",      segment: "finance",      icon: DollarSign },
+  { key: "settings",     segment: "settings",     icon: Settings },
 ] as const;
 
 export default function DashboardSidebar({ hallId }: { hallId: string }) {

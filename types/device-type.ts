@@ -11,6 +11,7 @@ export type HallDevice = {
   hall_id: string;
   device_type_id: string;
   quantity: number;
+  price_per_hour: number;
   created_at: string;
   updated_at: string;
   device_type?: DeviceType;

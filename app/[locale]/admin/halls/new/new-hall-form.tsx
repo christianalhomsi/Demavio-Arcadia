@@ -18,27 +18,27 @@ function Section({ icon: Icon, title, desc, children, accent = "oklch(0.55 0.26 
   children: React.ReactNode; accent?: string;
 }) {
   return (
-    <div className="rounded-2xl border border-border/50 bg-card overflow-hidden">
-      <div className="flex items-center gap-3 px-5 py-4 border-b border-border/40"
-        style={{ background: `${accent}08` }}>
-        <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
-          style={{ background: `${accent}15`, border: `1px solid ${accent}25` }}>
-          <Icon size={15} style={{ color: accent }} />
+    <div className="rounded-2xl border border-border/50 bg-card overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+      <div className="flex items-center gap-3 px-6 py-5 border-b border-border/40"
+        style={{ background: `linear-gradient(135deg, ${accent} / 0.08 0%, ${accent} / 0.03 100%)` }}>
+        <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
+          style={{ background: `${accent} / 0.15`, border: `1px solid ${accent} / 0.25` }}>
+          <Icon size={18} style={{ color: accent }} />
         </div>
         <div>
-          <p className="text-sm font-semibold text-foreground">{title}</p>
+          <p className="text-base font-bold text-foreground">{title}</p>
           {desc && <p className="text-xs text-muted-foreground mt-0.5">{desc}</p>}
         </div>
       </div>
-      <div className="p-5 space-y-4">{children}</div>
+      <div className="p-6 space-y-5">{children}</div>
     </div>
   );
 }
 
 function Field({ label, id, children }: { label: string; id: string; children: React.ReactNode }) {
   return (
-    <div className="space-y-1.5">
-      <Label htmlFor={id} className="text-xs font-medium text-muted-foreground">{label}</Label>
+    <div className="space-y-2">
+      <Label htmlFor={id} className="text-sm font-semibold text-foreground">{label}</Label>
       {children}
     </div>
   );
@@ -51,7 +51,7 @@ export default function NewHallForm({ deviceTypes, locale }: { deviceTypes: Devi
   const [pending, setPending]           = useState(false);
   const [name, setName]                 = useState("");
   const [address, setAddress]           = useState("");
-  const [devices, setDevices]           = useState<{ device_type_id: string; quantity: number }[]>([]);
+  const [devices, setDevices]           = useState<{ device_type_id: string; quantity: number; price_per_hour: number }[]>([]);
   const [staffEmail, setStaffEmail]     = useState("");
   const [staffPassword, setStaffPassword] = useState("");
   const [extraStaff, setExtraStaff]     = useState<{ email: string; password: string }[]>([]);
@@ -120,110 +120,116 @@ export default function NewHallForm({ deviceTypes, locale }: { deviceTypes: Devi
   }
 
   return (
-    <form onSubmit={onSubmit} className="space-y-5 max-w-2xl">
+    <form onSubmit={onSubmit} className="min-h-[calc(100vh-12rem)] pb-8">
 
-      {/* Hall info */}
-      <Section icon={Building2} title={t('hallInformation')} desc={t('hallInfoDesc')}>
-        <div className="grid sm:grid-cols-2 gap-4">
-          <Field label={t('hallName')} id="name">
-            <div className="relative">
-              <Building2 size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground/50 pointer-events-none" />
-              <Input id="name" value={name} onChange={e => setName(e.target.value)}
-                placeholder="e.g. Downtown Arena" required autoComplete="off" className="pl-9" />
+      {/* Grid Layout */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        
+        {/* Left Column */}
+        <div className="space-y-6">
+          {/* Hall info */}
+          <Section icon={Building2} title={t('hallInformation')} desc={t('hallInfoDesc')}>
+            <div className="space-y-5">
+              <Field label={t('hallName')} id="name">
+                <Input id="name" value={name} onChange={e => setName(e.target.value)}
+                  placeholder="e.g. Downtown Arena" required autoComplete="off" className="h-11 text-base" />
+              </Field>
+              <Field label={t('addressOptional')} id="address">
+                <Input id="address" value={address} onChange={e => setAddress(e.target.value)}
+                  placeholder="123 Main St" autoComplete="off" className="h-11 text-base" />
+              </Field>
             </div>
-          </Field>
-          <Field label={t('addressOptional')} id="address">
-            <div className="relative">
-              <MapPin size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground/50 pointer-events-none" />
-              <Input id="address" value={address} onChange={e => setAddress(e.target.value)}
-                placeholder="123 Main St" autoComplete="off" className="pl-9" />
+          </Section>
+
+          {/* Working Hours */}
+          <Section icon={Clock} title={t('workingHours')} desc={t('workingHoursDesc')} accent="oklch(0.65 0.20 140)">
+            <WorkingHoursEditor value={workingHours} onChange={setWorkingHours} />
+          </Section>
+
+          {/* Manager */}
+          <Section icon={UserCog} title={t('hallManager')} desc={t('hallManagerDesc')} accent="oklch(0.82 0.14 200)">
+            <div className="space-y-5">
+              <Field label={t('email')} id="staff_email">
+                <Input id="staff_email" type="email" value={staffEmail}
+                  onChange={e => setStaffEmail(e.target.value)}
+                  placeholder="manager@example.com" required autoComplete="off" className="h-11 text-base" />
+              </Field>
+              <Field label={t('password')} id="staff_password">
+                <Input id="staff_password" type="password" value={staffPassword}
+                  onChange={e => setStaffPassword(e.target.value)}
+                  placeholder={t('minCharacters')} required autoComplete="new-password" className="h-11 text-base" />
+              </Field>
             </div>
-          </Field>
+          </Section>
         </div>
-      </Section>
 
-      {/* Devices */}
-      <Section icon={Monitor} title={t('devices')} desc={locale === "ar" ? "اختر أنواع الأجهزة والكمية لكل نوع" : "Select device types and quantity for each"}>
-        <DeviceTypeSelector
-          deviceTypes={deviceTypes}
-          value={devices}
-          onChange={setDevices}
-          locale={locale}
-        />
-      </Section>
+        {/* Right Column */}
+        <div className="space-y-6">
+          {/* Devices */}
+          <Section icon={Monitor} title={t('devices')} desc={locale === "ar" ? "اختر أنواع الأجهزة والكمية لكل نوع" : "Select device types and quantity for each"}>
+            <DeviceTypeSelector
+              deviceTypes={deviceTypes}
+              value={devices}
+              onChange={setDevices}
+              locale={locale}
+            />
+          </Section>
 
-      {/* Working Hours */}
-      <Section icon={Clock} title={t('workingHours')} desc={t('workingHoursDesc')} accent="oklch(0.65 0.20 140)">
-        <WorkingHoursEditor value={workingHours} onChange={setWorkingHours} />
-      </Section>
-
-      {/* Manager */}
-      <Section icon={UserCog} title={t('hallManager')} desc={t('hallManagerDesc')} accent="oklch(0.82 0.14 200)">
-        <div className="grid sm:grid-cols-2 gap-4">
-          <Field label={t('email')} id="staff_email">
-            <Input id="staff_email" type="email" value={staffEmail}
-              onChange={e => setStaffEmail(e.target.value)}
-              placeholder="manager@example.com" required autoComplete="off" />
-          </Field>
-          <Field label={t('password')} id="staff_password">
-            <Input id="staff_password" type="password" value={staffPassword}
-              onChange={e => setStaffPassword(e.target.value)}
-              placeholder={t('minCharacters')} required autoComplete="new-password" />
-          </Field>
-        </div>
-      </Section>
-
-      {/* Extra staff */}
-      <Section icon={UserPlus} title={t('staffAccounts')} desc={t('staffAccountsDesc')}>
-        {extraStaff.length === 0 ? (
-          <p className="text-xs text-muted-foreground">{t('noExtraStaff')}</p>
-        ) : (
-          <div className="space-y-3">
-            {extraStaff.map((s, i) => (
-              <div key={i} className="grid sm:grid-cols-2 gap-3 p-4 rounded-xl border border-border/40 bg-muted/20 relative">
-                <p className="absolute -top-2.5 left-3 text-xs font-medium px-1.5 bg-card text-muted-foreground">
-                  {t('staff')} {i + 1}
-                </p>
-                <Input type="email" placeholder="staff@example.com" value={s.email}
-                  onChange={e => setExtraStaff(prev => prev.map((x, j) => j === i ? { ...x, email: e.target.value } : x))}
-                  autoComplete="off" />
-                <div className="flex gap-2">
-                  <Input type="password" placeholder={t('minCharacters')} value={s.password}
-                    onChange={e => setExtraStaff(prev => prev.map((x, j) => j === i ? { ...x, password: e.target.value } : x))}
-                    autoComplete="new-password" className="flex-1" />
-                  <button type="button"
-                    onClick={() => setExtraStaff(prev => prev.filter((_, j) => j !== i))}
-                    className="w-9 h-9 rounded-lg flex items-center justify-center border border-destructive/30 text-destructive hover:bg-destructive/10 transition-colors shrink-0">
-                    <Trash2 size={14} />
-                  </button>
-                </div>
+          {/* Extra staff */}
+          <Section icon={UserPlus} title={t('staffAccounts')} desc={t('staffAccountsDesc')}>
+            {extraStaff.length === 0 ? (
+              <p className="text-xs text-muted-foreground text-center py-4">{t('noExtraStaff')}</p>
+            ) : (
+              <div className="space-y-3">
+                {extraStaff.map((s, i) => (
+                  <div key={i} className="space-y-3 p-4 rounded-xl border border-border/40 bg-muted/20 relative">
+                    <p className="absolute -top-2.5 left-3 text-xs font-medium px-1.5 bg-card text-muted-foreground">
+                      {t('staff')} {i + 1}
+                    </p>
+                    <Input type="email" placeholder="staff@example.com" value={s.email}
+                      onChange={e => setExtraStaff(prev => prev.map((x, j) => j === i ? { ...x, email: e.target.value } : x))}
+                      autoComplete="off" className="h-11" />
+                    <div className="flex gap-2">
+                      <Input type="password" placeholder={t('minCharacters')} value={s.password}
+                        onChange={e => setExtraStaff(prev => prev.map((x, j) => j === i ? { ...x, password: e.target.value } : x))}
+                        autoComplete="new-password" className="flex-1 h-11" />
+                      <button type="button"
+                        onClick={() => setExtraStaff(prev => prev.filter((_, j) => j !== i))}
+                        className="w-11 h-11 rounded-lg flex items-center justify-center border border-destructive/30 text-destructive hover:bg-destructive/10 transition-colors shrink-0">
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
-        )}
-        <button type="button"
-          onClick={() => setExtraStaff(prev => [...prev, { email: "", password: "" }])}
-          className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-foreground border border-dashed border-border/60 hover:border-border px-3 py-2 rounded-lg transition-colors w-full justify-center">
-          <Plus size={13} />
-          {t('addStaffMember')}
-        </button>
-      </Section>
+            )}
+            <button type="button"
+              onClick={() => setExtraStaff(prev => [...prev, { email: "", password: "" }])}
+              className="inline-flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground border border-dashed border-border/60 hover:border-border px-4 py-3 rounded-lg transition-colors w-full justify-center">
+              <Plus size={16} />
+              {t('addStaffMember')}
+            </button>
+          </Section>
+        </div>
+      </div>
 
-      {/* submit */}
-      <div className="flex gap-3 pt-2">
-        <Button type="submit" disabled={pending}
-          className="gap-2 font-semibold"
-          style={{ background: "oklch(0.55 0.26 280)", color: "white", boxShadow: "0 4px 14px oklch(0.55 0.26 280 / 0.3)" }}>
-          {pending ? (
-            <span className="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />
-          ) : (
-            <Building2 size={15} />
-          )}
-          {pending ? t('creating') : t('createHall')}
-        </Button>
-        <Button type="button" variant="outline" onClick={() => router.back()}>
-          {tCommon('cancel')}
-        </Button>
+      {/* Action Buttons - Fixed at bottom */}
+      <div className="sticky bottom-0 left-0 right-0 bg-background/95 backdrop-blur-sm border-t border-border/50 py-4 mt-8">
+        <div className="flex gap-3 justify-end">
+          <Button type="button" variant="outline" onClick={() => router.back()} className="h-11 px-6">
+            {tCommon('cancel')}
+          </Button>
+          <Button type="submit" disabled={pending}
+            className="gap-2 font-semibold h-11 px-8"
+            style={{ background: "oklch(0.55 0.26 280)", color: "white", boxShadow: "0 4px 14px oklch(0.55 0.26 280 / 0.3)" }}>
+            {pending ? (
+              <span className="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />
+            ) : (
+              <Building2 size={16} />
+            )}
+            {pending ? t('creating') : t('createHall')}
+          </Button>
+        </div>
       </div>
     </form>
   );

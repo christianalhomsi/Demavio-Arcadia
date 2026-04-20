@@ -7,6 +7,12 @@ export async function getServerClient() {
   const supabaseEnv = getSupabaseEnv();
 
   return createServerClient(supabaseEnv.url, supabaseEnv.anonKey, {
+    auth: {
+      autoRefreshToken: true,
+      persistSession: true,
+      detectSessionInUrl: true,
+      flowType: 'pkce'
+    },
     cookies: {
       getAll() {
         return cookieStore.getAll();

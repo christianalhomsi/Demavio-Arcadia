@@ -7,6 +7,7 @@ import { z } from "zod";
 import { toast } from "sonner";
 import { useTranslations } from "next-intl";
 import { getBrowserClient } from "@/lib/supabase/client";
+import { cn } from "@/lib/utils";
 import type { Hall } from "@/types/hall";
 import type { Device } from "@/services/devices";
 import type { DeviceType } from "@/types/device-type";
@@ -37,6 +38,7 @@ export default function BookingForm({ halls, locale }: { halls: Hall[]; locale: 
   const [selectedTypeId, setSelectedTypeId] = useState("");
   const [success, setSuccess]         = useState(false);
   const [selectedSlot, setSelectedSlot] = useState<{ start: Date; end: Date } | null>(null);
+  const [pricePerHour, setPricePerHour] = useState<number>(0);
 
   const { register, handleSubmit, watch, setValue, formState: { errors: rawErrors, isSubmitting } } = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -57,25 +59,53 @@ export default function BookingForm({ halls, locale }: { halls: Hall[]; locale: 
     if (!selectedHallId) return;
     setTypesLoading(true);
     const supabase = getBrowserClient();
+    
     void supabase
       .from("hall_devices")
-      .select("device_type_id, device_types(id, name, name_ar, name_en)")
+      .select("device_type_id, quantity")
       .eq("hall_id", selectedHallId)
       .gt("quantity", 0)
-      .then(({ data }) => {
-        const types = (data ?? []).map((r: any) => r.device_types).filter(Boolean);
-        setDeviceTypes(types);
+      .then(async ({ data: hallDevicesData, error: hallDevicesError }) => {
+        if (hallDevicesError || !hallDevicesData || hallDevicesData.length === 0) {
+          setDeviceTypes([]);
+          setTypesLoading(false);
+          return;
+        }
+        
+        const typeIds = hallDevicesData.map(hd => hd.device_type_id);
+        
+        const { data: typesData } = await supabase
+          .from("device_types")
+          .select("id, name, name_ar, name_en, created_at")
+          .in("id", typeIds);
+        
+        setDeviceTypes(typesData ?? []);
         setTypesLoading(false);
-      }, () => setTypesLoading(false));
+      }, () => {
+        setTypesLoading(false);
+      });
   }, [selectedHallId, setValue]);
 
-  // لما يتغير النوع → جيب الأجهزة المتاحة من هذا النوع
+  // لما يتغير النوع → جيب الأجهزة المتاحة من هذا النوع والسعر
   useEffect(() => {
     setDevices([]);
     setValue("device_id", "");
+    setPricePerHour(0);
     if (!selectedHallId || !selectedTypeId) return;
     setDevicesLoading(true);
     const supabase = getBrowserClient();
+    
+    // جلب السعر من hall_devices
+    void supabase
+      .from("hall_devices")
+      .select("price_per_hour")
+      .eq("hall_id", selectedHallId)
+      .eq("device_type_id", selectedTypeId)
+      .single()
+      .then(({ data }) => {
+        if (data) setPricePerHour(data.price_per_hour || 0);
+      });
+    
     void supabase
       .from("devices")
       .select("id, hall_id, name, status, last_heartbeat, device_type_id")
@@ -100,10 +130,12 @@ export default function BookingForm({ halls, locale }: { halls: Hall[]; locale: 
     else toast.error(errMsg);
   }
 
-  const handleSelectSlot = (start: Date, end: Date) => {
-    setSelectedSlot({ start, end });
-    setValue("start_time", start.toISOString());
-    setValue("end_time", end.toISOString());
+  const handleSelectSlot = (start: Date | null, end: Date | null) => {
+    if (start && end) {
+      setSelectedSlot({ start, end });
+    } else {
+      setSelectedSlot(null);
+    }
   };
 
   if (success) {
@@ -120,19 +152,19 @@ export default function BookingForm({ halls, locale }: { halls: Hall[]; locale: 
 
   return (
     <Card className="border-border/60">
-      <CardHeader>
-        <CardTitle className="text-base">{t("bookingDetails")}</CardTitle>
-        <CardDescription>{t("fillDetails")}</CardDescription>
+      <CardHeader className="px-4 sm:px-6">
+        <CardTitle className="text-base font-cairo">{t("bookingDetails")}</CardTitle>
+        <CardDescription className="text-xs sm:text-sm">{t("fillDetails")}</CardDescription>
       </CardHeader>
       <Separator className="opacity-40" />
-      <CardContent className="pt-5">
-        <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-5">
+      <CardContent className="pt-5 px-4 sm:px-6">
+        <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-4 sm:space-y-5">
 
           {/* الصالة */}
           <div className="space-y-1.5">
             <Label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{t("hall")}</Label>
             <Select value={selectedHallId} onValueChange={(v) => setValue("hall_id", v ?? "")}>
-              <SelectTrigger className={e.hall_id ? "border-destructive" : ""}>
+              <SelectTrigger className={e.hall_id ? "border-destructive h-10 sm:h-11" : "h-10 sm:h-11"}>
                 <SelectValue placeholder={t("selectHall")}>
                   {selectedHallId ? halls.find(h => h.id === selectedHallId)?.name : t("selectHall")}
                 </SelectValue>
@@ -148,13 +180,19 @@ export default function BookingForm({ halls, locale }: { halls: Hall[]; locale: 
           <div className="space-y-1.5">
             <Label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{t("deviceType")}</Label>
             <Select value={selectedTypeId} onValueChange={(v) => setSelectedTypeId(v ?? "")} disabled={!selectedHallId || typesLoading}>
-              <SelectTrigger>
+              <SelectTrigger className="h-10 sm:h-11">
                 <SelectValue placeholder={
                   typesLoading ? t("booking") :
                   !selectedHallId ? t("selectHallFirst") :
                   deviceTypes.length === 0 ? t("noAvailableTypes") :
                   t("selectDeviceType")
-                } />
+                }>
+                  {selectedTypeId ? (
+                    locale === "ar" 
+                      ? deviceTypes.find(dt => dt.id === selectedTypeId)?.name_ar 
+                      : deviceTypes.find(dt => dt.id === selectedTypeId)?.name_en
+                  ) : null}
+                </SelectValue>
               </SelectTrigger>
               <SelectContent>
                 {deviceTypes.map((dt) => (
@@ -170,13 +208,15 @@ export default function BookingForm({ halls, locale }: { halls: Hall[]; locale: 
           <div className="space-y-1.5">
             <Label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{t("device")}</Label>
             <Select value={selectedDeviceId} onValueChange={(v) => setValue("device_id", v ?? "")} disabled={!selectedTypeId || devicesLoading}>
-              <SelectTrigger className={e.device_id ? "border-destructive" : ""}>
+              <SelectTrigger className={e.device_id ? "border-destructive h-10 sm:h-11" : "h-10 sm:h-11"}>
                 <SelectValue placeholder={
                   devicesLoading ? t("booking") :
                   !selectedTypeId ? t("selectTypeFirst") :
                   devices.length === 0 ? t("noAvailableDevices") :
                   t("selectDevice")
-                } />
+                }>
+                  {selectedDeviceId ? devices.find(d => d.id === selectedDeviceId)?.name : null}
+                </SelectValue>
               </SelectTrigger>
               <SelectContent>
                 {devices.map((d) => <SelectItem key={d.id} value={d.id} label={d.name}>{d.name}</SelectItem>)}
@@ -188,7 +228,7 @@ export default function BookingForm({ halls, locale }: { halls: Hall[]; locale: 
           {/* تاريخ الحجز */}
           <div className="space-y-1.5">
             <Label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{t("bookingDate")}</Label>
-            <Input type="date" className={e.booking_date ? "border-destructive" : ""} {...register("booking_date")} />
+            <Input type="date" className={e.booking_date ? "border-destructive h-10 sm:h-11" : "h-10 sm:h-11"} {...register("booking_date")} />
             {e.booking_date && <p className="text-xs text-destructive">{e.booking_date.message}</p>}
           </div>
 
@@ -199,26 +239,46 @@ export default function BookingForm({ halls, locale }: { halls: Hall[]; locale: 
                 {t("selectTimeSlot")}
               </Label>
               <CalendarBooking
+                key={`${selectedDeviceId}-${bookingDate}`}
                 deviceId={selectedDeviceId}
                 hallId={selectedHallId}
                 selectedDate={new Date(bookingDate)}
                 onSelectSlot={handleSelectSlot}
+                pricePerHour={pricePerHour}
+                locale={locale}
               />
             </div>
           )}
 
           {selectedSlot && (
-            <div className="p-3 rounded-lg bg-muted/50 text-sm">
-              <span className="text-muted-foreground">{t("selected")} </span>
-              <span className="font-medium">
-                {selectedSlot.start.toLocaleTimeString(locale === "ar" ? "ar-SA" : "en-US", { hour: "2-digit", minute: "2-digit", hour12: false })}
-                {" - "}
-                {selectedSlot.end.toLocaleTimeString(locale === "ar" ? "ar-SA" : "en-US", { hour: "2-digit", minute: "2-digit", hour12: false })}
-              </span>
+            <div className="p-3 sm:p-4 rounded-lg bg-muted/50 space-y-2">
+              <div className="text-xs sm:text-sm">
+                <span className="text-muted-foreground">{t("selected")} </span>
+                <span className="font-medium">
+                  {selectedSlot.start.toLocaleTimeString(locale === "ar" ? "ar-SA" : "en-US", { hour: "2-digit", minute: "2-digit", hour12: false })}
+                  {" - "}
+                  {selectedSlot.end.toLocaleTimeString(locale === "ar" ? "ar-SA" : "en-US", { hour: "2-digit", minute: "2-digit", hour12: false })}
+                </span>
+              </div>
+              {pricePerHour > 0 && (
+                <div className="flex items-center justify-between pt-2 border-t border-border/40">
+                  <span className="text-xs sm:text-sm text-muted-foreground">
+                    {locale === "ar" ? "السعر الإجمالي:" : "Total Price:"}
+                  </span>
+                  <span className="text-base sm:text-lg font-bold" style={{ color: "oklch(0.55 0.26 280)" }}>
+                    {(() => {
+                      const durationMs = selectedSlot.end.getTime() - selectedSlot.start.getTime();
+                      const durationHours = durationMs / (1000 * 60 * 60);
+                      const totalPrice = (durationHours * pricePerHour).toFixed(2);
+                      return locale === "ar" ? `${totalPrice} ل.س` : `${totalPrice} SYP`;
+                    })()}
+                  </span>
+                </div>
+              )}
             </div>
           )}
 
-          <Button type="submit" className="w-full cursor-pointer" disabled={isSubmitting}
+          <Button type="submit" className="w-full cursor-pointer h-10 sm:h-11" disabled={isSubmitting}
             style={{ background: "oklch(0.55 0.26 280)", color: "white" }}>
             {isSubmitting ? t("booking") : t("confirmBooking")}
           </Button>

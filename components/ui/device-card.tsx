@@ -103,7 +103,9 @@ export default function DeviceCard({ device, hallId }: { device: Device; hallId:
                     deviceId={device.id}
                     hallId={hallId}
                     selectedDate={new Date(bookingDate)}
-                    onSelectSlot={(start, end) => setSelectedSlot({ start, end })}
+                    onSelectSlot={(start, end) => {
+                      if (start && end) setSelectedSlot({ start, end });
+                    }}
                   />
                 </div>
               )}

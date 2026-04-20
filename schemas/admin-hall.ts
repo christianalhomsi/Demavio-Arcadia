@@ -8,6 +8,7 @@ export const hallBootstrapSchema = z.object({
   devices: z.array(z.object({
     device_type_id: z.string().uuid(),
     quantity: z.coerce.number().int().min(1).max(500),
+    price_per_hour: z.coerce.number().min(0),
   })).min(1),
   working_hours: z.array(z.object({
     day: z.number().int().min(0).max(6),

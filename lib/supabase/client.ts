@@ -18,7 +18,19 @@ export function getBrowserClient(): SupabaseClient {
       throw new Error('Missing Supabase environment variables');
     }
     
-    client = createBrowserClient(url, key);
+    client = createBrowserClient(url, key, {
+      auth: {
+        autoRefreshToken: true,
+        persistSession: true,
+        detectSessionInUrl: true,
+        flowType: 'pkce'
+      },
+      global: {
+        headers: {
+          'X-Client-Info': 'gaming-hub'
+        }
+      }
+    });
   }
   return client;
 }
