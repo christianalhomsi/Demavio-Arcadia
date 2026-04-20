@@ -16,6 +16,7 @@ type ReservationRow = {
 };
 
 const STATUS_CLS: Record<string, string> = {
+  pending:   "badge-pending",
   confirmed: "badge-confirmed",
   active:    "badge-active",
   cancelled: "badge-cancelled",

@@ -83,7 +83,7 @@ export default function DeviceCalendarView({ deviceId, deviceName, hallId, open,
         .eq("device_id", deviceId)
         .gte("start_time", startOfDay.toISOString())
         .lte("end_time", endOfDay.toISOString())
-        .in("status", ["confirmed", "active"]);
+        .in("status", ["pending", "confirmed", "active"]);
 
       const timeSlots: TimeSlot[] = [];
       const [openHour, openMin] = daySchedule.open_time.split(":").map(Number);
@@ -207,26 +207,29 @@ export default function DeviceCalendarView({ deviceId, deviceName, hallId, open,
               </CardContent>
             </Card>
           ) : (
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 max-h-[450px] overflow-y-auto pr-1">
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 max-h-[450px] overflow-y-auto pr-1">
               {slots.map((slot, i) => {
                 const isPast = slot.time < new Date();
                 const isBooked = !!slot.reservation;
+                const isPending = slot.reservation?.status === "pending";
 
                 return (
                   <Card
                     key={i}
                     className={cn(
-                      "border-2 transition-all hover:shadow-sm",
+                      "border transition-all hover:shadow-sm",
                       isBooked
-                        ? "border-purple-500/40 bg-purple-500/5"
+                        ? isPending
+                          ? "border-yellow-500/50 bg-yellow-500/10"
+                          : "border-purple-500/50 bg-purple-500/10"
                         : isPast
                         ? "border-border/30 bg-muted/20"
-                        : "border-green-500/40 bg-green-500/5"
+                        : "border-green-500/50 bg-green-500/10"
                     )}
                   >
-                    <CardContent className="p-3 space-y-2">
-                      <div className="flex items-center justify-between gap-2">
-                        <span className="text-sm font-bold">
+                    <CardContent className="p-2.5 space-y-1.5">
+                      <div className="flex items-center justify-between gap-1.5">
+                        <span className="text-xs font-bold">
                           {slot.time.toLocaleTimeString("en-US", {
                             hour: "2-digit",
                             minute: "2-digit",
@@ -235,31 +238,33 @@ export default function DeviceCalendarView({ deviceId, deviceName, hallId, open,
                         </span>
                         <span
                           className={cn(
-                            "text-[10px] font-semibold px-2 py-0.5 rounded-full",
+                            "text-[9px] font-semibold px-1.5 py-0.5 rounded-full whitespace-nowrap",
                             isBooked
-                              ? "bg-purple-500/20 text-purple-700"
+                              ? isPending
+                                ? "bg-yellow-500/25 text-yellow-600 dark:text-yellow-400"
+                                : "bg-purple-500/25 text-purple-600 dark:text-purple-400"
                               : isPast
                               ? "bg-muted text-muted-foreground"
-                              : "bg-green-500/20 text-green-700"
+                              : "bg-green-500/25 text-green-600 dark:text-green-400"
                           )}
                         >
-                          {isBooked ? "محجوز" : isPast ? "انتهى" : "متاح"}
+                          {isBooked ? (isPending ? "انتظار" : "محجوز") : isPast ? "انتهى" : "متاح"}
                         </span>
                       </div>
                       {isBooked && slot.reservation?.user ? (
-                        <div className="flex items-start gap-2 text-xs pt-1 border-t border-border/40">
-                          <User size={13} className="mt-0.5 shrink-0 text-muted-foreground" />
+                        <div className="flex items-start gap-1.5 text-[10px] pt-1 border-t border-border/40">
+                          <User size={11} className="mt-0.5 shrink-0 text-muted-foreground" />
                           <div className="min-w-0 flex-1">
                             <p className="font-semibold text-foreground truncate leading-tight">
                               {slot.reservation.user.full_name}
                             </p>
-                            <p className="text-[10px] text-muted-foreground truncate mt-0.5">
+                            <p className="text-[9px] text-muted-foreground truncate mt-0.5">
                               {slot.reservation.user.email}
                             </p>
                           </div>
                         </div>
                       ) : !isBooked && !isPast ? (
-                        <p className="text-[10px] text-muted-foreground text-center pt-1 border-t border-border/40">
+                        <p className="text-[9px] text-muted-foreground text-center pt-1 border-t border-border/40">
                           جاهز للحجز
                         </p>
                       ) : null}

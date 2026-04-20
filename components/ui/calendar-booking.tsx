@@ -81,11 +81,11 @@ export default function CalendarBooking(props: Props) {
 
         const { data: reservations, error: resError } = await supabase
           .from("reservations")
-          .select("start_time, end_time")
+          .select("start_time, end_time, status")
           .eq("device_id", deviceId)
           .gte("start_time", startOfDay.toISOString())
           .lte("end_time", endOfDay.toISOString())
-          .in("status", ["confirmed", "active"]);
+          .in("status", ["pending", "confirmed", "active"]);
 
         if (resError) {
           setSlots([]);
