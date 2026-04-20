@@ -9,8 +9,6 @@ export async function GET(request: Request) {
   // Default to Arabic
   const locale = 'ar';
 
-  console.log('🔐 OAuth Callback (fallback) - Code:', code ? 'Present' : 'Missing');
-
   if (error) return NextResponse.redirect(`${origin}/${locale}/auth/login?error=${error}`);
   if (!code) return NextResponse.redirect(`${origin}/${locale}/auth/login`);
 

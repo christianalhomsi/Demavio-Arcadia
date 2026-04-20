@@ -3,9 +3,10 @@
 import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { Separator } from "@/components/ui/separator";
+import { Button } from "@/components/ui/button";
 import LogoutButton from "@/components/ui/logout-button";
 import { LanguageToggle } from "@/components/language-toggle";
-import { Gamepad2, ChevronRight } from "lucide-react";
+import { Gamepad2, ChevronRight, Menu } from "lucide-react";
 
 interface BreadcrumbItem {
   label: string;
@@ -16,12 +17,25 @@ interface DashboardHeaderProps {
   hallName: string;
   hallId?: string;
   breadcrumbs?: BreadcrumbItem[];
+  onMenuClick?: () => void;
 }
 
-export default function DashboardHeader({ hallName, hallId, breadcrumbs }: DashboardHeaderProps) {
+export default function DashboardHeader({ hallName, hallId, breadcrumbs, onMenuClick }: DashboardHeaderProps) {
   const t = useTranslations("nav");
   return (
-    <header className="flex items-center gap-3 px-5 h-14 shrink-0 border-b border-border/60 bg-card/80 backdrop-blur-sm sticky top-0 z-50">
+    <header className="flex items-center gap-3 px-3 sm:px-5 h-14 shrink-0 border-b border-border/60 bg-card/80 backdrop-blur-sm sticky top-0 z-50">
+      {/* Mobile Menu Button */}
+      {onMenuClick && (
+        <Button
+          variant="ghost"
+          size="sm"
+          className="md:hidden h-9 w-9 p-0 cursor-pointer"
+          onClick={onMenuClick}
+        >
+          <Menu size={20} />
+        </Button>
+      )}
+
       {/* Logo */}
       <Link href="/halls" className="flex items-center gap-2 shrink-0 group">
         <div
@@ -36,10 +50,10 @@ export default function DashboardHeader({ hallName, hallId, breadcrumbs }: Dashb
         </span>
       </Link>
 
-      <Separator orientation="vertical" className="h-5 opacity-30" />
+      <Separator orientation="vertical" className="h-5 opacity-30 hidden sm:block" />
 
       {/* Breadcrumbs */}
-      <nav className="flex items-center gap-1 text-sm overflow-hidden" aria-label="Breadcrumb">
+      <nav className="hidden sm:flex items-center gap-1 text-sm overflow-hidden" aria-label="Breadcrumb">
         {hallId ? (
           <Link href="/halls" className="text-muted-foreground hover:text-foreground transition-colors shrink-0">
             {t("halls")}

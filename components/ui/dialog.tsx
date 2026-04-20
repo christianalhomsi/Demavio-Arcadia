@@ -46,7 +46,7 @@ export function DialogContent({
   return (
     <div
       className={cn(
-        "relative bg-card rounded-2xl border border-border/60 shadow-2xl mx-4 my-8",
+        "relative bg-card rounded-2xl border border-border/60 shadow-2xl mx-0 sm:mx-2 md:mx-4 my-0 sm:my-4 md:my-8",
         className
       )}
       {...props}
@@ -54,9 +54,9 @@ export function DialogContent({
       {onClose && (
         <button
           onClick={onClose}
-          className="absolute right-4 top-4 rounded-lg p-1.5 text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+          className="absolute left-2 sm:left-3 md:left-4 top-2 sm:top-3 md:top-4 rounded-lg p-1 sm:p-1.5 text-muted-foreground hover:text-foreground hover:bg-muted transition-colors z-10"
         >
-          <X size={18} />
+          <X size={16} className="sm:w-[18px] sm:h-[18px]" />
         </button>
       )}
       {children}
@@ -70,7 +70,7 @@ export function DialogHeader({
 }: React.HTMLAttributes<HTMLDivElement>) {
   return (
     <div
-      className={cn("px-6 pt-6 pb-4 space-y-1", className)}
+      className={cn("px-2 sm:px-3 md:px-6 pt-2 sm:pt-3 md:pt-6 pb-2 sm:pb-3 md:pb-4 space-y-1", className)}
       {...props}
     />
   );
@@ -106,7 +106,7 @@ export function DialogBody({
 }: React.HTMLAttributes<HTMLDivElement>) {
   return (
     <div
-      className={cn("px-6 pb-6", className)}
+      className={cn("px-2 sm:px-3 md:px-6 pb-2 sm:pb-3 md:pb-6", className)}
       {...props}
     />
   );

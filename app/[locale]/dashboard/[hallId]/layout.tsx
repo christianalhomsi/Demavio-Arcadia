@@ -1,8 +1,7 @@
 import { notFound, redirect } from "next/navigation";
 import { getServerClient } from "@/lib/supabase/server";
 import { verifyStaffHallAccess } from "@/services/staff";
-import DashboardHeader from "@/components/layout/dashboard-header";
-import DashboardSidebar from "@/components/layout/dashboard-sidebar";
+import DashboardLayoutClient from "./dashboard-layout-client";
 
 export default async function DashboardLayout({
   children,
@@ -28,17 +27,5 @@ export default async function DashboardLayout({
 
   if (!hall) notFound();
 
-  return (
-    <div className="flex flex-col min-h-screen bg-background">
-      <DashboardHeader hallName={hall.name} hallId={hallId} />
-      <div className="flex flex-1 overflow-hidden">
-        <aside className="w-52 shrink-0 border-r border-border/60 overflow-y-auto bg-card/50 hidden md:block">
-          <DashboardSidebar hallId={hallId} />
-        </aside>
-        <main className="flex-1 overflow-y-auto">
-          {children}
-        </main>
-      </div>
-    </div>
-  );
+  return <DashboardLayoutClient hallName={hall.name} hallId={hallId}>{children}</DashboardLayoutClient>;
 }

@@ -60,7 +60,7 @@ export default function DevicesGridClient({ devices, deviceTypes, sessions, rese
             <Monitor size={32} style={{ color: "oklch(0.65 0.22 280)" }} className="opacity-50" />
           </div>
           <p className="text-base font-semibold text-foreground mb-1">{t("noDevices")}</p>
-          <p className="text-sm text-muted-foreground">لم يتم إضافة أي أجهزة بعد</p>
+          <p className="text-sm text-muted-foreground">{t("noDevicesAdded")}</p>
         </CardContent>
       </Card>
     );
@@ -73,7 +73,7 @@ export default function DevicesGridClient({ devices, deviceTypes, sessions, rese
         <div className="space-y-3">
           <div className="flex items-center gap-2">
             <Layers size={16} className="text-muted-foreground" />
-            <h3 className="text-sm font-semibold text-muted-foreground">نوع الجهاز</h3>
+            <h3 className="text-sm font-semibold text-muted-foreground">{t("deviceType")}</h3>
           </div>
           <div className="flex flex-wrap gap-2">
             <Button
@@ -83,7 +83,7 @@ export default function DevicesGridClient({ devices, deviceTypes, sessions, rese
               className="cursor-pointer"
               style={selectedTypeId === null ? { background: "oklch(0.55 0.26 280)", color: "white" } : {}}
             >
-              الكل ({devices.length})
+              {t("all")} ({devices.length})
             </Button>
             {deviceTypes.map((type) => {
               const count = devices.filter(d => d.device_type?.id === type.id).length;
@@ -111,7 +111,7 @@ export default function DevicesGridClient({ devices, deviceTypes, sessions, rese
           <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
             {selectedTypeId 
               ? `${deviceTypes.find(t => t.id === selectedTypeId)?.[locale === "ar" ? "name_ar" : "name_en"]} (${cards.length})`
-              : `جميع الأجهزة (${cards.length})`
+              : `${t("allDevices")} (${cards.length})`
             }
           </h2>
         </div>
@@ -120,7 +120,7 @@ export default function DevicesGridClient({ devices, deviceTypes, sessions, rese
           <Card className="border-border/60 border-dashed">
             <CardContent className="py-12 text-center">
               <Monitor size={32} className="mx-auto mb-3 text-muted-foreground opacity-30" />
-              <p className="text-sm text-muted-foreground">لا توجد أجهزة من هذا النوع</p>
+              <p className="text-sm text-muted-foreground">{t("noDevicesOfType")}</p>
             </CardContent>
           </Card>
         ) : (

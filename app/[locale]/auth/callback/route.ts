@@ -8,16 +8,10 @@ export async function GET(request: Request, { params }: { params: Promise<{ loca
   
   const { locale } = await params;
 
-  console.log('🔐 OAuth Callback - Locale:', locale);
-  console.log('🔐 OAuth Callback - Code:', code ? 'Present' : 'Missing');
-  console.log('🔐 OAuth Callback - Error:', error);
-
   if (error) {
-    console.error('❌ OAuth Error:', error);
     return NextResponse.redirect(`${origin}/${locale}/auth/login?error=${error}`);
   }
   if (!code) {
-    console.error('❌ No code provided');
     return NextResponse.redirect(`${origin}/${locale}/auth/login`);
   }
 
@@ -26,7 +20,6 @@ export async function GET(request: Request, { params }: { params: Promise<{ loca
   const { data: sessionData, error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
   
   if (exchangeError) {
-    console.error('❌ Exchange Error:', exchangeError);
     const fallbackUrl = new URL(`${origin}/${locale}/auth/login`);
     fallbackUrl.searchParams.set("error", exchangeError.message);
     fallbackUrl.searchParams.set("oauth_code", code);
@@ -38,20 +31,13 @@ export async function GET(request: Request, { params }: { params: Promise<{ loca
       access_token: sessionData.session.access_token,
       refresh_token: sessionData.session.refresh_token,
     });
-    if (setSessionError) {
-      console.error("❌ setSession Error:", setSessionError);
-    }
-  }
 
-  console.log('✅ Session exchanged successfully');
+  }
 
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) {
-    console.error('❌ No user after exchange');
     return NextResponse.redirect(`${origin}/${locale}/auth/login`);
   }
-
-  console.log('✅ User found:', user.email);
 
   // ensure profile exists - create if not exists
   const { data: existingProfile, error: profileCheckError } = await supabase
@@ -60,10 +46,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ loca
     .eq("id", user.id)
     .maybeSingle();
 
-  console.log('📋 Existing profile:', existingProfile);
-
   if (!existingProfile) {
-    console.log('➕ Creating new profile...');
     const { error: insertError } = await supabase.from("profiles").insert({
       id: user.id,
       email: user.email,
@@ -71,17 +54,11 @@ export async function GET(request: Request, { params }: { params: Promise<{ loca
       role: "player"
     });
     
-    if (insertError) {
-      console.error('❌ Profile creation error:', insertError);
-    } else {
-      console.log('✅ Profile created successfully');
-    }
+
   }
 
   const { data: profile } = await supabase.from("profiles").select("role").eq("id", user.id).maybeSingle();
   const role = profile?.role;
-
-  console.log('👤 User role:', role);
 
   // Determine redirect URL
   let redirectUrl = `${origin}/${locale}/halls`;
@@ -93,8 +70,6 @@ export async function GET(request: Request, { params }: { params: Promise<{ loca
       .from("staff_assignments").select("hall_id").eq("user_id", user.id).maybeSingle();
     redirectUrl = `${origin}/${locale}${assignment?.hall_id ? `/dashboard/${assignment.hall_id}` : "/halls"}`;
   }
-
-  console.log('🔄 Redirecting to:', redirectUrl);
 
   authRedirectResponse.headers.set("location", redirectUrl);
   return authRedirectResponse;
