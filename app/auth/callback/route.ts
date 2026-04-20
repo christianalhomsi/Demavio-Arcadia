@@ -9,15 +9,17 @@ export async function GET(request: Request) {
   // Default to Arabic
   const locale = 'ar';
 
-  if (error) return NextResponse.redirect(`${origin}/${locale}/login?error=${error}`);
-  if (!code) return NextResponse.redirect(`${origin}/${locale}/login`);
+  console.log('🔐 OAuth Callback (fallback) - Code:', code ? 'Present' : 'Missing');
+
+  if (error) return NextResponse.redirect(`${origin}/${locale}/auth/login?error=${error}`);
+  if (!code) return NextResponse.redirect(`${origin}/${locale}/auth/login`);
 
   const supabase = await getServerClient();
   const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
-  if (exchangeError) return NextResponse.redirect(`${origin}/${locale}/login?error=${exchangeError.message}`);
+  if (exchangeError) return NextResponse.redirect(`${origin}/${locale}/auth/login?error=${exchangeError.message}`);
 
   const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return NextResponse.redirect(`${origin}/${locale}/login`);
+  if (!user) return NextResponse.redirect(`${origin}/${locale}/auth/login`);
 
   // ensure profile exists - create if not exists
   const { data: existingProfile } = await supabase
