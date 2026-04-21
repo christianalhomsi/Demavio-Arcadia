@@ -228,6 +228,8 @@ function SignUpForm() {
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-4">
+      <Field label={t('username')} id="signup-username" type="text" placeholder="username123"
+        icon={Mail} error={errors.username?.message} reg={register("username")} />
       <Field label={tCommon('email')} id="signup-email" type="email" placeholder="you@example.com"
         icon={Mail} error={errors.email?.message} reg={register("email")} />
       <Field label={tCommon('password')} id="signup-password" type="password" placeholder="••••••••"

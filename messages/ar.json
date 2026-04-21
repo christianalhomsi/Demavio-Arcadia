@@ -55,7 +55,16 @@
     "otpSentDescription": "أرسلنا رمز مكون من 6 أرقام إلى بريدك",
     "verifying": "جاري التحقق...",
     "verifyAndSignIn": "تحقق وسجل الدخول",
-    "accountCreated": "تم إنشاء الحساب بنجاح!"
+    "accountCreated": "تم إنشاء الحساب بنجاح!",
+    "username": "اسم المستخدم",
+    "usernameInvalid": "اسم المستخدم يجب أن يكون بين 3-20 حرف ويحتوي على أحرف وأرقام فقط",
+    "usernameTaken": "اسم المستخدم محجوز بالفعل",
+    "usernameUpdateFailed": "فشل تحديث اسم المستخدم",
+    "usernameSet": "تم تعيين اسم المستخدم بنجاح",
+    "setUsername": "اختر اسم المستخدم",
+    "setUsernameDescription": "اختر اسم مستخدم فريد لحسابك",
+    "usernameHint": "3-20 حرف، أحرف وأرقام وشرطة سفلية فقط",
+    "continue": "متابعة"
   },
   "admin": {
     "halls": "الصالات",
@@ -260,6 +269,7 @@
     "pending": "انتظار",
     "active": "نشط",
     "ended": "انتهى",
+    "completed": "مكتمل",
     "ready": "جاهز",
     "noDevicesAdded": "لم يتم إضافة أي أجهزة بعد",
     "deviceType": "نوع الجهاز",

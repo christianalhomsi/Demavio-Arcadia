@@ -25,12 +25,12 @@ export function Dialog({ open, onOpenChange, children }: DialogProps) {
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-0 sm:p-4">
       <div
-        className="fixed inset-0 bg-black/50 backdrop-blur-sm"
+        className="fixed inset-0 bg-black/70 backdrop-blur-sm"
         onClick={() => onOpenChange(false)}
       />
-      <div className="relative z-50 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+      <div className="relative z-50 w-full max-w-2xl flex flex-col h-[100dvh] sm:h-auto sm:max-h-[90vh] overflow-hidden">
         {children}
       </div>
     </div>
@@ -46,7 +46,7 @@ export function DialogContent({
   return (
     <div
       className={cn(
-        "relative bg-card rounded-2xl border border-border/60 shadow-2xl mx-0 sm:mx-2 md:mx-4 my-0 sm:my-4 md:my-8",
+        "relative bg-card rounded-none sm:rounded-3xl border border-border/60 shadow-2xl flex flex-col overflow-hidden w-full h-full",
         className
       )}
       {...props}
@@ -106,7 +106,7 @@ export function DialogBody({
 }: React.HTMLAttributes<HTMLDivElement>) {
   return (
     <div
-      className={cn("px-2 sm:px-3 md:px-6 pb-2 sm:pb-3 md:pb-6", className)}
+      className={cn("px-2 sm:px-3 md:px-6 pb-2 sm:pb-3 md:pb-6 flex-1 overflow-hidden flex flex-col", className)}
       {...props}
     />
   );

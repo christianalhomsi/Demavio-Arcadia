@@ -60,8 +60,11 @@ export async function POST(request: Request) {
         );
       }
 
-      // Set role to player
-      await admin.from("profiles").update({ role: "player" }).eq("id", authData.user.id);
+      // Set role to player and username
+      await admin.from("profiles").update({ 
+        role: "player",
+        username: record.username 
+      }).eq("id", authData.user.id);
 
       // Generate session link
       const { data: linkData, error: linkError } = await admin.auth.admin.generateLink({

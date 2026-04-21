@@ -55,7 +55,16 @@
     "otpSentDescription": "We sent a 6-digit code to your email",
     "verifying": "Verifying…",
     "verifyAndSignIn": "Verify & Sign In",
-    "accountCreated": "Account created successfully!"
+    "accountCreated": "Account created successfully!",
+    "username": "Username",
+    "usernameInvalid": "Username must be 3-20 characters and contain only letters, numbers, and underscores",
+    "usernameTaken": "Username is already taken",
+    "usernameUpdateFailed": "Failed to update username",
+    "usernameSet": "Username set successfully",
+    "setUsername": "Choose Username",
+    "setUsernameDescription": "Choose a unique username for your account",
+    "usernameHint": "3-20 characters, letters, numbers, and underscores only",
+    "continue": "Continue"
   },
   "admin": {
     "halls": "Halls",
@@ -259,6 +268,7 @@
     "pending": "Pending",
     "active": "Active",
     "ended": "Ended",
+    "completed": "Completed",
     "ready": "Ready",
     "noDevicesAdded": "No devices added yet",
     "deviceType": "Device Type",

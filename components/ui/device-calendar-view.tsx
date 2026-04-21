@@ -85,7 +85,7 @@ export default function DeviceCalendarView({ deviceId, deviceName, hallId, open,
         .eq("device_id", deviceId)
         .gte("start_time", startOfDay.toISOString())
         .lt("start_time", endOfDay.toISOString())
-        .in("status", ["pending", "confirmed", "active"]);
+        .in("status", ["pending", "confirmed", "active", "completed"]);
 
       // Fetch user profiles separately
       const userIds = reservations?.map(r => r.user_id).filter(Boolean) || [];
@@ -95,9 +95,14 @@ export default function DeviceCalendarView({ deviceId, deviceName, hallId, open,
       if (uniqueUserIds.length > 0) {
         const { data: profilesData } = await supabase
           .from("profiles")
-          .select("id, full_name, email")
+          .select("id, username, email")
           .in("id", uniqueUserIds);
-        profiles = profilesData || [];
+        
+        profiles = (profilesData || []).map(p => ({
+          id: p.id,
+          full_name: p.username || p.email?.split('@')[0] || 'User',
+          email: p.email
+        }));
       }
 
       // Map profiles to reservations
@@ -160,151 +165,164 @@ export default function DeviceCalendarView({ deviceId, deviceName, hallId, open,
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent onClose={onClose} className="max-w-[100vw] sm:max-w-[95vw] md:max-w-[90vw] lg:max-w-7xl w-full h-[100dvh] sm:h-auto sm:max-h-[96vh] m-0 sm:m-auto rounded-none sm:rounded-2xl flex flex-col">
-        <DialogHeader className="border-b pb-2 sm:pb-3 shrink-0">
-          <DialogTitle className="flex items-center gap-2">
+      <DialogContent onClose={onClose} className="w-full h-full flex flex-col overflow-hidden shadow-2xl border-none rounded-none sm:rounded-3xl">
+        <DialogHeader className="border-b border-border/40 px-5 py-4 sm:px-6 shrink-0 bg-background/80 backdrop-blur-md">
+          <DialogTitle className="flex items-center gap-3">
             <div
-              className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg flex items-center justify-center shrink-0"
-              style={{ background: "oklch(0.55 0.26 280 / 0.15)", border: "1px solid oklch(0.55 0.26 280 / 0.3)" }}
+              className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 shadow-sm"
+              style={{ background: "oklch(0.55 0.26 280 / 0.12)", border: "1px solid oklch(0.55 0.26 280 / 0.2)" }}
             >
-              <Calendar size={14} className="sm:w-4 sm:h-4" style={{ color: "oklch(0.65 0.22 280)" }} />
+              <Calendar size={18} style={{ color: "oklch(0.65 0.22 280)" }} />
             </div>
-            <div className="min-w-0">
-              <p className="text-sm sm:text-base md:text-lg font-bold truncate">{deviceName}</p>
-              <p className="text-[10px] sm:text-xs text-muted-foreground font-normal">{t("calendar")}</p>
+            <div className="flex flex-col gap-0.5">
+              <span className="text-base sm:text-lg font-bold tracking-tight leading-none">{deviceName}</span>
+              <span className="text-xs text-muted-foreground font-medium flex items-center gap-1.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-primary/40" />
+                {t("calendar")}
+              </span>
             </div>
           </DialogTitle>
         </DialogHeader>
         
-        <DialogBody className="flex-1 flex flex-col min-h-0 overflow-hidden">
-          <div className="flex flex-col gap-2 sm:gap-3 h-full">
-            {/* Date Navigation */}
-            <Card className="border-border/60 shrink-0">
-              <CardContent className="p-2 sm:p-3">
-                <div className="flex items-center justify-between gap-2">
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => changeDate(-1)}
-                    className="cursor-pointer h-8 w-8 sm:h-9 sm:w-9 p-0 shrink-0"
-                  >
-                    <ChevronRight size={16} className="sm:w-[18px] sm:h-[18px]" />
-                  </Button>
-                  <div className="text-center flex-1 min-w-0">
-                    <p className="text-[11px] sm:text-xs md:text-sm font-bold truncate">
-                      {selectedDate.toLocaleDateString("ar-SY", {
-                        weekday: "long",
-                        year: "numeric",
-                        month: "long",
-                        day: "numeric",
-                      })}
-                    </p>
-                    {isToday && (
-                      <span className="inline-block mt-1 text-[9px] sm:text-[10px] font-medium px-2 py-0.5 rounded-full" style={{ background: "oklch(0.55 0.26 280 / 0.15)", color: "oklch(0.65 0.22 280)" }}>
-                        {t("today")}
-                      </span>
-                    )}
-                  </div>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => changeDate(1)}
-                    className="cursor-pointer h-8 w-8 sm:h-9 sm:w-9 p-0 shrink-0"
-                  >
-                    <ChevronLeft size={16} className="sm:w-[18px] sm:h-[18px]" />
-                  </Button>
+        <DialogBody className="flex-1 overflow-hidden p-0 min-h-0">
+          <div className="flex flex-col h-full min-h-0">
+            {/* Date Navigation - Fixed at top of body */}
+            <div className="px-4 py-3 sm:px-6 sm:py-4 bg-muted/5 border-b border-border/40 shrink-0">
+              <div className="flex items-center justify-between gap-4">
+                <Button
+                  size="icon"
+                  variant="outline"
+                  onClick={() => changeDate(-1)}
+                  className="rounded-xl h-9 w-9 border-border/60 hover:bg-background hover:text-primary transition-all active:scale-95 shrink-0"
+                >
+                  <ChevronRight size={18} />
+                </Button>
+                
+                <div className="flex flex-col items-center gap-1 flex-1 min-w-0">
+                  <span className="text-sm sm:text-base font-bold tabular-nums truncate w-full text-center">
+                    {selectedDate.toLocaleDateString("ar-SY", {
+                      weekday: "long",
+                      day: "numeric",
+                      month: "long",
+                      year: "numeric",
+                    })}
+                  </span>
+                  {isToday && (
+                    <span className="text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20">
+                      {t("today")}
+                    </span>
+                  )}
                 </div>
-              </CardContent>
-            </Card>
 
-            {/* Time Slots */}
-            {loading ? (
-              <div className="flex-1 min-h-0 overflow-y-auto">
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 pb-2">
-                  {Array.from({ length: 24 }).map((_, i) => (
-                    <div key={i} className="h-24 sm:h-28 rounded-lg bg-muted/50 animate-pulse" />
+                <Button
+                  size="icon"
+                  variant="outline"
+                  onClick={() => changeDate(1)}
+                  className="rounded-xl h-9 w-9 border-border/60 hover:bg-background hover:text-primary transition-all active:scale-95 shrink-0"
+                >
+                  <ChevronLeft size={18} />
+                </Button>
+              </div>
+            </div>
+
+            {/* Time Slots - This area should scroll */}
+            <div className="flex-1 overflow-y-auto px-4 py-4 sm:px-6 overscroll-contain min-h-0" style={{ WebkitOverflowScrolling: 'touch' }}>
+              {loading ? (
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                  {Array.from({ length: 12 }).map((_, i) => (
+                    <div key={i} className="h-24 rounded-2xl bg-muted/50 animate-pulse" />
                   ))}
                 </div>
-              </div>
-            ) : slots.length === 0 ? (
-              <Card className="border-border/60 flex-1 flex items-center justify-center min-h-0">
-                <CardContent className="p-6 sm:p-10 text-center">
-                  <Clock size={28} className="sm:w-8 sm:h-8 mx-auto mb-3 text-muted-foreground opacity-50" />
-                  <p className="text-xs sm:text-sm font-medium text-muted-foreground">{t("hallClosed")}</p>
-                </CardContent>
-              </Card>
-            ) : (
-              <div className="flex-1 min-h-0 overflow-y-auto">
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 pb-2">
-                {slots.map((slot, i) => {
-                  const isPast = slot.time < new Date();
-                  const isBooked = !!slot.reservation;
-                  const isPending = slot.reservation?.status === "pending";
-                  const isConfirmed = slot.reservation?.status === "confirmed";
-                  const isActive = slot.reservation?.status === "active";
-
-                  return (
-                    <Card
-                      key={i}
-                      className={cn(
-                        "border transition-all hover:shadow-sm",
-                        isBooked
-                          ? isPending
-                            ? "border-yellow-500/50 bg-yellow-500/10"
-                            : "border-purple-500/50 bg-purple-500/10"
-                          : isPast
-                          ? "border-border/30 bg-muted/20"
-                          : "border-green-500/50 bg-green-500/10"
-                      )}
-                    >
-                      <CardContent className="p-2.5 sm:p-4 space-y-1.5">
-                        <div className="flex flex-col gap-1">
-                          <span className="text-sm sm:text-base font-bold text-center">
-                            {slot.time.toLocaleTimeString("en-US", {
-                              hour: "2-digit",
-                              minute: "2-digit",
-                              hour12: false,
-                            })}
-                          </span>
-                          <span
-                            className={cn(
-                              "text-[10px] sm:text-xs font-semibold px-2 py-1 rounded-full text-center",
-                              isBooked
-                                ? isPending
-                                  ? "bg-yellow-500/30 text-yellow-700 dark:text-yellow-300"
-                                  : "bg-purple-500/30 text-purple-700 dark:text-purple-300"
-                                : isPast
-                                ? "bg-muted text-muted-foreground"
-                                : "bg-green-500/30 text-green-700 dark:text-green-300"
-                            )}
-                          >
-                            {isBooked ? (isPending ? t("pending") : (isActive ? t("active") : t("booked"))) : isPast ? t("ended") : t("available")}
-                          </span>
-                        </div>
-                        {isBooked && slot.reservation?.user ? (
-                          <div className="flex items-start gap-1.5 text-[10px] sm:text-xs pt-1.5 border-t border-border/40">
-                            <User size={11} className="sm:w-[13px] sm:h-[13px] mt-0.5 shrink-0 text-muted-foreground" />
-                            <div className="min-w-0 flex-1">
-                              <p className="font-semibold text-foreground truncate leading-tight">
-                                {slot.reservation.user.full_name}
-                              </p>
-                            </div>
-                          </div>
-                        ) : !isBooked && !isPast ? (
-                          <p className="text-[10px] sm:text-xs text-muted-foreground text-center pt-1.5 border-t border-border/40">
-                            {t("ready")}
-                          </p>
-                        ) : null}
-                      </CardContent>
-                    </Card>
-                  );
-                })}
+              ) : slots.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-12 px-4 text-center bg-muted/5 rounded-3xl border border-dashed border-border/60 my-4">
+                  <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mb-4">
+                    <Clock size={32} className="text-muted-foreground/40" />
+                  </div>
+                  <p className="text-sm font-semibold text-muted-foreground">{t("hallClosed")}</p>
                 </div>
-              </div>
-            )}
+              ) : (
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 pb-8">
+                  {slots.map((slot, i) => {
+                    const isPast = slot.time < new Date();
+                    const isBooked = !!slot.reservation;
+                    const isPending = slot.reservation?.status === "pending";
+                    const isActive = slot.reservation?.status === "active";
+                    const isCompleted = slot.reservation?.status === "completed";
 
-            <div className="flex justify-end pt-2 border-t border-border/40 shrink-0">
-              <Button variant="outline" onClick={onClose} className="cursor-pointer text-xs sm:text-sm h-8 sm:h-9 px-3 sm:px-4">
+                    return (
+                      <Card
+                        key={i}
+                        className={cn(
+                          "relative overflow-hidden border-none transition-all duration-200 shadow-sm",
+                          isBooked
+                            ? isPending
+                              ? "bg-yellow-500/[0.08] ring-1 ring-yellow-500/20"
+                              : isCompleted
+                              ? "bg-blue-500/[0.08] ring-1 ring-blue-500/20"
+                              : "bg-purple-500/[0.08] ring-1 ring-purple-500/20"
+                            : isPast
+                            ? "bg-muted/30 ring-1 ring-border/10 opacity-60"
+                            : "bg-green-500/[0.08] ring-1 ring-green-500/20"
+                        )}
+                      >
+                        <CardContent className="p-4 flex flex-col min-h-[100px]">
+                          <div className="flex justify-between items-start mb-4">
+                            <span className="text-base sm:text-lg font-bold tabular-nums tracking-tight">
+                              {slot.time.toLocaleTimeString("en-GB", {
+                                hour: "2-digit",
+                                minute: "2-digit",
+                              })}
+                            </span>
+                            <div className={cn(
+                              "w-2.5 h-2.5 rounded-full",
+                              isBooked 
+                                ? (isPending ? "bg-yellow-500 animate-pulse" : isCompleted ? "bg-blue-500" : "bg-purple-500") 
+                                : (isPast ? "bg-muted-foreground/30" : "bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.4)]")
+                            )} />
+                          </div>
+
+                          <div className="mt-auto space-y-2">
+                            <span className={cn(
+                              "text-[10px] font-extrabold uppercase tracking-wider block",
+                              isBooked
+                                ? isPending ? "text-yellow-600" : isCompleted ? "text-blue-600" : "text-purple-600"
+                                : isPast ? "text-muted-foreground" : "text-green-600"
+                            )}>
+                              {isBooked ? (isPending ? t("pending") : (isCompleted ? t("completed") : (isActive ? t("active") : t("booked")))) : isPast ? t("ended") : t("available")}
+                            </span>
+
+                            {isBooked && slot.reservation?.user?.full_name && (
+                              <div className="flex items-center gap-2 pt-2 border-t border-border/10">
+                                <User size={10} className="text-muted-foreground shrink-0" />
+                                <p className="text-[11px] font-semibold truncate leading-none">
+                                  {slot.reservation.user.full_name}
+                                </p>
+                              </div>
+                            )}
+                            {isBooked && !slot.reservation?.user?.full_name && slot.reservation?.user_id && (
+                              <div className="flex items-center gap-2 pt-2 border-t border-border/10">
+                                <User size={10} className="text-muted-foreground shrink-0" />
+                                <p className="text-[11px] font-semibold truncate leading-none text-muted-foreground">
+                                  User ID: {slot.reservation.user_id.slice(0, 8)}...
+                                </p>
+                              </div>
+                            )}
+                          </div>
+                        </CardContent>
+                      </Card>
+                    );
+                  })}
+                </div>
+            )}
+            </div>
+
+            {/* Footer - Fixed at bottom */}
+            <div className="px-5 py-4 border-t border-border/40 bg-background/80 backdrop-blur-md shrink-0 flex justify-end">
+              <Button 
+                variant="outline" 
+                onClick={onClose} 
+                className="rounded-xl px-8 font-bold h-10 border-border/60 active:scale-95 transition-transform"
+              >
                 {tc("close")}
               </Button>
             </div>

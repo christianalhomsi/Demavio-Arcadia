@@ -2,13 +2,14 @@ import { getAdminClient } from "@/lib/supabase/admin";
 
 const MAX_ATTEMPTS = 5;
 
-export async function storeOtpRequest(email: string, hash: string, password?: string): Promise<void> {
+export async function storeOtpRequest(email: string, hash: string, password?: string, username?: string): Promise<void> {
   const supabase = getAdminClient();
 
   const { error } = await supabase.from("otp_requests").insert({
     email,
     otp_hash: hash,
     password_hash: password,
+    username: username,
     expires_at: new Date(Date.now() + 10 * 60 * 1000).toISOString(),
   });
 
@@ -20,6 +21,7 @@ export type OtpRequest = {
   email: string;
   otp_hash: string;
   password_hash?: string | null;
+  username?: string | null;
   expires_at: string;
   attempts: number;
   verified_at: string | null;
@@ -30,7 +32,7 @@ export async function getLatestOtpRequest(email: string): Promise<OtpRequest | n
 
   const { data, error } = await supabase
     .from("otp_requests")
-    .select("id, email, otp_hash, password_hash, expires_at, attempts, verified_at")
+    .select("id, email, otp_hash, password_hash, username, expires_at, attempts, verified_at")
     .eq("email", email)
     .is("verified_at", null)
     .gt("expires_at", new Date().toISOString())

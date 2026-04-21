@@ -17,15 +17,15 @@ export async function POST(request: Request) {
     );
   }
 
-  const { email, password } = parsed.data;
+  const { email, password, username } = parsed.data;
 
   try {
     const appEnv = getAppEnv();
     const otp = generateOtp();
     const hash = await hashOtp(otp, appEnv.otpSecret);
 
-    // Store OTP with password temporarily
-    await storeOtpRequest(email, hash, password);
+    // Store OTP with password and username temporarily
+    await storeOtpRequest(email, hash, password, username);
     await sendOtpEmail(email, otp);
 
     return NextResponse.json({ success: true }, { status: 200 });

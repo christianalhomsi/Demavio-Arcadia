@@ -30,11 +30,13 @@ export default function DashboardLayoutClient({
             setMobileMenuOpen={setMobileMenuOpen}
           />
         </aside>
-        <DashboardSidebar 
-          hallId={hallId} 
-          mobileMenuOpen={mobileMenuOpen}
-          setMobileMenuOpen={setMobileMenuOpen}
-        />
+        <div className="md:hidden">
+          <DashboardSidebar 
+            hallId={hallId} 
+            mobileMenuOpen={mobileMenuOpen}
+            setMobileMenuOpen={setMobileMenuOpen}
+          />
+        </div>
         <main className="flex-1 overflow-y-auto">
           {children}
         </main>
