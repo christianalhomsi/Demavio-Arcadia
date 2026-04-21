@@ -45,6 +45,9 @@ export default function SessionModal({
   const [loading, setLoading] = useState(false);
   const [ratePerHour, setRatePerHour] = useState("");
   
+  // localStorage key for this session
+  const storageKey = `session-${sessionId}-items`;
+  
   // Manual entry state
   const [showManualEntry, setShowManualEntry] = useState(false);
   const [manualName, setManualName] = useState("");
@@ -54,26 +57,57 @@ export default function SessionModal({
   useEffect(() => {
     if (open) {
       loadData();
+      loadFromLocalStorage();
     }
   }, [open, sessionId]);
+
+  // Load from localStorage on mount
+  function loadFromLocalStorage() {
+    try {
+      const saved = localStorage.getItem(storageKey);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed.items) {
+          setSessionItems(parsed.items);
+        }
+        if (parsed.rate) {
+          setRatePerHour(parsed.rate);
+        }
+      }
+    } catch (e) {
+      console.error("Failed to load from localStorage", e);
+    }
+  }
+
+  // Save to localStorage whenever items or rate changes
+  useEffect(() => {
+    if (sessionItems.length > 0 || ratePerHour) {
+      try {
+        localStorage.setItem(storageKey, JSON.stringify({ items: sessionItems, rate: ratePerHour }));
+      } catch (e) {
+        console.error("Failed to save to localStorage", e);
+      }
+    }
+  }, [sessionItems, ratePerHour, storageKey]);
 
   async function loadData() {
     setLoading(true);
     
-    // Load products and session items in parallel
-    const [productsRes, itemsRes] = await Promise.all([
-      fetch(`/api/products?hall_id=${hallId}`),
-      fetch(`/api/session-items?session_id=${sessionId}`),
-    ]);
-
+    // Load products
+    const productsRes = await fetch(`/api/products?hall_id=${hallId}`);
     if (productsRes.ok) {
       const data = await productsRes.json();
       setProducts(data.filter((p: Product) => p.is_active));
     }
 
-    if (itemsRes.ok) {
-      const data = await itemsRes.json();
-      setSessionItems(data);
+    // Load session items from database only if localStorage is empty
+    const saved = localStorage.getItem(storageKey);
+    if (!saved) {
+      const itemsRes = await fetch(`/api/session-items?session_id=${sessionId}`);
+      if (itemsRes.ok) {
+        const data = await itemsRes.json();
+        setSessionItems(data);
+      }
     }
 
     setLoading(false);
@@ -164,6 +198,8 @@ export default function SessionModal({
     setLoading(false);
 
     if (res.ok) {
+      // Clear localStorage after successful payment
+      localStorage.removeItem(storageKey);
       toast.success("Payment confirmed");
       onSessionEnd();
       onClose();

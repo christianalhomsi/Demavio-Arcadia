@@ -59,6 +59,12 @@ export async function POST(
   const itemsResult = await calculateSessionTotal(session.id);
   const itemsTotal = itemsResult.success ? itemsResult.data.items_total : 0;
   
+  // Get session items for invoice
+  const { data: sessionItems } = await supabase
+    .from("session_items")
+    .select("*")
+    .eq("session_id", session.id);
+  
   // Total price = session base cost + items
   const totalPrice = sessionPrice + itemsTotal;
 
@@ -90,6 +96,29 @@ export async function POST(
   }
   if (!deviceResult.success) {
     console.error("[end-session] setDeviceAvailable failed:", deviceResult.error);
+  }
+
+  // Create invoice record
+  const { error: invoiceError } = await supabase
+    .from("invoices")
+    .insert({
+      session_id: session.id,
+      payment_id: paymentResult.data.id,
+      hall_id: hall_id,
+      device_id: session.device_id,
+      user_id: session.user_id,
+      started_at: session.started_at,
+      ended_at: endedAt,
+      duration_hours: durationHours,
+      rate_per_hour: rate_per_hour,
+      session_price: sessionPrice,
+      items: sessionItems || [],
+      items_total: itemsTotal,
+      total_price: totalPrice,
+    });
+
+  if (invoiceError) {
+    console.error("[end-session] Failed to create invoice:", invoiceError);
   }
 
   return NextResponse.json(
