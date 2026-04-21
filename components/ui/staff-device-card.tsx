@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { Monitor, Timer, Clock, WifiOff, LogIn, StopCircle, CheckCircle2, Calendar } from "lucide-react";
+import { Monitor, Timer, Clock, WifiOff, LogIn, StopCircle, CheckCircle2, Calendar, Pause, Play } from "lucide-react";
 import DeviceCalendarView from "@/components/ui/device-calendar-view";
 
 export type StaffDeviceCardProps = {
@@ -25,6 +25,7 @@ const STATUS: Record<DeviceStatus, { cls: string; labelKey: string; icon: React.
   active:    { cls: "badge-active",    labelKey: "active",    icon: Timer },
   offline:   { cls: "badge-offline",   labelKey: "offline",   icon: WifiOff },
   idle:      { cls: "badge-idle",      labelKey: "idle",  icon: Clock },
+  paused:    { cls: "badge-paused",    labelKey: "paused",    icon: StopCircle },
 };
 
 function elapsed(startedAt: string): string {
@@ -44,6 +45,7 @@ export default function StaffDeviceCard(props: StaffDeviceCardProps) {
   const [showEndForm, setShowEndForm] = useState(false);
   const [showCalendar, setShowCalendar] = useState(false);
   const [loading, setLoading]         = useState(false);
+  const [pauseLoading, setPauseLoading] = useState(false);
 
   async function handleCheckIn() {
     if (!reservation) return;
@@ -89,6 +91,25 @@ export default function StaffDeviceCard(props: StaffDeviceCardProps) {
     }
   }
 
+  async function handlePauseToggle() {
+    setPauseLoading(true);
+    const isPaused = status === "paused";
+    const res = await fetch("/api/devices/pause", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ device_id: id, hall_id: hallId, paused: !isPaused }),
+    });
+    setPauseLoading(false);
+    if (res.ok) {
+      const json = await res.json();
+      setStatus(json.status);
+      toast.success(isPaused ? t("deviceResumed") : t("devicePaused"));
+    } else {
+      const json = await res.json().catch(() => ({}));
+      toast.error(json?.error ?? t("pauseFailed"));
+    }
+  }
+
 
 
   const s = STATUS[status] ?? STATUS.offline;
@@ -129,6 +150,14 @@ export default function StaffDeviceCard(props: StaffDeviceCardProps) {
             </p>
           </div>
         )}
+        {status === "paused" && session && (
+          <div className="flex items-center gap-2 p-2.5 rounded-lg bg-orange-500/10 border border-orange-500/20">
+            <span className="w-2 h-2 rounded-full bg-orange-400 shrink-0" />
+            <p className="text-xs font-medium text-orange-400">
+              {t("paused")} · {elapsed(session.started_at)}
+            </p>
+          </div>
+        )}
         {status === "idle" && reservation && (
           <div className="flex items-center gap-2 p-2.5 rounded-lg bg-amber-500/10 border border-amber-500/20">
             <span className="w-2 h-2 rounded-full bg-amber-400 shrink-0" />
@@ -148,6 +177,20 @@ export default function StaffDeviceCard(props: StaffDeviceCardProps) {
           >
             <LogIn size={13} />
             {t("checkIn")}
+          </Button>
+        )}
+
+        {/* pause/resume button - available for all device states except offline */}
+        {status !== "offline" && !showEndForm && (
+          <Button
+            size="sm"
+            variant="outline"
+            className="w-full text-xs cursor-pointer gap-1.5 border-orange-500/40 text-orange-500 hover:bg-orange-500/10"
+            onClick={handlePauseToggle}
+            disabled={pauseLoading}
+          >
+            {status === "paused" ? <Play size={13} /> : <Pause size={13} />}
+            {pauseLoading ? t("processing") : (status === "paused" ? t("resume") : t("pause"))}
           </Button>
         )}
 

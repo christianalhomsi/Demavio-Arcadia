@@ -1,7 +1,7 @@
 import { getServerClient } from "@/lib/supabase/server";
 import type { ServiceResult } from "@/types/reservation";
 
-export type DeviceStatus = "active" | "available" | "offline" | "idle";
+export type DeviceStatus = "active" | "available" | "offline" | "idle" | "paused";
 
 export type Device = {
   id: string;
@@ -48,6 +48,20 @@ export async function setDeviceAvailable(
   const { error } = await supabase
     .from("devices")
     .update({ status: "available" })
+    .eq("id", deviceId);
+
+  if (error) return { success: false, error: error.message };
+  return { success: true, data: true };
+}
+
+export async function setDevicePaused(
+  deviceId: string
+): Promise<ServiceResult<true>> {
+  const supabase = await getServerClient();
+
+  const { error } = await supabase
+    .from("devices")
+    .update({ status: "paused" })
     .eq("id", deviceId);
 
   if (error) return { success: false, error: error.message };

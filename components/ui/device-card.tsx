@@ -16,6 +16,7 @@ const STATUS: Record<DeviceStatus, { cls: string; label: string; icon: React.Ele
   active:    { cls: "badge-active",    label: "Active",    icon: Timer },
   offline:   { cls: "badge-offline",   label: "Offline",   icon: WifiOff },
   idle:      { cls: "badge-idle",      label: "Reserved",  icon: Clock },
+  paused:    { cls: "badge-paused",    label: "Paused",    icon: Timer },
 };
 
 export default function DeviceCard({ device, hallId }: { device: Device; hallId: string }) {
@@ -83,6 +84,14 @@ export default function DeviceCard({ device, hallId }: { device: Device; hallId:
             <CalendarPlus size={13} />
             Book this device
           </Button>
+        )}
+
+        {device.status === "paused" && (
+          <div className="p-2.5 rounded-lg bg-orange-500/10 border border-orange-500/20 text-center">
+            <p className="text-xs font-medium text-orange-400">
+              Device under maintenance
+            </p>
+          </div>
         )}
 
         <Dialog open={open} onOpenChange={setOpen}>

@@ -21,6 +21,7 @@ const STATUS_STYLE: Record<Device["status"], React.CSSProperties> = {
   active:    { background: "#dbeafe", color: "#1d4ed8" },
   offline:   { background: "#f3f4f6", color: "#6b7280" },
   idle:      { background: "#fef9c3", color: "#a16207" },
+  paused:    { background: "#fed7aa", color: "#c2410c" },
 };
 
 const STATUS_LABEL: Record<Device["status"], string> = {
@@ -28,6 +29,7 @@ const STATUS_LABEL: Record<Device["status"], string> = {
   active:    "Active",
   offline:   "Offline",
   idle:      "Reserved",
+  paused:    "Paused",
 };
 
 export default function AgentPanel({

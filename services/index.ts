@@ -3,7 +3,7 @@
 
 export { storeOtpRequest, getLatestOtpRequest, incrementOtpAttempts, markOtpVerified } from "./otp";
 export { getHalls } from "./halls";
-export { getDevice, setDeviceActive, setDeviceAvailable } from "./devices";
+export { getDevice, setDeviceActive, setDeviceAvailable, setDevicePaused } from "./devices";
 export { getDeviceTypes, getHallDevices } from "./device-types";
 export { getReservation, createReservation, setReservationActive } from "./reservations";
 export { verifyStaffHallAccess } from "./staff";

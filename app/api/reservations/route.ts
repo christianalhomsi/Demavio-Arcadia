@@ -49,6 +49,14 @@ export async function POST(request: Request) {
     );
   }
 
+  // Prevent booking paused devices
+  if (deviceResult.data.status === "paused") {
+    return NextResponse.json(
+      { error: "Device is currently paused for maintenance" },
+      { status: 422 }
+    );
+  }
+
   // Insert reservation — DB exclusion constraint handles overlap
   const result = await createReservation(
     { hall_id, device_id, start_time, end_time, guest_name },
