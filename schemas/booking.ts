@@ -6,6 +6,7 @@ export const bookingSchema = z
     device_id: z.string().uuid(),
     start_time: z.coerce.date(),
     end_time: z.coerce.date(),
+    guest_name: z.string().optional(),
   })
   .refine((data) => data.end_time > data.start_time, {
     message: "end_time must be after start_time",

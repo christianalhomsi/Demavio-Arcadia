@@ -1,7 +1,8 @@
 export type Reservation = {
   id: string;
   device_id: string;
-  user_id: string;
+  user_id: string | null;
+  guest_name: string | null;
   start_time: string;
   end_time: string;
   status: string;

@@ -78,7 +78,8 @@ function HallsGridSkeleton() {
 
 export default async function HallsPage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
-  const t = await getTranslations();
+  const t = await getTranslations('nav');
+  const th = await getTranslations('halls');
   const supabase = await getServerClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect(`/${locale}/login`);
@@ -121,20 +122,20 @@ export default async function HallsPage({ params }: { params: Promise<{ locale: 
               <Link href="/admin"
                 className="inline-flex items-center gap-1.5 h-8 px-3 rounded-lg text-xs font-medium border border-violet-500/30 bg-violet-500/10 text-violet-400 hover:bg-violet-500/20 transition-colors">
                 <ShieldCheck size={13} />
-                {t('nav.admin')}
+                {t('admin')}
               </Link>
             )}
             {hallDashboardId && (
               <Link href={`/dashboard/${hallDashboardId}`}
                 className="inline-flex items-center gap-1.5 h-8 px-3 rounded-lg text-xs font-medium border border-border/60 hover:bg-muted transition-colors text-muted-foreground hover:text-foreground">
                 <LayoutDashboard size={13} />
-                {t('nav.dashboard')}
+                {t('dashboard')}
               </Link>
             )}
             <Link href="/reservations"
               className="inline-flex items-center gap-1.5 h-8 px-3 rounded-lg text-xs font-medium border border-border/60 hover:bg-muted transition-colors text-muted-foreground hover:text-foreground">
               <CalendarDays size={13} />
-              <span className="hidden sm:block">{t('nav.reservations')}</span>
+              <span className="hidden sm:block">{t('reservations')}</span>
             </Link>
             <LogoutButton />
           </nav>
@@ -156,13 +157,13 @@ export default async function HallsPage({ params }: { params: Promise<{ locale: 
               <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium border"
                 style={{ background: "oklch(0.55 0.26 280 / 0.1)", borderColor: "oklch(0.55 0.26 280 / 0.25)", color: "oklch(0.75 0.18 280)" }}>
                 <Zap size={11} />
-                {t('halls.bookYourSession')}
+                {th('bookYourSession')}
               </div>
               <h1 className="text-3xl sm:text-4xl font-bold tracking-tight">
-                {t('halls.findYourGamingArena')}
+                {th('findYourGamingArena')}
               </h1>
               <p className="text-muted-foreground text-sm sm:text-base max-w-md">
-                {t('halls.browseHalls')}
+                {th('browseHalls')}
               </p>
             </div>
 
@@ -170,7 +171,7 @@ export default async function HallsPage({ params }: { params: Promise<{ locale: 
               className="inline-flex items-center gap-2 h-10 px-5 rounded-xl text-sm font-semibold text-white transition-all hover:opacity-90 hover:scale-[1.02] active:scale-[0.98] shrink-0"
               style={{ background: "linear-gradient(135deg, oklch(0.55 0.26 280), oklch(0.48 0.26 280))", boxShadow: "0 0 20px oklch(0.55 0.26 280 / 0.3)" }}>
               <Plus size={16} />
-              {t('halls.newBooking')}
+              {th('newBooking')}
             </Link>
           </div>
         </div>
@@ -179,7 +180,7 @@ export default async function HallsPage({ params }: { params: Promise<{ locale: 
       {/* ── Halls Grid ── */}
       <main className="max-w-6xl mx-auto px-5 py-10">
         <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-6">
-          {t('halls.allHalls')}
+          {th('allHalls')}
         </p>
         <Suspense fallback={<HallsGridSkeleton />}>
           <HallsGrid />

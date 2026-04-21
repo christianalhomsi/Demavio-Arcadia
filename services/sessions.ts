@@ -5,7 +5,7 @@ export type Session = {
   id: string;
   reservation_id: string;
   device_id: string;
-  user_id: string;
+  user_id: string | null;
   started_at: string;
   ended_at: string | null;
 };
@@ -13,7 +13,7 @@ export type Session = {
 export async function createSession(
   reservationId: string,
   deviceId: string,
-  userId: string
+  userId: string | null
 ): Promise<ServiceResult<Session>> {
   const supabase = await getServerClient();
 

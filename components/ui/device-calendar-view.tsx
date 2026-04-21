@@ -6,8 +6,11 @@ import { getBrowserClient } from "@/lib/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogBody } from "@/components/ui/dialog";
-import { ChevronLeft, ChevronRight, Calendar, User, Clock } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { ChevronLeft, ChevronRight, Calendar, User, Clock, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 import type { WorkingHours } from "@/types/hall";
 
 type Reservation = {
@@ -15,6 +18,7 @@ type Reservation = {
   start_time: string;
   end_time: string;
   user_id: string;
+  guest_name?: string | null;
   status: string;
   user?: { full_name: string; email: string };
 };
@@ -36,6 +40,10 @@ export default function DeviceCalendarView({ deviceId, deviceName, hallId, open,
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [slots, setSlots] = useState<TimeSlot[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showAddDialog, setShowAddDialog] = useState(false);
+  const [selectedSlot, setSelectedSlot] = useState<Date | null>(null);
+  const [guestName, setGuestName] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const t = useTranslations("devices");
   const tc = useTranslations("common");
 
@@ -80,6 +88,7 @@ export default function DeviceCalendarView({ deviceId, deviceName, hallId, open,
           start_time,
           end_time,
           user_id,
+          guest_name,
           status
         `)
         .eq("device_id", deviceId)
@@ -159,6 +168,129 @@ export default function DeviceCalendarView({ deviceId, deviceName, hallId, open,
     const newDate = new Date(selectedDate);
     newDate.setDate(newDate.getDate() + days);
     setSelectedDate(newDate);
+  };
+
+  const handleAddReservation = async () => {
+    if (!selectedSlot || !guestName.trim()) {
+      toast.error(tc("error"), { description: "Please fill all fields" });
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      const startTime = new Date(selectedSlot);
+      const endTime = new Date(selectedSlot);
+      endTime.setMinutes(endTime.getMinutes() + 30);
+
+      const response = await fetch("/api/reservations", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          hall_id: hallId,
+          device_id: deviceId,
+          start_time: startTime.toISOString(),
+          end_time: endTime.toISOString(),
+          guest_name: guestName.trim(),
+        }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Failed to add reservation");
+      }
+
+      toast.success(t("reservationAdded"));
+      setShowAddDialog(false);
+      setGuestName("");
+      setSelectedSlot(null);
+      
+      // Refresh slots
+      const supabase = getBrowserClient();
+      const { data: hall } = await supabase
+        .from("halls")
+        .select("working_hours")
+        .eq("id", hallId)
+        .single();
+
+      if (hall) {
+        const workingHours = hall?.working_hours as WorkingHours[] | null;
+        const dayOfWeek = selectedDate.getDay();
+        const daySchedule = workingHours?.find((h) => h.day === dayOfWeek);
+
+        if (daySchedule && daySchedule.is_open) {
+          const startOfDay = new Date(selectedDate);
+          startOfDay.setHours(0, 0, 0, 0);
+          const endOfDay = new Date(selectedDate);
+          endOfDay.setHours(23, 59, 59, 999);
+
+          const { data: reservations } = await supabase
+            .from("reservations")
+            .select(`id, start_time, end_time, user_id, guest_name, status`)
+            .eq("device_id", deviceId)
+            .gte("start_time", startOfDay.toISOString())
+            .lt("start_time", endOfDay.toISOString())
+            .in("status", ["pending", "confirmed", "active", "completed"]);
+
+          const userIds = reservations?.map(r => r.user_id).filter(Boolean) || [];
+          const uniqueUserIds = [...new Set(userIds)];
+          let profiles: any[] = [];
+          
+          if (uniqueUserIds.length > 0) {
+            const { data: profilesData } = await supabase
+              .from("profiles")
+              .select("id, username, email")
+              .in("id", uniqueUserIds);
+            
+            profiles = (profilesData || []).map(p => ({
+              id: p.id,
+              full_name: p.username || p.email?.split('@')[0] || 'User',
+              email: p.email
+            }));
+          }
+
+          const reservationsWithUsers = reservations?.map(r => ({
+            ...r,
+            user: profiles?.find(p => p.id === r.user_id)
+          }));
+
+          const timeSlots: TimeSlot[] = [];
+          const [openHour, openMin] = daySchedule.open_time.split(":").map(Number);
+          const [closeHour, closeMin] = daySchedule.close_time.split(":").map(Number);
+
+          const current = new Date(selectedDate);
+          current.setHours(openHour, openMin, 0, 0);
+          const end = new Date(selectedDate);
+          end.setHours(closeHour, closeMin, 0, 0);
+
+          while (current < end) {
+            const slotTime = new Date(current);
+            const slotEnd = new Date(current);
+            slotEnd.setMinutes(slotEnd.getMinutes() + 30);
+
+            if (slotEnd > end) break;
+
+            const reservation = reservationsWithUsers?.find((r) => {
+              const rStart = new Date(r.start_time);
+              const rEnd = new Date(r.end_time);
+              return slotTime >= rStart && slotTime < rEnd;
+            });
+
+            timeSlots.push({
+              time: slotTime,
+              reservation: reservation || null,
+            });
+
+            current.setMinutes(current.getMinutes() + 30);
+          }
+
+          setSlots(timeSlots);
+        }
+      }
+    } catch (error: any) {
+      toast.error(tc("error"), { description: error.message });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const isToday = selectedDate.toDateString() === new Date().toDateString();
@@ -291,7 +423,7 @@ export default function DeviceCalendarView({ deviceId, deviceName, hallId, open,
                               {isBooked ? (isPending ? t("pending") : (isCompleted ? t("completed") : (isActive ? t("active") : t("booked")))) : isPast ? t("ended") : t("available")}
                             </span>
 
-                            {isBooked && slot.reservation?.user?.full_name && (
+            {isBooked && slot.reservation?.user?.full_name && (
                               <div className="flex items-center gap-2 pt-2 border-t border-border/10">
                                 <User size={10} className="text-muted-foreground shrink-0" />
                                 <p className="text-[11px] font-semibold truncate leading-none">
@@ -299,7 +431,15 @@ export default function DeviceCalendarView({ deviceId, deviceName, hallId, open,
                                 </p>
                               </div>
                             )}
-                            {isBooked && !slot.reservation?.user?.full_name && slot.reservation?.user_id && (
+                            {isBooked && slot.reservation?.guest_name && (
+                              <div className="flex items-center gap-2 pt-2 border-t border-border/10">
+                                <User size={10} className="text-muted-foreground shrink-0" />
+                                <p className="text-[11px] font-semibold truncate leading-none">
+                                  {slot.reservation.guest_name}
+                                </p>
+                              </div>
+                            )}
+                            {isBooked && !slot.reservation?.user?.full_name && !slot.reservation?.guest_name && slot.reservation?.user_id && (
                               <div className="flex items-center gap-2 pt-2 border-t border-border/10">
                                 <User size={10} className="text-muted-foreground shrink-0" />
                                 <p className="text-[11px] font-semibold truncate leading-none text-muted-foreground">
@@ -317,7 +457,15 @@ export default function DeviceCalendarView({ deviceId, deviceName, hallId, open,
             </div>
 
             {/* Footer - Fixed at bottom */}
-            <div className="px-5 py-4 border-t border-border/40 bg-background/80 backdrop-blur-md shrink-0 flex justify-end">
+            <div className="px-5 py-4 border-t border-border/40 bg-background/80 backdrop-blur-md shrink-0 flex justify-between items-center gap-3">
+              <Button 
+                variant="default" 
+                onClick={() => setShowAddDialog(true)}
+                className="rounded-xl px-6 font-bold h-10 active:scale-95 transition-transform"
+              >
+                <Plus size={16} className="ml-2" />
+                {t("addReservation")}
+              </Button>
               <Button 
                 variant="outline" 
                 onClick={onClose} 
@@ -329,6 +477,90 @@ export default function DeviceCalendarView({ deviceId, deviceName, hallId, open,
           </div>
         </DialogBody>
       </DialogContent>
+
+      {/* Add Reservation Dialog */}
+      <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
+        <DialogContent onClose={() => setShowAddDialog(false)} className="w-[95vw] max-w-lg max-h-[85vh] flex flex-col">
+          <DialogHeader className="border-b border-border/40 px-5 py-4 shrink-0">
+            <DialogTitle className="flex items-center gap-3">
+              <div
+                className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 shadow-sm"
+                style={{ background: "oklch(0.55 0.26 280 / 0.12)", border: "1px solid oklch(0.55 0.26 280 / 0.2)" }}
+              >
+                <Plus size={18} style={{ color: "oklch(0.65 0.22 280)" }} />
+              </div>
+              <span className="text-base sm:text-lg font-bold tracking-tight">{t("addReservation")}</span>
+            </DialogTitle>
+          </DialogHeader>
+          <DialogBody className="flex-1 overflow-y-auto px-5 py-4 space-y-5 min-h-0">
+            <div className="space-y-2">
+              <Label htmlFor="guestName" className="text-sm font-semibold">{t("guestName")}</Label>
+              <Input
+                id="guestName"
+                value={guestName}
+                onChange={(e) => setGuestName(e.target.value)}
+                placeholder={t("guestNamePlaceholder")}
+                disabled={isSubmitting}
+                className="h-11 rounded-xl"
+              />
+            </div>
+            <div className="space-y-3">
+              <Label className="text-sm font-semibold">{t("selectTime")}</Label>
+              {slots.filter(slot => !slot.reservation && slot.time >= new Date()).length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground text-sm">
+                  {t("noAvailableSlots") || "لا توجد أوقات متاحة"}
+                </div>
+              ) : (
+                <div className="grid grid-cols-3 gap-2 max-h-[40vh] overflow-y-auto p-1 rounded-xl bg-muted/20">
+                  {slots
+                    .filter(slot => !slot.reservation && slot.time >= new Date())
+                    .map((slot, i) => (
+                      <Button
+                        key={i}
+                        variant={selectedSlot?.getTime() === slot.time.getTime() ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => setSelectedSlot(slot.time)}
+                        disabled={isSubmitting}
+                        className={cn(
+                          "h-11 text-sm font-bold rounded-xl transition-all",
+                          selectedSlot?.getTime() === slot.time.getTime() 
+                            ? "shadow-md scale-105" 
+                            : "hover:scale-105"
+                        )}
+                      >
+                        {slot.time.toLocaleTimeString("en-GB", {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}
+                      </Button>
+                    ))}
+                </div>
+              )}
+            </div>
+          </DialogBody>
+          <div className="border-t border-border/40 px-5 py-4 shrink-0 flex gap-3">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setShowAddDialog(false);
+                setGuestName("");
+                setSelectedSlot(null);
+              }}
+              disabled={isSubmitting}
+              className="flex-1 h-11 rounded-xl font-bold"
+            >
+              {tc("cancel")}
+            </Button>
+            <Button
+              onClick={handleAddReservation}
+              disabled={isSubmitting || !guestName.trim() || !selectedSlot}
+              className="flex-1 h-11 rounded-xl font-bold"
+            >
+              {isSubmitting ? t("adding") : tc("confirm")}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </Dialog>
   );
 }

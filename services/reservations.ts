@@ -11,7 +11,7 @@ export async function getReservation(
 
   const { data, error } = await supabase
     .from("reservations")
-    .select("id, device_id, user_id, start_time, end_time, created_at, status")
+    .select("id, device_id, user_id, guest_name, start_time, end_time, created_at, status")
     .eq("id", reservationId)
     .single();
 
@@ -36,7 +36,7 @@ export async function setReservationActive(
 
 export async function createReservation(
   input: BookingInput,
-  userId: string
+  userId: string | null = null
 ): Promise<ServiceResult<Reservation>> {
   const supabase = await getServerClient();
 
@@ -45,10 +45,11 @@ export async function createReservation(
     .insert({
       device_id: input.device_id,
       user_id: userId,
+      guest_name: input.guest_name || null,
       start_time: input.start_time.toISOString(),
       end_time: input.end_time.toISOString(),
     })
-    .select("id, device_id, user_id, start_time, end_time, created_at, status")
+    .select("id, device_id, user_id, guest_name, start_time, end_time, created_at, status")
     .single();
 
   if (error) {

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { bookingSchema } from "@/schemas/booking";
-import { getDevice, createReservation } from "@/services";
+import { getDevice, createReservation, verifyHallManagementAccess } from "@/services";
 import { getServerClient } from "@/lib/supabase/server";
 
 export async function POST(request: Request) {
@@ -14,17 +14,27 @@ export async function POST(request: Request) {
     );
   }
 
-  const { hall_id, device_id, start_time, end_time } = parsed.data;
+  const { hall_id, device_id, start_time, end_time, guest_name } = parsed.data;
 
   // Validate end > start
   if (new Date(end_time) <= new Date(start_time)) {
     return NextResponse.json({ error: "End time must be after start time" }, { status: 400 });
   }
+  
   // Resolve authenticated user
   const supabase = await getServerClient();
   const { data: { user } } = await supabase.auth.getUser();
+  
   if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  // If guest_name is provided, verify user has staff/manager access to the hall
+  if (guest_name) {
+    const accessResult = await verifyHallManagementAccess(user.id, hall_id);
+    if (!accessResult.success) {
+      return NextResponse.json({ error: "Only staff and managers can create guest reservations" }, { status: 403 });
+    }
   }
 
   // Verify device exists and belongs to the expected hall
@@ -41,8 +51,8 @@ export async function POST(request: Request) {
 
   // Insert reservation — DB exclusion constraint handles overlap
   const result = await createReservation(
-    { hall_id, device_id, start_time, end_time },
-    user.id
+    { hall_id, device_id, start_time, end_time, guest_name },
+    guest_name ? null : user.id
   );
 
   if (!result.success) {

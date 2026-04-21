@@ -4,7 +4,7 @@ import type { ServiceResult } from "@/types/reservation";
 export type Payment = {
   id: string;
   session_id: string;
-  user_id: string;
+  user_id: string | null;
   amount: number;
   duration_hours: number;
   created_at: string;
@@ -20,7 +20,7 @@ export type LedgerEntry = {
 
 export async function createPayment(
   sessionId: string,
-  userId: string,
+  userId: string | null,
   amount: number,
   durationHours: number
 ): Promise<ServiceResult<Payment>> {
