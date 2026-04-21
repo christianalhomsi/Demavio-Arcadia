@@ -196,7 +196,13 @@
     "devices": "Devices",
     "filter": "Filter",
     "selectDate": "Select date",
-    "today": "Today"
+    "today": "Today",
+    "invoices": "Invoices",
+    "viewAllInvoices": "View all invoices",
+    "noInvoices": "No invoices yet",
+    "duration": "Duration",
+    "sessionCost": "Session Cost",
+    "items": "Items"
   },
   "halls": {
     "title": "Halls",

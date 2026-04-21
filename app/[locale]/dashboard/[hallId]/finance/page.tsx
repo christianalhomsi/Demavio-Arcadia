@@ -6,7 +6,9 @@ import type { TransactionType } from "@/types/transaction";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
-import { DollarSign, Gamepad2, TrendingUp, TrendingDown, RefreshCw, SlidersHorizontal } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { DollarSign, Gamepad2, TrendingUp, TrendingDown, RefreshCw, SlidersHorizontal, Receipt } from "lucide-react";
+import Link from "next/link";
 
 export const metadata: Metadata = { title: "Finance" };
 
@@ -103,6 +105,13 @@ async function FinanceContent({ hallId }: { hallId: string }) {
           </Card>
         ))}
       </div>
+
+      <Link href={`/dashboard/${hallId}/finance/invoices`}>
+        <Button variant="outline" className="w-full sm:w-auto">
+          <Receipt size={16} className="mr-2" />
+          {t("invoices")}
+        </Button>
+      </Link>
 
       <Card className="border-border/60 overflow-hidden">
         <CardHeader className="pb-3">

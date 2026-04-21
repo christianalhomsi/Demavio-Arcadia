@@ -197,7 +197,13 @@
     "devices": "الأجهزة",
     "filter": "تصفية",
     "selectDate": "اختر التاريخ",
-    "today": "اليوم"
+    "today": "اليوم",
+    "invoices": "الفواتير",
+    "viewAllInvoices": "عرض جميع الفواتير",
+    "noInvoices": "لا توجد فواتير",
+    "duration": "المدة",
+    "sessionCost": "تكلفة الجلسة",
+    "items": "العناصر"
   },
   "halls": {
     "title": "الصالات",
