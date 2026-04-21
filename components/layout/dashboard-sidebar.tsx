@@ -5,12 +5,13 @@ import { usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
-import { LayoutDashboard, Monitor, CalendarDays, DollarSign, ChevronLeft, Settings } from "lucide-react";
+import { LayoutDashboard, Monitor, CalendarDays, DollarSign, ChevronLeft, Settings, Package } from "lucide-react";
 
 const NAV_ITEMS = [
   { key: "overview",     segment: "overview",     icon: LayoutDashboard },
   { key: "devices",      segment: "devices",      icon: Monitor },
   { key: "reservations", segment: "reservations", icon: CalendarDays },
+  { key: "products",     segment: "products",     icon: Package },
   { key: "finance",      segment: "finance",      icon: DollarSign },
   { key: "settings",     segment: "settings",     icon: Settings },
 ] as const;

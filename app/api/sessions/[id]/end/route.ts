@@ -9,6 +9,7 @@ import {
   createPayment,
   createLedgerEntry,
   setDeviceAvailable,
+  calculateSessionTotal,
 } from "@/services";
 
 export async function POST(
@@ -52,7 +53,14 @@ export async function POST(
 
   // Calculate duration and price
   const durationHours = calculateDuration(session.started_at, endedAt);
-  const totalPrice = calculatePrice(durationHours, rate_per_hour);
+  const sessionPrice = calculatePrice(durationHours, rate_per_hour);
+
+  // Get session items total
+  const itemsResult = await calculateSessionTotal(session.id);
+  const itemsTotal = itemsResult.success ? itemsResult.data.items_total : 0;
+  
+  // Total price = session base cost + items
+  const totalPrice = sessionPrice + itemsTotal;
 
   // Create payment record
   const paymentResult = await createPayment(
@@ -88,6 +96,8 @@ export async function POST(
     {
       session_id: session.id,
       duration_hours: durationHours,
+      session_price: sessionPrice,
+      items_total: itemsTotal,
       total_price: totalPrice,
       payment_id: paymentResult.data.id,
       ledger_id: ledgerResult.data.id,

@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { Monitor, Timer, Clock, WifiOff, LogIn, StopCircle, CheckCircle2, Calendar, Pause, Play } from "lucide-react";
 import DeviceCalendarView from "@/components/ui/device-calendar-view";
+import SessionModal from "@/components/ui/session-modal";
 
 export type StaffDeviceCardProps = {
   id: string;
@@ -44,6 +45,7 @@ export default function StaffDeviceCard(props: StaffDeviceCardProps) {
   const [ratePerHour, setRatePerHour] = useState("");
   const [showEndForm, setShowEndForm] = useState(false);
   const [showCalendar, setShowCalendar] = useState(false);
+  const [showSessionModal, setShowSessionModal] = useState(false);
   const [loading, setLoading]         = useState(false);
   const [pauseLoading, setPauseLoading] = useState(false);
 
@@ -115,9 +117,25 @@ export default function StaffDeviceCard(props: StaffDeviceCardProps) {
   const s = STATUS[status] ?? STATUS.offline;
   const StatusIcon = s.icon;
 
+  function handleDoubleClick() {
+    if (session) {
+      setShowSessionModal(true);
+    }
+  }
+
+  function handleSessionEnd() {
+    setStatus("available");
+    setSession(null);
+    setShowEndForm(false);
+    setRatePerHour("");
+  }
+
   return (
     <>
-    <Card className="border-border/60 hover:border-primary/50 transition-all hover:shadow-xl group relative overflow-hidden">
+    <Card 
+      className="border-border/60 hover:border-primary/50 transition-all hover:shadow-xl group relative overflow-hidden"
+      onDoubleClick={handleDoubleClick}
+    >
       {/* Gradient overlay on hover */}
       <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
       
@@ -266,6 +284,18 @@ export default function StaffDeviceCard(props: StaffDeviceCardProps) {
       open={showCalendar}
       onClose={() => setShowCalendar(false)}
     />
+    
+    {session && (
+      <SessionModal
+        open={showSessionModal}
+        onClose={() => setShowSessionModal(false)}
+        sessionId={session.id}
+        deviceName={name}
+        hallId={hallId}
+        startedAt={session.started_at}
+        onSessionEnd={handleSessionEnd}
+      />
+    )}
     </>
   );
 }

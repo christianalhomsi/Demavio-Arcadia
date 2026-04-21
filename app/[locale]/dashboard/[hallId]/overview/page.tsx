@@ -2,11 +2,11 @@ import { Suspense } from "react";
 import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
 import { getServerClient } from "@/lib/supabase/server";
-import type { DeviceStatus } from "@/services/devices";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
-import { Monitor, CheckCircle2, Play, Clock, WifiOff, LayoutDashboard } from "lucide-react";
+import { LayoutDashboard } from "lucide-react";
+import OverviewDeviceCard from "@/components/ui/overview-device-card";
 
 export const metadata: Metadata = { title: "Overview" };
 
@@ -23,26 +23,20 @@ async function OverviewContent({ hallId }: { hallId: string }) {
   const supabase = await getServerClient();
   const t = await getTranslations("dashboard");
 
-  // both queries in parallel
-  const [devicesRes, reservationsRes] = await Promise.all([
-    supabase.from("devices").select("id, status").eq("hall_id", hallId),
+  // all queries in parallel
+  const [devicesRes, reservationsRes, sessionsRes] = await Promise.all([
+    supabase.from("devices").select("id, name, status").eq("hall_id", hallId).order("name", { ascending: true }),
     supabase.from("reservations")
       .select("id, start_time, end_time, status, devices!inner(name, hall_id)")
       .eq("devices.hall_id", hallId)
       .order("start_time", { ascending: false })
       .limit(5),
+    supabase.from("sessions").select("id, device_id, started_at").is("ended_at", null).eq("hall_id", hallId),
   ]);
 
   const devices = devicesRes.data ?? [];
-  const count = (s: DeviceStatus) => devices.filter(d => d.status === s).length;
-
-  const stats = [
-    { label: t("total"),     value: devices.length,    color: "text-foreground",       icon: Monitor },
-    { label: t("available"), value: count("available"), color: "text-green-400",        icon: CheckCircle2 },
-    { label: t("active"),    value: count("active"),    color: "text-blue-400",         icon: Play },
-    { label: t("reserved"),  value: count("idle"),      color: "text-amber-400",        icon: Clock },
-    { label: t("offline"),   value: count("offline"),   color: "text-muted-foreground", icon: WifiOff },
-  ];
+  const sessions = sessionsRes.data ?? [];
+  const sessionByDevice = new Map(sessions.map((s) => [s.device_id, s]));
 
   const rows = (reservationsRes.data ?? []) as unknown as {
     id: string; start_time: string; end_time: string; status: string;
@@ -51,25 +45,32 @@ async function OverviewContent({ hallId }: { hallId: string }) {
 
   return (
     <>
-      {/* stats */}
-      <div className="grid gap-3 grid-cols-2 sm:grid-cols-3 lg:grid-cols-5">
-        {stats.map(({ label, value, color, icon: Icon }) => (
-          <Card key={label} className="border-border/60">
-            <CardContent className="pt-4 pb-4">
-              <div className="flex items-center justify-between mb-3">
-                <span className="text-xs text-muted-foreground">{label}</span>
-                <Icon size={14} className="text-muted-foreground/40" />
-              </div>
-              <p className={`text-3xl font-bold leading-none tabular-nums ${color}`}>{value}</p>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+      {/* devices grid */}
+      {devices.length > 0 && (
+        <div className="mb-6">
+          <h2 className="text-sm font-semibold text-muted-foreground mb-3">{t("devices")}</h2>
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
+            {devices.map((device) => (
+              <OverviewDeviceCard
+                key={device.id}
+                id={device.id}
+                name={device.name}
+                status={device.status}
+                hallId={hallId}
+                activeSession={sessionByDevice.get(device.id) ? {
+                  id: sessionByDevice.get(device.id)!.id,
+                  started_at: sessionByDevice.get(device.id)!.started_at
+                } : null}
+              />
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* recent reservations */}
       <Card className="border-border/60">
         <CardHeader className="pb-3">
-          <CardTitle className="text-sm font-semibold">{t("recentReservations")}</CardTitle>
+          <h2 className="text-sm font-semibold text-muted-foreground">{t("recentReservations")}</h2>
         </CardHeader>
         <Separator className="opacity-40" />
         {rows.length === 0 ? (
@@ -111,10 +112,13 @@ async function OverviewContent({ hallId }: { hallId: string }) {
 function OverviewSkeleton() {
   return (
     <>
-      <div className="grid gap-3 grid-cols-2 sm:grid-cols-3 lg:grid-cols-5">
-        {Array.from({ length: 5 }).map((_, i) => (
-          <Skeleton key={i} className="h-24 rounded-xl skeleton-shimmer" />
-        ))}
+      <div className="mb-6">
+        <Skeleton className="h-4 w-24 mb-3 skeleton-shimmer" />
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
+          {Array.from({ length: 8 }).map((_, i) => (
+            <Skeleton key={i} className="h-28 rounded-xl skeleton-shimmer" />
+          ))}
+        </div>
       </div>
       <Card className="border-border/60">
         <CardHeader><Skeleton className="h-4 w-40 skeleton-shimmer" /></CardHeader>

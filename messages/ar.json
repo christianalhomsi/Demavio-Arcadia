@@ -27,6 +27,7 @@
     "users": "المستخدمين",
     "overview": "نظرة عامة",
     "devices": "الأجهزة",
+    "products": "المنتجات",
     "finance": "المالية",
     "agent": "الوكيل",
     "playerApp": "تطبيق اللاعبين",
@@ -193,6 +194,7 @@
     "reserved": "محجوز",
     "offline": "غير متصل",
     "recentReservations": "الحجوزات الأخيرة",
+    "devices": "الأجهزة",
     "filter": "تصفية",
     "selectDate": "اختر التاريخ",
     "today": "اليوم"
@@ -332,5 +334,28 @@
     "saving": "جاري الحفظ...",
     "updateError": "فشل تحديث الأسعار",
     "requestFailed": "فشل الطلب"
+  },
+  "products": {
+    "title": "المنتجات",
+    "description": "إدارة المنتجات القابلة للبيع (مشروبات، وجبات خفيفة، إلخ)",
+    "addProduct": "إضافة منتج",
+    "newProduct": "منتج جديد",
+    "productName": "اسم المنتج",
+    "price": "السعر",
+    "add": "إضافة",
+    "noProducts": "لا توجد منتجات بعد"
+  },
+  "session": {
+    "title": "الجلسة",
+    "duration": "المدة",
+    "quickAdd": "إضافة سريعة",
+    "customItem": "عنصر مخصص",
+    "sessionItems": "عناصر الجلسة",
+    "noItems": "لم تتم إضافة عناصر بعد",
+    "ratePerHour": "السعر / ساعة",
+    "sessionCost": "تكلفة الجلسة",
+    "items": "العناصر",
+    "total": "الإجمالي",
+    "confirmPayment": "تأكيد الدفع"
   }
 }

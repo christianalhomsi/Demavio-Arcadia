@@ -27,6 +27,7 @@
     "users": "Users",
     "overview": "Overview",
     "devices": "Devices",
+    "products": "Products",
     "finance": "Finance",
     "agent": "Agent",
     "playerApp": "Player App",
@@ -192,6 +193,7 @@
     "reserved": "Reserved",
     "offline": "Offline",
     "recentReservations": "Recent Reservations",
+    "devices": "Devices",
     "filter": "Filter",
     "selectDate": "Select date",
     "today": "Today"
@@ -331,5 +333,28 @@
     "saving": "Saving...",
     "updateError": "Failed to update prices",
     "requestFailed": "Request failed"
+  },
+  "products": {
+    "title": "Products",
+    "description": "Manage sellable products (drinks, snacks, etc.)",
+    "addProduct": "Add Product",
+    "newProduct": "New Product",
+    "productName": "Product Name",
+    "price": "Price",
+    "add": "Add",
+    "noProducts": "No products yet"
+  },
+  "session": {
+    "title": "Session",
+    "duration": "Duration",
+    "quickAdd": "Quick Add",
+    "customItem": "Custom Item",
+    "sessionItems": "Session Items",
+    "noItems": "No items added yet",
+    "ratePerHour": "Rate per Hour",
+    "sessionCost": "Session Cost",
+    "items": "Items",
+    "total": "Total",
+    "confirmPayment": "Confirm Payment"
   }
 }
