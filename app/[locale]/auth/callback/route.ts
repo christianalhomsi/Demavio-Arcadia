@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
-import { getServerClient } from "@/lib/supabase/server";
+import { createServerClient } from "@supabase/ssr";
+import { cookies } from "next/headers";
+import { getSupabaseEnv } from "@/lib/env";
 
 export async function GET(request: Request, { params }: { params: Promise<{ locale: string }> }) {
   const { searchParams, origin } = new URL(request.url);
@@ -15,23 +17,26 @@ export async function GET(request: Request, { params }: { params: Promise<{ loca
     return NextResponse.redirect(`${origin}/${locale}/auth/login`);
   }
 
-  const authRedirectResponse = NextResponse.redirect(`${origin}/${locale}/halls`);
-  const supabase = await getServerClient(authRedirectResponse);
+  const cookieStore = await cookies();
+  const supabaseEnv = getSupabaseEnv();
+  
+  const supabase = createServerClient(supabaseEnv.url, supabaseEnv.anonKey, {
+    cookies: {
+      getAll() {
+        return cookieStore.getAll();
+      },
+      setAll(cookiesToSet: { name: string; value: string; options?: any }[]) {
+        cookiesToSet.forEach(({ name, value, options }) => {
+          cookieStore.set(name, value, options);
+        });
+      },
+    },
+  });
+
   const { data: sessionData, error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
   
   if (exchangeError) {
-    const fallbackUrl = new URL(`${origin}/${locale}/auth/login`);
-    fallbackUrl.searchParams.set("error", exchangeError.message);
-    fallbackUrl.searchParams.set("oauth_code", code);
-    return NextResponse.redirect(fallbackUrl.toString());
-  }
-
-  if (sessionData?.session) {
-    const { error: setSessionError } = await supabase.auth.setSession({
-      access_token: sessionData.session.access_token,
-      refresh_token: sessionData.session.refresh_token,
-    });
-
+    return NextResponse.redirect(`${origin}/${locale}/auth/login?error=${exchangeError.message}`);
   }
 
   const { data: { user } } = await supabase.auth.getUser();
@@ -40,25 +45,28 @@ export async function GET(request: Request, { params }: { params: Promise<{ loca
   }
 
   // ensure profile exists - create if not exists
-  const { data: existingProfile, error: profileCheckError } = await supabase
+  const { data: existingProfile } = await supabase
     .from("profiles")
-    .select("id, role")
+    .select("id, role, username")
     .eq("id", user.id)
     .maybeSingle();
 
   if (!existingProfile) {
-    const { error: insertError } = await supabase.from("profiles").insert({
+    await supabase.from("profiles").insert({
       id: user.id,
       email: user.email,
       full_name: user.user_metadata?.full_name || user.email?.split('@')[0] || 'User',
       role: "player"
     });
-    
-
+    return NextResponse.redirect(`${origin}/${locale}/auth/set-username`);
   }
 
-  const { data: profile } = await supabase.from("profiles").select("role").eq("id", user.id).maybeSingle();
-  const role = profile?.role;
+  // Check if username is set
+  if (!existingProfile.username) {
+    return NextResponse.redirect(`${origin}/${locale}/auth/set-username`);
+  }
+
+  const role = existingProfile.role;
 
   // Determine redirect URL
   let redirectUrl = `${origin}/${locale}/halls`;
@@ -71,6 +79,5 @@ export async function GET(request: Request, { params }: { params: Promise<{ loca
     redirectUrl = `${origin}/${locale}${assignment?.hall_id ? `/dashboard/${assignment.hall_id}` : "/halls"}`;
   }
 
-  authRedirectResponse.headers.set("location", redirectUrl);
-  return authRedirectResponse;
+  return NextResponse.redirect(redirectUrl);
 }

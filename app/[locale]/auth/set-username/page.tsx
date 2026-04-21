@@ -101,7 +101,7 @@ export default function SetUsernamePage() {
             ) : (
               <User size={16} />
             )}
-            {loading ? t("saving") : t("continue")}
+            {loading ? t("verifying") : t("continue")}
           </Button>
         </form>
       </div>
