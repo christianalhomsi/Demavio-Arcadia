@@ -191,7 +191,10 @@
     "available": "Available",
     "reserved": "Reserved",
     "offline": "Offline",
-    "recentReservations": "Recent Reservations"
+    "recentReservations": "Recent Reservations",
+    "filter": "Filter",
+    "selectDate": "Select date",
+    "today": "Today"
   },
   "halls": {
     "title": "Halls",

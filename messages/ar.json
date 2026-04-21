@@ -192,7 +192,10 @@
     "available": "متاح",
     "reserved": "محجوز",
     "offline": "غير متصل",
-    "recentReservations": "الحجوزات الأخيرة"
+    "recentReservations": "الحجوزات الأخيرة",
+    "filter": "تصفية",
+    "selectDate": "اختر التاريخ",
+    "today": "اليوم"
   },
   "halls": {
     "title": "الصالات",
