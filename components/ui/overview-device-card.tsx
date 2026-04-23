@@ -12,7 +12,7 @@ type Props = {
   name: string;
   status: DeviceStatus;
   hallId: string;
-  activeSession: { id: string; started_at: string } | null;
+  activeSession: { id: string; started_at: string; user_id: string | null; guest_name: string | null } | null;
 };
 
 const STATUS: Record<DeviceStatus, { cls: string; icon: React.ElementType }> = {
@@ -100,6 +100,8 @@ export default function OverviewDeviceCard({ id, name, status, hallId, activeSes
           deviceName={name}
           hallId={hallId}
           startedAt={session.started_at}
+          userId={session.user_id}
+          guestName={session.guest_name}
           onSessionEnd={handleSessionEnd}
         />
       )}

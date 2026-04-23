@@ -10,6 +10,8 @@ import {
   createLedgerEntry,
   setDeviceAvailable,
   calculateSessionTotal,
+  getOrCreateWallet,
+  deductFromWallet,
 } from "@/services";
 
 export async function POST(
@@ -26,7 +28,7 @@ export async function POST(
     );
   }
 
-  const { hall_id, rate_per_hour } = parsed.data;
+  const { hall_id, rate_per_hour, payment_method, wallet_price_per_hour } = parsed.data;
   const { id } = await params;
 
   // Resolve authenticated staff user
@@ -53,7 +55,8 @@ export async function POST(
 
   // Calculate duration and price
   const durationHours = calculateDuration(session.started_at, endedAt);
-  const sessionPrice = calculatePrice(durationHours, rate_per_hour);
+  const effectiveRate = payment_method === 'wallet' && wallet_price_per_hour ? wallet_price_per_hour : rate_per_hour;
+  const sessionPrice = calculatePrice(durationHours, effectiveRate);
 
   // Get session items total
   const itemsResult = await calculateSessionTotal(session.id);
@@ -67,6 +70,45 @@ export async function POST(
   
   // Total price = session base cost + items
   const totalPrice = sessionPrice + itemsTotal;
+
+  // Handle wallet payment if selected
+  let walletTransactionId: string | null = null;
+  if (payment_method === 'wallet') {
+    if (!session.user_id) {
+      // Get guest_name from reservation
+      const { data: reservation } = await supabase
+        .from("reservations")
+        .select("guest_name")
+        .eq("id", session.reservation_id)
+        .single();
+
+      if (!reservation?.guest_name) {
+        return NextResponse.json({ error: "Guest name not found" }, { status: 400 });
+      }
+
+      const walletResult = await getOrCreateWallet(hall_id, null, reservation.guest_name);
+      if (!walletResult.success) {
+        return NextResponse.json({ error: walletResult.error }, { status: 500 });
+      }
+
+      const deductResult = await deductFromWallet(walletResult.data.id, sessionPrice, session.id, user.id);
+      if (!deductResult.success) {
+        return NextResponse.json({ error: deductResult.error }, { status: 400 });
+      }
+      walletTransactionId = deductResult.data.id;
+    } else {
+      const walletResult = await getOrCreateWallet(hall_id, session.user_id, null);
+      if (!walletResult.success) {
+        return NextResponse.json({ error: walletResult.error }, { status: 500 });
+      }
+
+      const deductResult = await deductFromWallet(walletResult.data.id, sessionPrice, session.id, user.id);
+      if (!deductResult.success) {
+        return NextResponse.json({ error: deductResult.error }, { status: 400 });
+      }
+      walletTransactionId = deductResult.data.id;
+    }
+  }
 
   // Create payment record
   const paymentResult = await createPayment(
@@ -110,11 +152,13 @@ export async function POST(
       started_at: session.started_at,
       ended_at: endedAt,
       duration_hours: durationHours,
-      rate_per_hour: rate_per_hour,
+      rate_per_hour: effectiveRate,
       session_price: sessionPrice,
       items: sessionItems || [],
       items_total: itemsTotal,
       total_price: totalPrice,
+      payment_method: payment_method || 'cash',
+      wallet_transaction_id: walletTransactionId,
     });
 
   if (invoiceError) {

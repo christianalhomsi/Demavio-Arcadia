@@ -18,7 +18,7 @@ export type StaffDeviceCardProps = {
   status: DeviceStatus;
   hallId: string;
   pendingReservation: { id: string } | null;
-  activeSession: { id: string; started_at: string } | null;
+  activeSession: { id: string; started_at: string; user_id: string | null; guest_name: string | null } | null;
 };
 
 const STATUS: Record<DeviceStatus, { cls: string; labelKey: string; icon: React.ElementType }> = {
@@ -61,7 +61,7 @@ export default function StaffDeviceCard(props: StaffDeviceCardProps) {
     if (res.ok) {
       const data = await res.json();
       setStatus("active");
-      setSession({ id: data.id, started_at: data.started_at });
+      setSession({ id: data.id, started_at: data.started_at, user_id: data.user_id || null, guest_name: data.guest_name || null });
       setReservation(null);
       toast.success(`${name} — ${t("sessionStarted")}`);
     } else {
@@ -293,6 +293,8 @@ export default function StaffDeviceCard(props: StaffDeviceCardProps) {
         deviceName={name}
         hallId={hallId}
         startedAt={session.started_at}
+        userId={session.user_id}
+        guestName={session.guest_name}
         onSessionEnd={handleSessionEnd}
       />
     )}

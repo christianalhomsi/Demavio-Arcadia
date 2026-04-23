@@ -13,6 +13,8 @@ export type Invoice = {
   items: InvoiceItem[];
   items_total: number;
   total_price: number;
+  payment_method: 'cash' | 'wallet';
+  wallet_transaction_id: string | null;
   created_at: string;
 };
 

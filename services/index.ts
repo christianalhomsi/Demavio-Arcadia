@@ -14,3 +14,4 @@ export { insertTransaction } from "./transactions";
 export { openCashRegister, getCashRegister, closeCashRegister } from "./cash-registers";
 export { getHallProducts, createProduct, updateProduct, toggleProductActive } from "./products";
 export { getSessionItems, addSessionItem, removeSessionItem, calculateSessionTotal } from "./session-items";
+export { getOrCreateWallet, getWalletBalance, getWalletWithBalance, addWalletTopUp, deductFromWallet, getWalletTransactions } from "./wallets";

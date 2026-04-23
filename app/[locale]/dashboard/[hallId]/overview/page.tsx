@@ -31,12 +31,23 @@ async function OverviewContent({ hallId }: { hallId: string }) {
       .eq("devices.hall_id", hallId)
       .order("start_time", { ascending: false })
       .limit(5),
-    supabase.from("sessions").select("id, device_id, started_at").is("ended_at", null).eq("hall_id", hallId),
+    supabase.from("sessions").select("id, device_id, started_at, user_id, reservations!inner(guest_name)").is("ended_at", null).eq("hall_id", hallId),
   ]);
 
   const devices = devicesRes.data ?? [];
-  const sessions = sessionsRes.data ?? [];
-  const sessionByDevice = new Map(sessions.map((s) => [s.device_id, s]));
+  const sessions = (sessionsRes.data ?? []) as unknown as {
+    id: string;
+    device_id: string;
+    started_at: string;
+    user_id: string | null;
+    reservations: { guest_name: string | null } | null;
+  }[];
+  const sessionByDevice = new Map(sessions.map((s) => [s.device_id, {
+    id: s.id,
+    started_at: s.started_at,
+    user_id: s.user_id,
+    guest_name: s.reservations?.guest_name ?? null,
+  }]));
 
   const rows = (reservationsRes.data ?? []) as unknown as {
     id: string; start_time: string; end_time: string; status: string;
@@ -59,7 +70,9 @@ async function OverviewContent({ hallId }: { hallId: string }) {
                 hallId={hallId}
                 activeSession={sessionByDevice.get(device.id) ? {
                   id: sessionByDevice.get(device.id)!.id,
-                  started_at: sessionByDevice.get(device.id)!.started_at
+                  started_at: sessionByDevice.get(device.id)!.started_at,
+                  user_id: sessionByDevice.get(device.id)!.user_id,
+                  guest_name: sessionByDevice.get(device.id)!.guest_name,
                 } : null}
               />
             ))}

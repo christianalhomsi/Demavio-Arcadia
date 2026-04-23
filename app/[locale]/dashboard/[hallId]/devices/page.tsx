@@ -11,7 +11,7 @@ export const metadata: Metadata = { title: "Devices | Gaming Hub" };
 
 type DeviceWithType = Device & { device_type?: DeviceType };
 
-type ActiveSession = { id: string; device_id: string; started_at: string };
+type ActiveSession = { id: string; device_id: string; started_at: string; user_id: string | null; guest_name: string | null };
 type PendingReservation = { id: string; device_id: string };
 
 async function fetchPageData(hallId: string): Promise<{
@@ -67,14 +67,22 @@ async function fetchPageData(hallId: string): Promise<{
   if (deviceIds.length === 0) return { devices, deviceTypes, sessions: [], reservations: [] };
 
   const [sessionsRes, reservationsRes] = await Promise.all([
-    supabase.from("sessions").select("id, device_id, started_at").is("ended_at", null).in("device_id", deviceIds),
+    supabase.from("sessions").select("id, device_id, started_at, user_id, reservations!inner(guest_name)").is("ended_at", null).in("device_id", deviceIds),
     supabase.from("reservations").select("id, device_id").eq("status", "confirmed").in("device_id", deviceIds),
   ]);
+
+  const sessions = (sessionsRes.data ?? []).map((s: any) => ({
+    id: s.id,
+    device_id: s.device_id,
+    started_at: s.started_at,
+    user_id: s.user_id,
+    guest_name: s.reservations?.guest_name ?? null,
+  })) as ActiveSession[];
 
   return {
     devices,
     deviceTypes,
-    sessions: (sessionsRes.data ?? []) as ActiveSession[],
+    sessions,
     reservations: (reservationsRes.data ?? []) as PendingReservation[],
   };
 }

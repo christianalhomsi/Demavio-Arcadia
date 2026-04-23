@@ -14,7 +14,7 @@ type DeviceWithType = Device & { device_type?: DeviceType };
 type Props = {
   devices: DeviceWithType[];
   deviceTypes: DeviceType[];
-  sessions: { id: string; device_id: string; started_at: string }[];
+  sessions: { id: string; device_id: string; started_at: string; user_id: string | null; guest_name: string | null }[];
   reservations: { id: string; device_id: string }[];
   hallId: string;
 };
@@ -40,7 +40,12 @@ export default function DevicesGridClient({ devices, deviceTypes, sessions, rese
       status: d.status,
       hallId,
       activeSession: sessionByDevice.get(d.id)
-        ? { id: sessionByDevice.get(d.id)!.id, started_at: sessionByDevice.get(d.id)!.started_at }
+        ? { 
+            id: sessionByDevice.get(d.id)!.id, 
+            started_at: sessionByDevice.get(d.id)!.started_at,
+            user_id: sessionByDevice.get(d.id)!.user_id,
+            guest_name: sessionByDevice.get(d.id)!.guest_name
+          }
         : null,
       pendingReservation: reservationByDevice.get(d.id)
         ? { id: reservationByDevice.get(d.id)!.id }

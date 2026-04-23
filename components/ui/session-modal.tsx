@@ -8,9 +8,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
-import { ShoppingCart, Plus, Trash2, Clock, DollarSign, X } from "lucide-react";
+import { ShoppingCart, Plus, Trash2, Clock, DollarSign, X, Wallet } from "lucide-react";
 import type { Product } from "@/types/product";
 import type { SessionItem } from "@/types/session-item";
+import type { WalletWithBalance } from "@/types/wallet";
 
 type SessionModalProps = {
   open: boolean;
@@ -19,6 +20,8 @@ type SessionModalProps = {
   deviceName: string;
   hallId: string;
   startedAt: string;
+  userId: string | null;
+  guestName: string | null;
   onSessionEnd: () => void;
 };
 
@@ -35,6 +38,8 @@ export default function SessionModal({
   deviceName,
   hallId,
   startedAt,
+  userId,
+  guestName,
   onSessionEnd,
 }: SessionModalProps) {
   const t = useTranslations("session");
@@ -44,11 +49,12 @@ export default function SessionModal({
   const [sessionItems, setSessionItems] = useState<SessionItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [ratePerHour, setRatePerHour] = useState("");
+  const [walletPricePerHour, setWalletPricePerHour] = useState("");
+  const [wallet, setWallet] = useState<WalletWithBalance | null>(null);
+  const [paymentMethod, setPaymentMethod] = useState<'cash' | 'wallet'>('cash');
   
-  // localStorage key for this session
   const storageKey = `session-${sessionId}-items`;
   
-  // Manual entry state
   const [showManualEntry, setShowManualEntry] = useState(false);
   const [manualName, setManualName] = useState("");
   const [manualPrice, setManualPrice] = useState("");
@@ -58,10 +64,10 @@ export default function SessionModal({
     if (open) {
       loadData();
       loadFromLocalStorage();
+      loadWallet();
     }
   }, [open, sessionId]);
 
-  // Load from localStorage on mount
   function loadFromLocalStorage() {
     try {
       const saved = localStorage.getItem(storageKey);
@@ -79,7 +85,6 @@ export default function SessionModal({
     }
   }
 
-  // Save to localStorage whenever items or rate changes
   useEffect(() => {
     if (sessionItems.length > 0 || ratePerHour) {
       try {
@@ -93,14 +98,12 @@ export default function SessionModal({
   async function loadData() {
     setLoading(true);
     
-    // Load products
     const productsRes = await fetch(`/api/products?hall_id=${hallId}`);
     if (productsRes.ok) {
       const data = await productsRes.json();
       setProducts(data.filter((p: Product) => p.is_active));
     }
 
-    // Load session items from database only if localStorage is empty
     const saved = localStorage.getItem(storageKey);
     if (!saved) {
       const itemsRes = await fetch(`/api/session-items?session_id=${sessionId}`);
@@ -111,6 +114,32 @@ export default function SessionModal({
     }
 
     setLoading(false);
+  }
+
+  async function loadWallet() {
+    if (!userId && !guestName) return;
+
+    const supabase = await fetch('/api/auth/session').then(r => r.json());
+    
+    // Get username if userId exists
+    let username: string | null = null;
+    if (userId) {
+      const res = await fetch(`/api/users/${userId}`);
+      if (res.ok) {
+        const user = await res.json();
+        username = user.username;
+      }
+    }
+
+    const params = new URLSearchParams({ hall_id: hallId });
+    if (username) params.append("username", username);
+    if (guestName) params.append("guest_name", guestName);
+
+    const res = await fetch(`/api/wallets?${params}`);
+    if (res.ok) {
+      const data = await res.json();
+      setWallet(data);
+    }
   }
 
   async function addProduct(product: Product) {
@@ -189,16 +218,30 @@ export default function SessionModal({
       return;
     }
 
+    if (paymentMethod === 'wallet') {
+      const walletRate = parseFloat(walletPricePerHour) || rate;
+      const sessionCost = walletRate * durationHours;
+      
+      if (!wallet || wallet.balance < sessionCost) {
+        toast.error("Insufficient wallet balance");
+        return;
+      }
+    }
+
     setLoading(true);
     const res = await fetch(`/api/sessions/${sessionId}/end`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ hall_id: hallId, rate_per_hour: rate }),
+      body: JSON.stringify({ 
+        hall_id: hallId, 
+        rate_per_hour: rate,
+        payment_method: paymentMethod,
+        wallet_price_per_hour: walletPricePerHour ? parseFloat(walletPricePerHour) : undefined,
+      }),
     });
     setLoading(false);
 
     if (res.ok) {
-      // Clear localStorage after successful payment
       localStorage.removeItem(storageKey);
       toast.success("Payment confirmed");
       onSessionEnd();
@@ -215,7 +258,10 @@ export default function SessionModal({
   );
 
   const durationHours = (Date.now() - new Date(startedAt).getTime()) / (1000 * 60 * 60);
-  const sessionCost = parseFloat(ratePerHour) * durationHours || 0;
+  const effectiveRate = paymentMethod === 'wallet' && walletPricePerHour 
+    ? parseFloat(walletPricePerHour) 
+    : parseFloat(ratePerHour);
+  const sessionCost = effectiveRate * durationHours || 0;
   const grandTotal = sessionCost + itemsTotal;
 
   return (
@@ -229,7 +275,6 @@ export default function SessionModal({
         </DialogHeader>
 
         <DialogBody className="space-y-4">
-          {/* Session Info */}
           <div className="flex items-center gap-4 p-3 rounded-lg bg-blue-500/10 border border-blue-500/20">
             <Clock size={16} className="text-blue-400" />
             <span className="text-sm font-medium text-blue-400">
@@ -237,7 +282,6 @@ export default function SessionModal({
             </span>
           </div>
 
-          {/* Products Catalog */}
           <div className="space-y-2">
             <Label className="text-sm font-semibold">Quick Add Products</Label>
             <div className="grid grid-cols-2 gap-2">
@@ -258,7 +302,6 @@ export default function SessionModal({
             </div>
           </div>
 
-          {/* Manual Entry */}
           <div className="space-y-2">
             {!showManualEntry ? (
               <Button
@@ -321,7 +364,6 @@ export default function SessionModal({
 
           <Separator />
 
-          {/* Cart */}
           <div className="space-y-2">
             <Label className="text-sm font-semibold">Session Items</Label>
             {sessionItems.length === 0 ? (
@@ -362,9 +404,20 @@ export default function SessionModal({
 
           <Separator />
 
-          {/* Rate Input */}
+          {wallet && (
+            <div className="p-3 rounded-lg bg-green-500/10 border border-green-500/20">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Wallet size={16} className="text-green-400" />
+                  <span className="text-sm font-medium text-green-400">Wallet Balance</span>
+                </div>
+                <span className="text-sm font-bold text-green-400">${wallet.balance.toFixed(2)}</span>
+              </div>
+            </div>
+          )}
+
           <div className="space-y-1">
-            <Label className="text-sm">Rate per Hour ($)</Label>
+            <Label className="text-sm">Cash Rate per Hour ($)</Label>
             <Input
               type="number"
               placeholder="e.g. 5.00"
@@ -376,11 +429,64 @@ export default function SessionModal({
             />
           </div>
 
-          {/* Total Breakdown */}
+          {wallet && (
+            <div className="space-y-1">
+              <Label className="text-sm">Wallet Rate per Hour ($) - Optional</Label>
+              <Input
+                type="number"
+                placeholder="Leave empty to use cash rate"
+                value={walletPricePerHour}
+                onChange={(e) => setWalletPricePerHour(e.target.value)}
+                className="h-9"
+                min="0"
+                step="0.01"
+              />
+            </div>
+          )}
+
+          {wallet && (
+            <div className="space-y-2">
+              <Label className="text-sm font-semibold">Payment Method</Label>
+              <div className="grid grid-cols-2 gap-2">
+                <Button
+                  type="button"
+                  variant={paymentMethod === 'cash' ? 'default' : 'outline'}
+                  onClick={() => setPaymentMethod('cash')}
+                  className="h-12"
+                >
+                  <DollarSign size={16} className="mr-1" />
+                  Full Cash
+                </Button>
+                <Button
+                  type="button"
+                  variant={paymentMethod === 'wallet' ? 'default' : 'outline'}
+                  onClick={() => setPaymentMethod('wallet')}
+                  className="h-12"
+                  disabled={!wallet || wallet.balance < sessionCost}
+                >
+                  <Wallet size={16} className="mr-1" />
+                  Wallet + Cash
+                </Button>
+              </div>
+              {paymentMethod === 'wallet' && (
+                <p className="text-xs text-muted-foreground">
+                  Session cost paid from wallet, products paid in cash
+                </p>
+              )}
+            </div>
+          )}
+
+          <Separator />
+
           <div className="space-y-2 p-3 rounded-lg bg-primary/5 border border-primary/20">
             <div className="flex justify-between text-sm">
               <span>Session ({durationHours.toFixed(2)}h)</span>
-              <span>${sessionCost.toFixed(2)}</span>
+              <div className="flex items-center gap-2">
+                <span>${sessionCost.toFixed(2)}</span>
+                {paymentMethod === 'wallet' && (
+                  <span className="text-xs text-green-400">(Wallet)</span>
+                )}
+              </div>
             </div>
             <div className="flex justify-between text-sm">
               <span>Items ({sessionItems.length})</span>
@@ -391,9 +497,13 @@ export default function SessionModal({
               <span>Total</span>
               <span className="text-primary">${grandTotal.toFixed(2)}</span>
             </div>
+            {paymentMethod === 'wallet' && (
+              <p className="text-xs text-muted-foreground">
+                Cash to collect: ${itemsTotal.toFixed(2)}
+              </p>
+            )}
           </div>
 
-          {/* Actions */}
           <div className="flex gap-2 pt-2">
             <Button
               className="flex-1"
