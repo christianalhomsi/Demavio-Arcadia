@@ -5,6 +5,7 @@ export type Session = {
   id: string;
   reservation_id: string;
   device_id: string;
+  hall_id: string;
   user_id: string | null;
   started_at: string;
   ended_at: string | null;
@@ -25,7 +26,7 @@ export async function createSession(
       user_id: userId,
       started_at: new Date().toISOString(),
     })
-    .select("id, reservation_id, device_id, user_id, started_at, ended_at")
+    .select("id, reservation_id, device_id, hall_id, user_id, started_at, ended_at")
     .single();
 
   if (error) return { success: false, error: error.message };
@@ -39,7 +40,7 @@ export async function getActiveSession(
 
   const { data, error } = await supabase
     .from("sessions")
-    .select("id, reservation_id, device_id, user_id, started_at, ended_at")
+    .select("id, reservation_id, device_id, hall_id, user_id, started_at, ended_at")
     .eq("id", sessionId)
     .is("ended_at", null)
     .single();

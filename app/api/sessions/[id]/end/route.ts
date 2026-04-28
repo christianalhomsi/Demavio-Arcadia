@@ -51,6 +51,12 @@ export async function POST(
   }
 
   const session = sessionResult.data;
+
+  // Verify the session actually belongs to the hall provided in the request body
+  if (session.hall_id !== hall_id) {
+    return NextResponse.json({ error: "Session does not belong to this hall" }, { status: 403 });
+  }
+
   const endedAt = new Date().toISOString();
 
   // Calculate duration and price
@@ -71,60 +77,72 @@ export async function POST(
   // Total price = session base cost + items
   const totalPrice = sessionPrice + itemsTotal;
 
-  // Handle wallet payment if selected
+  // Determine if payment will be made
+  const isPaid = payment_method !== undefined && payment_method !== null;
+  let paymentId: string | null = null;
+  let ledgerId: string | null = null;
   let walletTransactionId: string | null = null;
-  if (payment_method === 'wallet') {
-    if (!session.user_id) {
-      // Get guest_name from reservation
-      const { data: reservation } = await supabase
-        .from("reservations")
-        .select("guest_name")
-        .eq("id", session.reservation_id)
-        .single();
 
-      if (!reservation?.guest_name) {
-        return NextResponse.json({ error: "Guest name not found" }, { status: 400 });
-      }
+  if (isPaid) {
+    // Handle wallet payment if selected
+    if (payment_method === 'wallet') {
+      if (!session.user_id) {
+        // Guest session — need guest_name from reservation
+        if (!session.reservation_id) {
+          return NextResponse.json({ error: "No reservation linked to this walk-in session" }, { status: 400 });
+        }
+        const { data: reservation } = await supabase
+          .from("reservations")
+          .select("guest_name")
+          .eq("id", session.reservation_id)
+          .single();
 
-      const walletResult = await getOrCreateWallet(hall_id, null, reservation.guest_name);
-      if (!walletResult.success) {
-        return NextResponse.json({ error: walletResult.error }, { status: 500 });
-      }
+        if (!reservation?.guest_name) {
+          return NextResponse.json({ error: "Guest name not found" }, { status: 400 });
+        }
 
-      const deductResult = await deductFromWallet(walletResult.data.id, sessionPrice, session.id, user.id);
-      if (!deductResult.success) {
-        return NextResponse.json({ error: deductResult.error }, { status: 400 });
-      }
-      walletTransactionId = deductResult.data.id;
-    } else {
-      const walletResult = await getOrCreateWallet(hall_id, session.user_id, null);
-      if (!walletResult.success) {
-        return NextResponse.json({ error: walletResult.error }, { status: 500 });
-      }
+        const walletResult = await getOrCreateWallet(hall_id, null, reservation.guest_name);
+        if (!walletResult.success) {
+          return NextResponse.json({ error: walletResult.error }, { status: 500 });
+        }
 
-      const deductResult = await deductFromWallet(walletResult.data.id, sessionPrice, session.id, user.id);
-      if (!deductResult.success) {
-        return NextResponse.json({ error: deductResult.error }, { status: 400 });
+        const deductResult = await deductFromWallet(walletResult.data.id, totalPrice, session.id, user.id);
+        if (!deductResult.success) {
+          return NextResponse.json({ error: deductResult.error }, { status: 400 });
+        }
+        walletTransactionId = deductResult.data.id;
+      } else {
+        const walletResult = await getOrCreateWallet(hall_id, session.user_id, null);
+        if (!walletResult.success) {
+          return NextResponse.json({ error: walletResult.error }, { status: 500 });
+        }
+
+        const deductResult = await deductFromWallet(walletResult.data.id, totalPrice, session.id, user.id);
+        if (!deductResult.success) {
+          return NextResponse.json({ error: deductResult.error }, { status: 400 });
+        }
+        walletTransactionId = deductResult.data.id;
       }
-      walletTransactionId = deductResult.data.id;
     }
-  }
 
-  // Create payment record
-  const paymentResult = await createPayment(
-    session.id,
-    session.user_id,
-    totalPrice,
-    durationHours
-  );
-  if (!paymentResult.success) {
-    return NextResponse.json({ error: paymentResult.error }, { status: 500 });
-  }
+    // Create payment record
+    const paymentResult = await createPayment(
+      session.id,
+      session.user_id,
+      totalPrice,
+      durationHours
+    );
+    if (!paymentResult.success) {
+      return NextResponse.json({ error: paymentResult.error }, { status: 500 });
+    }
+    paymentId = paymentResult.data.id;
 
-  // Create ledger entry
-  const ledgerResult = await createLedgerEntry(paymentResult.data.id, totalPrice);
-  if (!ledgerResult.success) {
-    return NextResponse.json({ error: ledgerResult.error }, { status: 500 });
+    // Create ledger entry
+    const ledgerResult = await createLedgerEntry(paymentId, totalPrice);
+    if (!ledgerResult.success) {
+      return NextResponse.json({ error: ledgerResult.error }, { status: 500 });
+    }
+    ledgerId = ledgerResult.data.id;
   }
 
   // Mark session as ended and reset device — run in parallel
@@ -140,12 +158,12 @@ export async function POST(
     console.error("[end-session] setDeviceAvailable failed:", deviceResult.error);
   }
 
-  // Create invoice record
+  // Create invoice record (always, even if unpaid)
   const { error: invoiceError } = await supabase
     .from("invoices")
     .insert({
       session_id: session.id,
-      payment_id: paymentResult.data.id,
+      payment_id: paymentId,
       hall_id: hall_id,
       device_id: session.device_id,
       user_id: session.user_id,
@@ -157,8 +175,9 @@ export async function POST(
       items: sessionItems || [],
       items_total: itemsTotal,
       total_price: totalPrice,
-      payment_method: payment_method || 'cash',
+      payment_method: payment_method || null,
       wallet_transaction_id: walletTransactionId,
+      is_paid: isPaid,
     });
 
   if (invoiceError) {
@@ -172,8 +191,9 @@ export async function POST(
       session_price: sessionPrice,
       items_total: itemsTotal,
       total_price: totalPrice,
-      payment_id: paymentResult.data.id,
-      ledger_id: ledgerResult.data.id,
+      payment_id: paymentId,
+      ledger_id: ledgerId,
+      is_paid: isPaid,
     },
     { status: 200 }
   );

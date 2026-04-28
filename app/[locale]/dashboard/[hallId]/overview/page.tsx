@@ -58,9 +58,9 @@ async function OverviewContent({ hallId }: { hallId: string }) {
     <>
       {/* devices grid */}
       {devices.length > 0 && (
-        <div className="mb-6">
-          <h2 className="text-sm font-semibold text-muted-foreground mb-3">{t("devices")}</h2>
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
+        <div className="mb-4 sm:mb-6">
+          <h2 className="text-xs sm:text-sm font-semibold text-muted-foreground mb-2.5 sm:mb-3">{t("devices")}</h2>
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2.5 sm:gap-3">
             {devices.map((device) => (
               <OverviewDeviceCard
                 key={device.id}
@@ -82,32 +82,32 @@ async function OverviewContent({ hallId }: { hallId: string }) {
 
       {/* recent reservations */}
       <Card className="border-border/60">
-        <CardHeader className="pb-3">
-          <h2 className="text-sm font-semibold text-muted-foreground">{t("recentReservations")}</h2>
+        <CardHeader className="pb-2.5 sm:pb-3">
+          <h2 className="text-xs sm:text-sm font-semibold text-muted-foreground">{t("recentReservations")}</h2>
         </CardHeader>
         <Separator className="opacity-40" />
         {rows.length === 0 ? (
-          <CardContent className="py-10 text-center">
-            <p className="text-sm text-muted-foreground">{t("noReservations")}</p>
+          <CardContent className="py-8 sm:py-10 text-center">
+            <p className="text-xs sm:text-sm text-muted-foreground">{t("noReservations")}</p>
           </CardContent>
         ) : (
           <div className="overflow-x-auto" dir="auto">
-            <table className="w-full text-sm">
+            <table className="w-full text-xs sm:text-sm">
               <thead>
                 <tr className="border-b border-border/40">
                   {[t("device"), t("start"), t("end"), t("status")].map((h) => (
-                    <th key={h} className="px-4 py-2.5 text-start section-heading">{h}</th>
+                    <th key={h} className="px-3 py-2 sm:px-4 sm:py-2.5 text-start section-heading">{h}</th>
                   ))}
                 </tr>
               </thead>
               <tbody>
                 {rows.map((r) => (
                   <tr key={r.id} className="table-row-hover border-b border-border/20 last:border-0">
-                    <td className="px-4 py-3 font-medium text-foreground">{r.devices?.name ?? "—"}</td>
-                    <td className="px-4 py-3 text-muted-foreground whitespace-nowrap text-xs">{fmt(r.start_time)}</td>
-                    <td className="px-4 py-3 text-muted-foreground whitespace-nowrap text-xs">{fmt(r.end_time)}</td>
-                    <td className="px-4 py-3">
-                      <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${RES_STATUS[r.status] ?? "badge-completed"}`}>
+                    <td className="px-3 py-2.5 sm:px-4 sm:py-3 font-medium text-foreground">{r.devices?.name ?? "—"}</td>
+                    <td className="px-3 py-2.5 sm:px-4 sm:py-3 text-muted-foreground whitespace-nowrap text-[10px] sm:text-xs">{fmt(r.start_time)}</td>
+                    <td className="px-3 py-2.5 sm:px-4 sm:py-3 text-muted-foreground whitespace-nowrap text-[10px] sm:text-xs">{fmt(r.end_time)}</td>
+                    <td className="px-3 py-2.5 sm:px-4 sm:py-3">
+                      <span className={`text-[10px] sm:text-xs font-medium px-1.5 sm:px-2 py-0.5 rounded-full ${RES_STATUS[r.status] ?? "badge-completed"}`}>
                         {t(r.status as any)}
                       </span>
                     </td>
@@ -125,19 +125,19 @@ async function OverviewContent({ hallId }: { hallId: string }) {
 function OverviewSkeleton() {
   return (
     <>
-      <div className="mb-6">
-        <Skeleton className="h-4 w-24 mb-3 skeleton-shimmer" />
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
+      <div className="mb-4 sm:mb-6">
+        <Skeleton className="h-3 sm:h-4 w-20 sm:w-24 mb-2.5 sm:mb-3 skeleton-shimmer" />
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2.5 sm:gap-3">
           {Array.from({ length: 8 }).map((_, i) => (
-            <Skeleton key={i} className="h-28 rounded-xl skeleton-shimmer" />
+            <Skeleton key={i} className="h-24 sm:h-28 rounded-lg sm:rounded-xl skeleton-shimmer" />
           ))}
         </div>
       </div>
       <Card className="border-border/60">
-        <CardHeader><Skeleton className="h-4 w-40 skeleton-shimmer" /></CardHeader>
-        <CardContent className="space-y-2">
+        <CardHeader><Skeleton className="h-3 sm:h-4 w-32 sm:w-40 skeleton-shimmer" /></CardHeader>
+        <CardContent className="space-y-1.5 sm:space-y-2">
           {Array.from({ length: 4 }).map((_, i) => (
-            <Skeleton key={i} className="h-11 rounded-lg skeleton-shimmer" />
+            <Skeleton key={i} className="h-9 sm:h-11 rounded-lg skeleton-shimmer" />
           ))}
         </CardContent>
       </Card>
@@ -150,11 +150,11 @@ export default async function OverviewPage({ params }: { params: Promise<{ hallI
   const t = await getTranslations("dashboard");
   return (
     <div className="page-shell">
-      <div className="flex items-center gap-2.5">
-        <LayoutDashboard size={18} className="text-muted-foreground" />
+      <div className="flex items-center gap-2 sm:gap-2.5">
+        <LayoutDashboard size={16} className="sm:w-[18px] sm:h-[18px] text-muted-foreground" />
         <div>
-          <h1 className="text-xl font-bold leading-none">{t("overview")}</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">{t("hallStatusGlance")}</p>
+          <h1 className="text-lg sm:text-xl font-bold leading-none">{t("overview")}</h1>
+          <p className="text-xs sm:text-sm text-muted-foreground mt-0.5">{t("hallStatusGlance")}</p>
         </div>
       </div>
       <Suspense fallback={<OverviewSkeleton />}>

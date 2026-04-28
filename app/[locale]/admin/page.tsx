@@ -46,57 +46,57 @@ export default async function AdminHomePage() {
   ];
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6 sm:space-y-8">
 
       {/* page header */}
-      <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
+      <div className="flex items-center gap-2.5 sm:gap-3">
+        <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl flex items-center justify-center shrink-0"
           style={{ background: "oklch(0.55 0.26 280 / 0.12)", border: "1px solid oklch(0.55 0.26 280 / 0.25)" }}>
-          <ShieldCheck size={20} style={{ color: "oklch(0.65 0.22 280)" }} />
+          <ShieldCheck size={18} className="sm:w-5 sm:h-5" style={{ color: "oklch(0.65 0.22 280)" }} />
         </div>
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">{t('superAdmin')}</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">{t('manageHalls')}</p>
+          <h1 className="text-xl sm:text-2xl font-bold tracking-tight">{t('superAdmin')}</h1>
+          <p className="text-xs sm:text-sm text-muted-foreground mt-0.5">{t('manageHalls')}</p>
         </div>
       </div>
 
       {/* stats */}
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
         {stats.map(({ label, value, icon: Icon, color, bg, border }) => (
-          <div key={label} className="rounded-2xl border bg-card p-5"
+          <div key={label} className="rounded-xl sm:rounded-2xl border bg-card p-4 sm:p-5"
             style={{ borderColor: border, background: `color-mix(in oklch, ${bg}, var(--card))` }}>
-            <div className="flex items-center justify-between mb-3">
-              <p className="text-xs text-muted-foreground">{label}</p>
-              <div className="w-8 h-8 rounded-lg flex items-center justify-center"
+            <div className="flex items-center justify-between mb-2.5 sm:mb-3">
+              <p className="text-[10px] sm:text-xs text-muted-foreground">{label}</p>
+              <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg flex items-center justify-center"
                 style={{ background: bg, border: `1px solid ${border}` }}>
-                <Icon size={15} className={color} />
+                <Icon size={14} className={`sm:w-[15px] sm:h-[15px] ${color}`} />
               </div>
             </div>
-            <p className={`text-4xl font-bold tabular-nums leading-none ${color}`}>{value}</p>
+            <p className={`text-3xl sm:text-4xl font-bold tabular-nums leading-none ${color}`}>{value}</p>
           </div>
         ))}
       </div>
 
       {/* quick actions */}
       <div>
-        <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-4">{t('quickActions')}</p>
-        <div className="grid gap-4 sm:grid-cols-2">
+        <p className="text-[10px] sm:text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-3 sm:mb-4">{t('quickActions')}</p>
+        <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2">
           {actions.map(({ title, desc, icon: Icon, href, cta, accent }) => (
-            <Link key={href} href={href} className="group rounded-2xl border border-border/50 bg-card p-5 hover:border-primary/30 transition-all duration-200 hover:shadow-lg hover:shadow-primary/5 block">
-              <div className="flex items-start gap-3 mb-4">
-                <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
+            <Link key={href} href={href} className="group rounded-xl sm:rounded-2xl border border-border/50 bg-card p-4 sm:p-5 hover:border-primary/30 transition-all duration-200 hover:shadow-lg hover:shadow-primary/5 block">
+              <div className="flex items-start gap-2.5 sm:gap-3 mb-3 sm:mb-4">
+                <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl flex items-center justify-center shrink-0"
                   style={{ background: `${accent}18`, border: `1px solid ${accent}30` }}>
-                  <Icon size={18} style={{ color: accent }} />
+                  <Icon size={16} className="sm:w-[18px] sm:h-[18px]" style={{ color: accent }} />
                 </div>
-                <div>
-                  <p className="font-semibold text-sm text-foreground">{title}</p>
-                  <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">{desc}</p>
+                <div className="min-w-0">
+                  <p className="font-semibold text-xs sm:text-sm text-foreground">{title}</p>
+                  <p className="text-[10px] sm:text-xs text-muted-foreground mt-0.5 leading-relaxed">{desc}</p>
                 </div>
               </div>
-              <div className="inline-flex items-center gap-1.5 text-xs font-medium transition-colors"
+              <div className="inline-flex items-center gap-1 sm:gap-1.5 text-[10px] sm:text-xs font-medium transition-colors"
                 style={{ color: accent }}>
                 {cta}
-                <ArrowRight size={12} className="transition-transform group-hover:translate-x-0.5" />
+                <ArrowRight size={11} className="sm:w-3 sm:h-3 transition-transform group-hover:translate-x-0.5" />
               </div>
             </Link>
           ))}

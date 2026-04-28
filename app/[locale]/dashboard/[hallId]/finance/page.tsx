@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
-import { DollarSign, Gamepad2, TrendingUp, TrendingDown, RefreshCw, SlidersHorizontal, Receipt } from "lucide-react";
+import { DollarSign, Gamepad2, TrendingUp, TrendingDown, RefreshCw, SlidersHorizontal, Receipt, Wallet as WalletIcon, FileText, Shield } from "lucide-react";
 import Link from "next/link";
 
 export const metadata: Metadata = { title: "Finance" };
@@ -106,12 +106,32 @@ async function FinanceContent({ hallId }: { hallId: string }) {
         ))}
       </div>
 
-      <Link href={`/dashboard/${hallId}/finance/invoices`}>
-        <Button variant="outline" className="w-full sm:w-auto">
-          <Receipt size={16} className="mr-2" />
-          {t("invoices")}
-        </Button>
-      </Link>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+        <Link href={`/dashboard/${hallId}/finance/invoices`}>
+          <Button variant="outline" className="w-full">
+            <Receipt size={16} className="mr-2" />
+            {t("invoices")}
+          </Button>
+        </Link>
+        <Link href={`/dashboard/${hallId}/finance/register`}>
+          <Button variant="outline" className="w-full">
+            <WalletIcon size={16} className="mr-2" />
+            {t("cashRegister")}
+          </Button>
+        </Link>
+        <Link href={`/dashboard/${hallId}/finance/transactions`}>
+          <Button variant="outline" className="w-full">
+            <FileText size={16} className="mr-2" />
+            {t("transactions")}
+          </Button>
+        </Link>
+        <Link href={`/dashboard/${hallId}/finance/audit-logs`}>
+          <Button variant="outline" className="w-full">
+            <Shield size={16} className="mr-2" />
+            {t("auditLogs")}
+          </Button>
+        </Link>
+      </div>
 
       <Card className="border-border/60 overflow-hidden">
         <CardHeader className="pb-3">

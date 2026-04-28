@@ -40,6 +40,9 @@ export async function createReservation(
 ): Promise<ServiceResult<Reservation>> {
   const supabase = await getServerClient();
 
+  // حجوزات الضيوف تكون confirmed مباشرة، حجوزات المستخدمين pending
+  const status = input.guest_name ? 'confirmed' : 'pending';
+
   const { data, error } = await supabase
     .from("reservations")
     .insert({
@@ -48,6 +51,7 @@ export async function createReservation(
       guest_name: input.guest_name || null,
       start_time: input.start_time.toISOString(),
       end_time: input.end_time.toISOString(),
+      status: status,
     })
     .select("id, device_id, user_id, guest_name, start_time, end_time, created_at, status")
     .single();

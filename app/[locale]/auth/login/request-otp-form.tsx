@@ -15,6 +15,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Mail, Lock, AlertCircle, Send, LogIn, MailCheck } from "lucide-react";
+import Logo from "@/components/ui/logo";
 
 const loginSchema = z.object({
   email: z.string().email("Invalid email address"),
@@ -74,7 +75,10 @@ export default function AuthForm() {
     <div className="min-h-screen w-full flex items-center justify-center bg-gradient-to-br from-slate-950 via-violet-950/30 to-slate-950 p-4">
       <div className="w-full max-w-md">
         {/* Logo/Title */}
-        <div className="text-center mb-8">
+        <div className="text-center mb-8 flex flex-col items-center">
+          <div className="mb-4 p-4 rounded-2xl" style={{ background: "oklch(0.55 0.26 280 / 0.08)", border: "1px solid oklch(0.55 0.26 280 / 0.15)" }}>
+            <Logo href="/" size="xl" showText={false} />
+          </div>
           <h1 className="text-3xl font-bold bg-gradient-to-r from-violet-400 to-cyan-400 bg-clip-text text-transparent mb-1">Arcadia</h1>
           <p className="text-slate-400 text-xs">Gaming Hub Management</p>
         </div>
@@ -112,6 +116,10 @@ function LoginForm() {
     resolver: zodResolver(loginSchema),
   });
 
+  function getLocale() {
+    return window.location.pathname.split('/')[1] || 'ar';
+  }
+
   useEffect(() => {
     const error = searchParams.get("error");
     const oauthCode = searchParams.get("oauth_code");
@@ -137,12 +145,13 @@ function LoginForm() {
       }
 
       console.log('🟢 Client exchange success:', data.session.user.email);
+      const locale = getLocale();
       const userId = data.session.user.id;
       const { data: profile } = await supabase.from("profiles").select("role").eq("id", userId).maybeSingle();
       const role = profile?.role;
 
       if (role === "super_admin") {
-        router.replace("/admin");
+        router.replace(`/${locale}/admin`);
         return;
       }
       if (role === "hall_manager" || role === "hall_staff") {
@@ -151,10 +160,10 @@ function LoginForm() {
           .select("hall_id")
           .eq("user_id", userId)
           .maybeSingle();
-        router.replace(assignment?.hall_id ? `/dashboard/${assignment.hall_id}` : "/halls");
+        router.replace(assignment?.hall_id ? `/${locale}/dashboard/${assignment.hall_id}` : `/${locale}/halls`);
         return;
       }
-      router.replace("/halls");
+      router.replace(`/${locale}/halls`);
     };
 
     run();
@@ -164,21 +173,24 @@ function LoginForm() {
   }, [router, searchParams]);
 
   async function onSubmit(data: LoginInput) {
+    const locale = getLocale();
     const supabase = getBrowserClient();
     const { data: authData, error } = await supabase.auth.signInWithPassword({ email: data.email, password: data.password });
     if (error) { toast.error(error.message); return; }
     toast.success(t('welcomeBackMessage'));
-    await supabase.auth.getSession();
     const { data: profile } = await supabase.from("profiles").select("role").eq("id", authData.user.id).maybeSingle();
     const role = profile?.role;
-    if (role === "super_admin") { router.replace("/admin"); return; }
+    if (role === "super_admin") { router.replace(`/${locale}/admin`); return; }
     if (role === "hall_manager" || role === "hall_staff") {
-      const table = role === "hall_manager" ? "hall_managers" : "hall_staff_permissions";
-      const { data: hallData } = await supabase.from(table).select("hall_id").eq("user_id", authData.user.id).maybeSingle();
-      router.replace(hallData?.hall_id ? `/dashboard/${hallData.hall_id}` : "/halls");
+      const { data: assignment } = await supabase
+        .from("staff_assignments")
+        .select("hall_id")
+        .eq("user_id", authData.user.id)
+        .maybeSingle();
+      router.replace(assignment?.hall_id ? `/${locale}/dashboard/${assignment.hall_id}` : `/${locale}/halls`);
       return;
     }
-    router.replace("/halls");
+    router.replace(`/${locale}/halls`);
   }
 
   return (
@@ -212,6 +224,7 @@ function SignUpForm() {
   });
 
   async function onSubmit(data: SignupInput) {
+    const locale = window.location.pathname.split('/')[1] || 'ar';
     const res = await fetch("/api/auth/signup", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -219,7 +232,7 @@ function SignUpForm() {
     });
     if (res.ok) {
       toast.success(t('otpSent'));
-      router.push(`/auth/verify-otp?email=${encodeURIComponent(data.email)}`);
+      router.push(`/${locale}/auth/verify-otp?email=${encodeURIComponent(data.email)}`);
       return;
     }
     const json = await res.json().catch(() => ({}));

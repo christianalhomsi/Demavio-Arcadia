@@ -10,6 +10,7 @@ import { Toaster } from "@/components/ui/sonner";
 import { NavigationLoader } from "@/components/navigation-loader";
 import { QueryLoadingBar } from "@/components/query-loading-bar";
 import { SessionMonitor } from "@/components/session-monitor";
+import Image from "next/image";
 import "../globals.css";
 
 const cairo = Cairo({ 
@@ -23,6 +24,14 @@ const cairo = Cairo({
 export const metadata: Metadata = {
   title: { default: "Arcadia", template: "%s | Arcadia" },
   description: "Arcadia — Staff & Player Portal",
+  icons: {
+    icon: [
+      { url: '/assets/images/logos/arcadialogo.png', sizes: '32x32', type: 'image/png' },
+      { url: '/assets/images/logos/arcadialogo.png', sizes: '16x16', type: 'image/png' },
+    ],
+    apple: '/assets/images/logos/arcadialogo.png',
+    shortcut: '/assets/images/logos/arcadialogo.png',
+  },
 };
 
 export default async function RootLayout({

@@ -139,47 +139,47 @@ export default function StaffDeviceCard(props: StaffDeviceCardProps) {
       {/* Gradient overlay on hover */}
       <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
       
-      <CardContent className="pt-5 pb-4 space-y-3 relative">
+      <CardContent className="pt-4 sm:pt-5 pb-3 sm:pb-4 space-y-2.5 sm:space-y-3 relative">
         {/* header */}
-        <div className="flex items-start justify-between gap-3">
-          <div className="flex items-center gap-3 min-w-0 flex-1">
+        <div className="flex items-start justify-between gap-2 sm:gap-3">
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
             <div
-              className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform duration-300"
+              className="w-9 h-9 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform duration-300"
               style={{ background: "oklch(0.55 0.26 280 / 0.15)", border: "1.5px solid oklch(0.55 0.26 280 / 0.4)" }}
             >
-              <Monitor size={18} style={{ color: "oklch(0.65 0.22 280)" }} />
+              <Monitor size={16} className="sm:w-[18px] sm:h-[18px]" style={{ color: "oklch(0.65 0.22 280)" }} />
             </div>
             <div className="min-w-0 flex-1">
-              <p className="text-sm font-bold text-foreground truncate">{name}</p>
-              <p className="text-xs text-muted-foreground">ID: {id.slice(0, 8)}</p>
+              <p className="text-xs sm:text-sm font-bold text-foreground truncate">{name}</p>
+              <p className="text-[10px] sm:text-xs text-muted-foreground">ID: {id.slice(0, 8)}</p>
             </div>
           </div>
-          <span className={`flex items-center justify-center w-8 h-8 rounded-full shrink-0 ${s.cls}`}>
-            <StatusIcon size={16} />
+          <span className={`flex items-center justify-center w-7 h-7 sm:w-8 sm:h-8 rounded-full shrink-0 ${s.cls}`}>
+            <StatusIcon size={14} className="sm:w-4 sm:h-4" />
           </span>
         </div>
 
         {/* session info */}
         {status === "active" && session && (
-          <div className="flex items-center gap-2 p-2.5 rounded-lg bg-blue-500/10 border border-blue-500/20">
-            <span className="w-2 h-2 rounded-full bg-blue-400 animate-pulse shrink-0" />
-            <p className="text-xs font-medium text-blue-400">
+          <div className="flex items-center gap-1.5 sm:gap-2 p-2 sm:p-2.5 rounded-lg bg-blue-500/10 border border-blue-500/20">
+            <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-blue-400 animate-pulse shrink-0" />
+            <p className="text-[10px] sm:text-xs font-medium text-blue-400">
               {t("running")} · {elapsed(session.started_at)}
             </p>
           </div>
         )}
         {status === "paused" && session && (
-          <div className="flex items-center gap-2 p-2.5 rounded-lg bg-orange-500/10 border border-orange-500/20">
-            <span className="w-2 h-2 rounded-full bg-orange-400 shrink-0" />
-            <p className="text-xs font-medium text-orange-400">
+          <div className="flex items-center gap-1.5 sm:gap-2 p-2 sm:p-2.5 rounded-lg bg-orange-500/10 border border-orange-500/20">
+            <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-orange-400 shrink-0" />
+            <p className="text-[10px] sm:text-xs font-medium text-orange-400">
               {t("paused")} · {elapsed(session.started_at)}
             </p>
           </div>
         )}
         {status === "idle" && reservation && (
-          <div className="flex items-center gap-2 p-2.5 rounded-lg bg-amber-500/10 border border-amber-500/20">
-            <span className="w-2 h-2 rounded-full bg-amber-400 shrink-0" />
-            <p className="text-xs font-medium text-amber-400">
+          <div className="flex items-center gap-1.5 sm:gap-2 p-2 sm:p-2.5 rounded-lg bg-amber-500/10 border border-amber-500/20">
+            <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-amber-400 shrink-0" />
+            <p className="text-[10px] sm:text-xs font-medium text-amber-400">
               {t("confirmedReservation")}
             </p>
           </div>
@@ -189,11 +189,11 @@ export default function StaffDeviceCard(props: StaffDeviceCardProps) {
         {status === "idle" && reservation && !loading && (
           <Button
             size="sm"
-            className="w-full text-xs cursor-pointer gap-1.5"
+            className="w-full text-[10px] sm:text-xs cursor-pointer gap-1 sm:gap-1.5 h-7 sm:h-8"
             style={{ background: "oklch(0.55 0.26 280)", color: "white" }}
             onClick={handleCheckIn}
           >
-            <LogIn size={13} />
+            <LogIn size={12} className="sm:w-[13px] sm:h-[13px]" />
             {t("checkIn")}
           </Button>
         )}
@@ -203,11 +203,11 @@ export default function StaffDeviceCard(props: StaffDeviceCardProps) {
           <Button
             size="sm"
             variant="outline"
-            className="w-full text-xs cursor-pointer gap-1.5 border-orange-500/40 text-orange-500 hover:bg-orange-500/10"
+            className="w-full text-[10px] sm:text-xs cursor-pointer gap-1 sm:gap-1.5 h-7 sm:h-8 border-orange-500/40 text-orange-500 hover:bg-orange-500/10"
             onClick={handlePauseToggle}
             disabled={pauseLoading}
           >
-            {status === "paused" ? <Play size={13} /> : <Pause size={13} />}
+            {status === "paused" ? <Play size={12} className="sm:w-[13px] sm:h-[13px]" /> : <Pause size={12} className="sm:w-[13px] sm:h-[13px]" />}
             {pauseLoading ? t("processing") : (status === "paused" ? t("resume") : t("pause"))}
           </Button>
         )}
@@ -217,10 +217,10 @@ export default function StaffDeviceCard(props: StaffDeviceCardProps) {
           <Button
             size="sm"
             variant="outline"
-            className="w-full text-xs font-semibold cursor-pointer gap-2 border-primary/50 text-primary hover:bg-primary/15 hover:border-primary transition-all"
+            className="w-full text-[10px] sm:text-xs font-semibold cursor-pointer gap-1.5 sm:gap-2 h-7 sm:h-8 border-primary/50 text-primary hover:bg-primary/15 hover:border-primary transition-all"
             onClick={() => setShowCalendar(true)}
           >
-            <Calendar size={14} />
+            <Calendar size={12} className="sm:w-[14px] sm:h-[14px]" />
             {t("viewCalendar")}
           </Button>
         )}
@@ -230,29 +230,29 @@ export default function StaffDeviceCard(props: StaffDeviceCardProps) {
           <Button
             size="sm"
             variant="outline"
-            className="w-full text-xs cursor-pointer gap-1.5 border-destructive/40 text-destructive hover:bg-destructive/10"
+            className="w-full text-[10px] sm:text-xs cursor-pointer gap-1 sm:gap-1.5 h-7 sm:h-8 border-destructive/40 text-destructive hover:bg-destructive/10"
             onClick={() => setShowEndForm(true)}
           >
-            <StopCircle size={13} />
+            <StopCircle size={12} className="sm:w-[13px] sm:h-[13px]" />
             {t("endSession")}
           </Button>
         )}
 
         {/* end session form */}
         {showEndForm && (
-          <div className="space-y-3 pt-1 border-t border-border/40">
+          <div className="space-y-2.5 sm:space-y-3 pt-1 border-t border-border/40">
             <div className="space-y-1">
-              <Label className="text-xs text-muted-foreground">{t("ratePerHour")}</Label>
+              <Label className="text-[10px] sm:text-xs text-muted-foreground">{t("ratePerHour")}</Label>
               <Input
                 type="number" min="0" step="0.01" placeholder="e.g. 5.00"
                 value={ratePerHour} onChange={(e) => setRatePerHour(e.target.value)}
-                className="text-xs h-8"
+                className="text-xs h-7 sm:h-8"
               />
             </div>
-            <div className="flex gap-2">
+            <div className="flex gap-1.5 sm:gap-2">
               <Button
                 size="sm"
-                className="flex-1 text-xs cursor-pointer"
+                className="flex-1 text-[10px] sm:text-xs cursor-pointer h-7 sm:h-8"
                 disabled={loading || !ratePerHour}
                 style={{ background: "oklch(0.55 0.26 280)", color: "white" }}
                 onClick={handleEndSession}
@@ -262,7 +262,7 @@ export default function StaffDeviceCard(props: StaffDeviceCardProps) {
               <Button
                 size="sm"
                 variant="outline"
-                className="flex-1 text-xs cursor-pointer"
+                className="flex-1 text-[10px] sm:text-xs cursor-pointer h-7 sm:h-8"
                 onClick={() => { setShowEndForm(false); setRatePerHour(""); }}
               >
                 {tc("cancel")}
@@ -272,7 +272,7 @@ export default function StaffDeviceCard(props: StaffDeviceCardProps) {
         )}
 
         {loading && !showEndForm && (
-          <p className="text-xs text-muted-foreground text-center">{t("processing")}</p>
+          <p className="text-[10px] sm:text-xs text-muted-foreground text-center">{t("processing")}</p>
         )}
       </CardContent>
     </Card>

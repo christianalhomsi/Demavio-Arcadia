@@ -39,40 +39,45 @@ export async function GET(request: Request) {
 
 // POST /api/products
 export async function POST(request: Request) {
-  const body = await request.json().catch(() => null);
-  
-  const parsed = productSchema.safeParse(body);
-  if (!parsed.success) {
-    return NextResponse.json(
-      { error: parsed.error.flatten().fieldErrors },
-      { status: 400 }
-    );
+  try {
+    const body = await request.json().catch(() => null);
+    
+    const parsed = productSchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: parsed.error.flatten().fieldErrors },
+        { status: 400 }
+      );
+    }
+
+    const { searchParams } = new URL(request.url);
+    const hallId = searchParams.get("hall_id");
+
+    if (!hallId) {
+      return NextResponse.json({ error: "hall_id is required" }, { status: 400 });
+    }
+
+    const supabase = await getServerClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const accessResult = await verifyStaffHallAccess(user.id, hallId);
+    if (!accessResult.success) {
+      return NextResponse.json({ error: accessResult.error }, { status: 403 });
+    }
+
+    const result = await createProduct(hallId, parsed.data);
+    if (!result.success) {
+      return NextResponse.json({ error: result.error }, { status: 500 });
+    }
+
+    return NextResponse.json(result.data, { status: 201 });
+  } catch (error) {
+    console.error('POST /api/products error:', error);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
-
-  const { searchParams } = new URL(request.url);
-  const hallId = searchParams.get("hall_id");
-
-  if (!hallId) {
-    return NextResponse.json({ error: "hall_id is required" }, { status: 400 });
-  }
-
-  const supabase = await getServerClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  const accessResult = await verifyStaffHallAccess(user.id, hallId);
-  if (!accessResult.success) {
-    return NextResponse.json({ error: accessResult.error }, { status: 403 });
-  }
-
-  const result = await createProduct(hallId, parsed.data);
-  if (!result.success) {
-    return NextResponse.json({ error: result.error }, { status: 500 });
-  }
-
-  return NextResponse.json(result.data, { status: 201 });
 }
 
 // PATCH /api/products?product_id=xxx

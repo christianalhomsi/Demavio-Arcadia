@@ -9,12 +9,12 @@ export async function cancelExpiredReservations(): Promise<CancelExpiredResult> 
   const supabase = getAdminClient();
   const now = new Date().toISOString();
 
-  // بس الـ pending اللي فات وقتها تنلغى
+  // Cancel both 'pending' and 'confirmed' reservations that passed their end_time without check-in
   const { data, error } = await supabase
     .from("reservations")
     .update({ status: "cancelled" })
-    .eq("status", "pending")
-    .lt("start_time", now)
+    .in("status", ["pending", "confirmed"])
+    .lt("end_time", now)
     .select("id");
 
   if (error) throw new Error(`cancelExpiredReservations failed: ${error.message}`);

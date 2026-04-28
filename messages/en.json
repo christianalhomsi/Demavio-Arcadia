@@ -227,7 +227,10 @@
     "statusAvailable": "Available",
     "statusActive": "Active",
     "statusIdle": "Idle",
-    "statusOffline": "Offline"
+    "statusOffline": "Offline",
+    "open": "Open",
+    "capacity": "Capacity",
+    "totalDevices": "Total Devices"
   },
   "reservations": {
     "title": "Reservations",
@@ -349,7 +352,10 @@
     "productName": "Product Name",
     "price": "Price",
     "add": "Add",
-    "noProducts": "No products yet"
+    "noProducts": "No products yet",
+    "added": "Product added",
+    "addFailed": "Failed to add product",
+    "totalDevices": "Total Devices"
   },
   "session": {
     "title": "Session",

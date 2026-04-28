@@ -19,7 +19,7 @@ export default function AdminNav() {
 
   return (
     <nav className="space-y-0.5">
-      <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground px-3 mb-3">
+      <p className="text-[10px] sm:text-xs font-semibold uppercase tracking-widest text-muted-foreground px-2.5 sm:px-3 mb-2.5 sm:mb-3">
         {t('adminPanel')}
       </p>
       {NAV.map(({ labelKey, href, icon: Icon, exact }) => {
@@ -27,12 +27,12 @@ export default function AdminNav() {
         return (
           <Link key={href} href={href}
             className={cn(
-              "flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-150",
+              "flex items-center gap-2 sm:gap-2.5 px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-medium transition-all duration-150",
               active
                 ? "bg-primary text-primary-foreground shadow-sm"
                 : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
             )}>
-            <Icon size={15} className="shrink-0" />
+            <Icon size={14} className="sm:w-[15px] sm:h-[15px] shrink-0" />
             {t(labelKey)}
           </Link>
         );

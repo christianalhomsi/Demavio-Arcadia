@@ -1,7 +1,7 @@
 export type Invoice = {
   id: string;
   session_id: string;
-  payment_id: string;
+  payment_id: string | null;
   hall_id: string;
   device_id: string;
   user_id: string | null;
@@ -13,8 +13,9 @@ export type Invoice = {
   items: InvoiceItem[];
   items_total: number;
   total_price: number;
-  payment_method: 'cash' | 'wallet';
+  payment_method: 'cash' | 'wallet' | null;
   wallet_transaction_id: string | null;
+  is_paid: boolean;
   created_at: string;
 };
 

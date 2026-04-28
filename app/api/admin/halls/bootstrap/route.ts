@@ -107,7 +107,13 @@ export async function POST(request: Request) {
 
     const userId = created.user.id;
 
-    await admin.from("profiles").upsert({ id: userId, email: staff.email, role: "hall_manager" });
+    const { error: profileErr } = await admin.from("profiles").upsert({ id: userId, email: staff.email, role: "hall_manager" });
+    if (profileErr) {
+      console.error("[admin/halls/bootstrap] profile upsert", profileErr);
+      await admin.auth.admin.deleteUser(userId);
+      await rollbackHall(admin, hallId);
+      return NextResponse.json({ error: "Failed to create manager profile" }, { status: 500 });
+    }
 
     const { error: saErr } = await admin.from("staff_assignments").insert({
       user_id: userId,
@@ -157,9 +163,27 @@ export async function POST(request: Request) {
       }
 
       const uid = created.user.id;
-      await admin.from("profiles").upsert({ id: uid, email: member.email, role: "hall_staff" });
-      await admin.from("staff_assignments").insert({ user_id: uid, hall_id: hallId, role: "hall_staff" });
-      await admin.from("staff_hall_access").insert({ user_id: uid, hall_id: hallId });
+      const { error: extraProfileErr } = await admin.from("profiles").upsert({ id: uid, email: member.email, role: "hall_staff" });
+      if (extraProfileErr) {
+        console.error("[admin/halls/bootstrap] extra_staff profile upsert", extraProfileErr);
+        await admin.auth.admin.deleteUser(uid);
+        await rollbackHall(admin, hallId);
+        return NextResponse.json({ error: `Failed to create profile for ${member.email}` }, { status: 500 });
+      }
+
+      const { error: saErr } = await admin.from("staff_assignments").insert({ user_id: uid, hall_id: hallId, role: "hall_staff" });
+      if (saErr) {
+        console.error("[admin/halls/bootstrap] extra_staff staff_assignments", saErr);
+        await rollbackHall(admin, hallId);
+        return NextResponse.json({ error: `Failed to assign staff ${member.email}: ${saErr.message}` }, { status: 500 });
+      }
+
+      const { error: legacyErr } = await admin.from("staff_hall_access").insert({ user_id: uid, hall_id: hallId });
+      if (legacyErr) {
+        console.error("[admin/halls/bootstrap] extra_staff staff_hall_access", legacyErr);
+        await rollbackHall(admin, hallId);
+        return NextResponse.json({ error: `Failed to sync access for ${member.email}: ${legacyErr.message}` }, { status: 500 });
+      }
     }
   }
 

@@ -37,8 +37,41 @@ export default function VerifyOtpForm() {
     const { error } = await supabase.auth.verifyOtp({ token_hash: json.token_hash, type: "magiclink" });
     if (error) { toast.error(error.message); return; }
 
+    const locale = window.location.pathname.split('/')[1] || 'ar';
+
+    // Redirect based on role
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    if (userError) {
+      console.error('[verify-otp] getUser error:', userError.message);
+      toast.success(t('accountCreated'));
+      router.replace(`/${locale}/halls`);
+      return;
+    }
+    if (user) {
+      const { data: profile, error: profileError } = await supabase
+        .from("profiles").select("role").eq("id", user.id).maybeSingle();
+      if (profileError) {
+        console.error('[verify-otp] profile fetch error:', profileError.message);
+        router.replace(`/${locale}/halls`);
+        return;
+      }
+      const role = profile?.role;
+      if (role === "super_admin") { router.replace(`/${locale}/admin`); return; }
+      if (role === "hall_manager" || role === "hall_staff") {
+        const { data: assignment, error: assignmentError } = await supabase
+          .from("staff_assignments").select("hall_id").eq("user_id", user.id).maybeSingle();
+        if (assignmentError) {
+          console.error('[verify-otp] assignment fetch error:', assignmentError.message);
+          router.replace(`/${locale}/halls`);
+          return;
+        }
+        router.replace(assignment?.hall_id ? `/${locale}/dashboard/${assignment.hall_id}` : `/${locale}/halls`);
+        return;
+      }
+    }
+
     toast.success(t('accountCreated'));
-    router.replace("/halls");
+    router.replace(`/${locale}/halls`);
   }
 
   return (

@@ -18,10 +18,10 @@ export async function markOfflineDevices(
   // 2. .lt("last_heartbeat", cutoff) is a stable condition — re-running
   //    produces the same result until a device sends a new heartbeat
   const { data, error } = await supabase
-    .from("devices")
+    .from("hall_devices")
     .update({ status: "offline" })
     .neq("status", "offline")
-    .lt("last_heartbeat", cutoff)
+    .lt("last_ping", cutoff)
     .select("id");
 
   if (error) throw new Error(`markOfflineDevices failed: ${error.message}`);

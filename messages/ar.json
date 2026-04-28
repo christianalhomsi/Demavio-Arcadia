@@ -204,7 +204,18 @@
     "noInvoices": "لا توجد فواتير",
     "duration": "المدة",
     "sessionCost": "تكلفة الجلسة",
-    "items": "العناصر"
+    "items": "العناصر",
+    "cashRegister": "الصندوق",
+    "transactions": "المعاملات",
+    "auditLogs": "سجلات التدقيق",
+    "closed": "مغلق",
+    "noRegisterOpen": "لا يوجد صندوق مفتوح حالياً",
+    "open": "مفتوح",
+    "opened": "تم الفتح",
+    "openingBalance": "الرصيد الافتتاحي",
+    "totalIncome": "إجمالي الدخل",
+    "expectedBalance": "الرصيد المتوقع",
+    "financeOverview": "نظرة عامة على المالية"
   },
   "halls": {
     "title": "الصالات",
@@ -228,7 +239,10 @@
     "statusAvailable": "متاح",
     "statusActive": "نشط",
     "statusIdle": "خامل",
-    "statusOffline": "غير متصل"
+    "statusOffline": "غير متصل",
+    "open": "مفتوح",
+    "capacity": "السعة",
+    "totalDevices": "إجمالي الأجهزة"
   },
   "reservations": {
     "title": "الحجوزات",

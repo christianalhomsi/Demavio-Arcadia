@@ -3,7 +3,7 @@ import { z } from "zod";
 export const endSessionSchema = z.object({
   hall_id: z.string().uuid(),
   rate_per_hour: z.number().positive(),
-  payment_method: z.enum(['cash', 'wallet']).optional().default('cash'),
+  payment_method: z.enum(['cash', 'wallet']).optional().nullable(),
   wallet_price_per_hour: z.number().positive().optional(),
 });
 

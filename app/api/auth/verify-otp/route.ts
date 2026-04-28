@@ -7,6 +7,7 @@ import {
   getLatestOtpRequest,
   incrementOtpAttempts,
   markOtpVerified,
+  decryptPassword,
 } from "@/services/otp";
 
 export async function POST(request: Request) {
@@ -44,11 +45,12 @@ export async function POST(request: Request) {
 
     const admin = getAdminClient();
 
-    // If password exists, create user with password
+    // If password exists, create user with decrypted password
     if (record.password_hash) {
+      const plainPassword = await decryptPassword(record.password_hash, appEnv.otpSecret);
       const { data: authData, error: signupError } = await admin.auth.admin.createUser({
         email,
-        password: record.password_hash,
+        password: plainPassword,
         email_confirm: true,
       });
 

@@ -61,8 +61,8 @@ export async function GET(request: Request, { params }: { params: Promise<{ loca
     return NextResponse.redirect(`${origin}/${locale}/auth/set-username`);
   }
 
-  // Check if username is set
-  if (!existingProfile.username) {
+  // Check if username is missing or empty
+  if (!existingProfile.username || existingProfile.username.trim() === '') {
     return NextResponse.redirect(`${origin}/${locale}/auth/set-username`);
   }
 

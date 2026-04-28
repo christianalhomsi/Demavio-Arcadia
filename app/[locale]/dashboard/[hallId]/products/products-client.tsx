@@ -43,6 +43,22 @@ export default function ProductsClient({ hallId }: { hallId: string }) {
       return;
     }
 
+    // Optimistic update
+    const tempId = `temp-${Date.now()}`;
+    const tempProduct: Product = {
+      id: tempId,
+      hall_id: hallId,
+      name,
+      price: priceNum,
+      is_active: true,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    };
+    setProducts([...products, tempProduct]);
+    setName("");
+    setPrice("");
+    setShowAddForm(false);
+
     const res = await fetch(`/api/products?hall_id=${hallId}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -51,13 +67,11 @@ export default function ProductsClient({ hallId }: { hallId: string }) {
 
     if (res.ok) {
       const newProduct = await res.json();
-      setProducts([...products, newProduct]);
-      setName("");
-      setPrice("");
-      setShowAddForm(false);
-      toast.success("Product added");
+      setProducts(prev => prev.map(p => p.id === tempId ? newProduct : p));
+      toast.success(t('added'));
     } else {
-      toast.error("Failed to add product");
+      setProducts(prev => prev.filter(p => p.id !== tempId));
+      toast.error(t('addFailed'));
     }
   }
 
@@ -74,6 +88,15 @@ export default function ProductsClient({ hallId }: { hallId: string }) {
       return;
     }
 
+    // Optimistic update
+    const oldProducts = [...products];
+    setProducts(products.map((p) => 
+      p.id === productId ? { ...p, name, price: priceNum } : p
+    ));
+    setEditingId(null);
+    setName("");
+    setPrice("");
+
     const res = await fetch(`/api/products?product_id=${productId}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
@@ -82,17 +105,21 @@ export default function ProductsClient({ hallId }: { hallId: string }) {
 
     if (res.ok) {
       const updated = await res.json();
-      setProducts(products.map((p) => (p.id === productId ? updated : p)));
-      setEditingId(null);
-      setName("");
-      setPrice("");
+      setProducts(prev => prev.map((p) => (p.id === productId ? updated : p)));
       toast.success("Product updated");
     } else {
+      setProducts(oldProducts);
       toast.error("Failed to update product");
     }
   }
 
   async function toggleActive(product: Product) {
+    // Optimistic update
+    const oldProducts = [...products];
+    setProducts(products.map((p) => 
+      p.id === product.id ? { ...p, is_active: !p.is_active } : p
+    ));
+
     const res = await fetch(`/api/products?product_id=${product.id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
@@ -101,9 +128,10 @@ export default function ProductsClient({ hallId }: { hallId: string }) {
 
     if (res.ok) {
       const updated = await res.json();
-      setProducts(products.map((p) => (p.id === product.id ? updated : p)));
+      setProducts(prev => prev.map((p) => (p.id === product.id ? updated : p)));
       toast.success(updated.is_active ? "Product activated" : "Product deactivated");
     } else {
+      setProducts(oldProducts);
       toast.error("Failed to update product");
     }
   }

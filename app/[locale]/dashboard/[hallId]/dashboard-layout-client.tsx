@@ -23,7 +23,7 @@ export default function DashboardLayoutClient({
         onMenuClick={() => setMobileMenuOpen(true)}
       />
       <div className="flex flex-1 overflow-hidden">
-        <aside className="w-52 shrink-0 border-r border-border/60 overflow-y-auto bg-card/50 hidden md:block">
+        <aside className="w-48 sm:w-52 shrink-0 border-r border-border/60 overflow-y-auto bg-card/50 hidden md:block">
           <DashboardSidebar 
             hallId={hallId} 
             mobileMenuOpen={false}

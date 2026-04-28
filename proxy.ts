@@ -8,6 +8,13 @@ const intlMiddleware = createMiddleware(routing);
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
   
+  // Redirect root to default locale
+  if (pathname === '/') {
+    const url = request.nextUrl.clone();
+    url.pathname = '/ar';
+    return NextResponse.redirect(url);
+  }
+  
   // Redirect /login to /auth/login
   if (pathname.endsWith('/login') && !pathname.includes('/auth/')) {
     const url = request.nextUrl.clone();

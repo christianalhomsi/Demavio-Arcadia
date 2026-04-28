@@ -12,7 +12,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import LogoutButton from "@/components/ui/logout-button";
 import { LanguageToggle } from "@/components/language-toggle";
 import { HALL_DASHBOARD_ROLES } from "@/types/user-role";
-import { Gamepad2, Plus, LayoutDashboard, ShieldCheck, CalendarDays, Building2, Zap } from "lucide-react";
+import { Plus, LayoutDashboard, ShieldCheck, CalendarDays, Building2, Zap } from "lucide-react";
+import Logo from "@/components/ui/logo";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations('halls');
@@ -102,40 +103,31 @@ export default async function HallsPage({ params }: { params: Promise<{ locale: 
 
       {/* ── Navbar ── */}
       <header className="sticky top-0 z-50 border-b border-border/50 bg-background/80 backdrop-blur-md">
-        <div className="max-w-6xl mx-auto px-5 h-14 flex items-center gap-3">
-          <Link href="/halls" className="flex items-center gap-2 group shrink-0">
-            <div className="w-8 h-8 rounded-xl flex items-center justify-center transition-all group-hover:scale-105"
-              style={{ background: "oklch(0.55 0.26 280 / 0.15)", border: "1px solid oklch(0.55 0.26 280 / 0.3)" }}>
-              <Gamepad2 size={16} style={{ color: "oklch(0.65 0.22 280)" }} />
-            </div>
-            <span className="text-sm font-bold tracking-tight">
-              <span style={{ color: "oklch(0.55 0.26 280)" }}>Arc</span>
-              <span style={{ color: "oklch(0.82 0.14 200)" }}>adia</span>
-            </span>
-          </Link>
+        <div className="max-w-6xl mx-auto px-3 sm:px-5 h-14 flex items-center gap-2">
+          <Logo href="/halls" size="sm" showText={true} />
 
           <div className="flex-1" />
 
-          <nav className="flex items-center gap-1.5">
+          <nav className="flex items-center gap-1">
             <LanguageToggle />
             {showAdmin && (
               <Link href="/admin"
-                className="inline-flex items-center gap-1.5 h-8 px-3 rounded-lg text-xs font-medium border border-violet-500/30 bg-violet-500/10 text-violet-400 hover:bg-violet-500/20 transition-colors">
+                className="inline-flex items-center gap-1.5 h-8 px-2 sm:px-3 rounded-lg text-xs font-medium border border-violet-500/30 bg-violet-500/10 text-violet-400 hover:bg-violet-500/20 transition-colors">
                 <ShieldCheck size={13} />
-                {t('admin')}
+                <span className="hidden sm:inline">{t('admin')}</span>
               </Link>
             )}
             {hallDashboardId && (
               <Link href={`/dashboard/${hallDashboardId}`}
-                className="inline-flex items-center gap-1.5 h-8 px-3 rounded-lg text-xs font-medium border border-border/60 hover:bg-muted transition-colors text-muted-foreground hover:text-foreground">
+                className="inline-flex items-center gap-1.5 h-8 px-2 sm:px-3 rounded-lg text-xs font-medium border border-border/60 hover:bg-muted transition-colors text-muted-foreground hover:text-foreground">
                 <LayoutDashboard size={13} />
-                {t('dashboard')}
+                <span className="hidden sm:inline">{t('dashboard')}</span>
               </Link>
             )}
             <Link href="/reservations"
-              className="inline-flex items-center gap-1.5 h-8 px-3 rounded-lg text-xs font-medium border border-border/60 hover:bg-muted transition-colors text-muted-foreground hover:text-foreground">
+              className="inline-flex items-center gap-1.5 h-8 px-2 sm:px-3 rounded-lg text-xs font-medium border border-border/60 hover:bg-muted transition-colors text-muted-foreground hover:text-foreground">
               <CalendarDays size={13} />
-              <span className="hidden sm:block">{t('reservations')}</span>
+              <span className="hidden sm:inline">{t('reservations')}</span>
             </Link>
             <LogoutButton />
           </nav>
@@ -151,24 +143,24 @@ export default async function HallsPage({ params }: { params: Promise<{ locale: 
             style={{ background: "radial-gradient(circle, oklch(0.82 0.14 200) 0%, transparent 70%)" }} />
         </div>
 
-        <div className="relative max-w-6xl mx-auto px-5 py-16 sm:py-20">
-          <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-6">
-            <div className="space-y-3">
-              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium border"
+        <div className="relative max-w-6xl mx-auto px-3 sm:px-5 py-10 sm:py-16">
+          <div className="flex flex-col gap-4 sm:gap-6">
+            <div className="space-y-2 sm:space-y-3">
+              <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border"
                 style={{ background: "oklch(0.55 0.26 280 / 0.1)", borderColor: "oklch(0.55 0.26 280 / 0.25)", color: "oklch(0.75 0.18 280)" }}>
                 <Zap size={11} />
                 {th('bookYourSession')}
               </div>
-              <h1 className="text-3xl sm:text-4xl font-bold tracking-tight">
+              <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight">
                 {th('findYourGamingArena')}
               </h1>
-              <p className="text-muted-foreground text-sm sm:text-base max-w-md">
+              <p className="text-muted-foreground text-sm max-w-md">
                 {th('browseHalls')}
               </p>
             </div>
 
             <Link href="/reservations/new"
-              className="inline-flex items-center gap-2 h-10 px-5 rounded-xl text-sm font-semibold text-white transition-all hover:opacity-90 hover:scale-[1.02] active:scale-[0.98] shrink-0"
+              className="inline-flex items-center justify-center gap-2 h-10 px-5 rounded-xl text-sm font-semibold text-white transition-all hover:opacity-90 active:scale-[0.98] w-full sm:w-auto"
               style={{ background: "linear-gradient(135deg, oklch(0.55 0.26 280), oklch(0.48 0.26 280))", boxShadow: "0 0 20px oklch(0.55 0.26 280 / 0.3)" }}>
               <Plus size={16} />
               {th('newBooking')}
@@ -178,8 +170,8 @@ export default async function HallsPage({ params }: { params: Promise<{ locale: 
       </section>
 
       {/* ── Halls Grid ── */}
-      <main className="max-w-6xl mx-auto px-5 py-10">
-        <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-6">
+      <main className="max-w-6xl mx-auto px-3 sm:px-5 py-8 sm:py-10">
+        <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-4 sm:mb-6">
           {th('allHalls')}
         </p>
         <Suspense fallback={<HallsGridSkeleton />}>

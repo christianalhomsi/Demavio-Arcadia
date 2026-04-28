@@ -106,7 +106,7 @@ export function DialogBody({
 }: React.HTMLAttributes<HTMLDivElement>) {
   return (
     <div
-      className={cn("px-2 sm:px-3 md:px-6 pb-2 sm:pb-3 md:pb-6 flex-1 overflow-hidden flex flex-col", className)}
+      className={cn("px-2 sm:px-3 md:px-6 pb-2 sm:pb-3 md:pb-6 flex-1 overflow-y-auto flex flex-col", className)}
       {...props}
     />
   );
