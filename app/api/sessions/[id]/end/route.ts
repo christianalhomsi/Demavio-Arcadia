@@ -158,16 +158,11 @@ export async function POST(
     console.error("[end-session] setDeviceAvailable failed:", deviceResult.error);
   }
 
-  // Create invoice record (always, even if unpaid)
+  // Update existing invoice instead of creating new one
   const { error: invoiceError } = await supabase
     .from("invoices")
-    .insert({
-      session_id: session.id,
+    .update({
       payment_id: paymentId,
-      hall_id: hall_id,
-      device_id: session.device_id,
-      user_id: session.user_id,
-      started_at: session.started_at,
       ended_at: endedAt,
       duration_hours: durationHours,
       rate_per_hour: effectiveRate,
@@ -178,10 +173,11 @@ export async function POST(
       payment_method: payment_method || null,
       wallet_transaction_id: walletTransactionId,
       is_paid: isPaid,
-    });
+    })
+    .eq("session_id", session.id);
 
   if (invoiceError) {
-    console.error("[end-session] Failed to create invoice:", invoiceError);
+    console.error("[end-session] Failed to update invoice:", invoiceError);
   }
 
   return NextResponse.json(

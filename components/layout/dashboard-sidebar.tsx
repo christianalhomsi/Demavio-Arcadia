@@ -58,7 +58,7 @@ export default function DashboardSidebar({ hallId, mobileMenuOpen, setMobileMenu
                 className={cn("nav-link w-full", active && "nav-link-active")}
               >
                 <Icon size={15} className="shrink-0" />
-                <span className="flex-1 text-left">{t(key)}</span>
+                <span className="flex-1 text-start">{t(key)}</span>
                 <ChevronDown size={13} className={cn("transition-transform", isExpanded && "rotate-180")} />
               </button>
               {isExpanded && (
@@ -150,7 +150,7 @@ export default function DashboardSidebar({ hallId, mobileMenuOpen, setMobileMenu
                     className={cn("nav-link w-full", active && "nav-link-active")}
                   >
                     <Icon size={15} className="shrink-0" />
-                    <span className="flex-1 text-left">{t(key)}</span>
+                    <span className="flex-1 text-start">{t(key)}</span>
                     <ChevronDown size={13} className={cn("transition-transform", isExpanded && "rotate-180")} />
                   </button>
                   {isExpanded && (

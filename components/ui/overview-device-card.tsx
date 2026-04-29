@@ -15,12 +15,12 @@ type Props = {
   activeSession: { id: string; started_at: string; user_id: string | null; guest_name: string | null } | null;
 };
 
-const STATUS: Record<DeviceStatus, { cls: string; icon: React.ElementType }> = {
-  available: { cls: "badge-available", icon: CheckCircle2 },
-  active:    { cls: "badge-active",    icon: Timer },
-  offline:   { cls: "badge-offline",   icon: WifiOff },
-  idle:      { cls: "badge-idle",      icon: Clock },
-  paused:    { cls: "badge-paused",    icon: StopCircle },
+const STATUS: Record<DeviceStatus, { bg: string; border: string; text: string; icon: React.ElementType }> = {
+  available: { bg: "bg-green-500/10", border: "border-green-500/30", text: "text-green-400", icon: CheckCircle2 },
+  active:    { bg: "bg-blue-500/10", border: "border-blue-500/30", text: "text-blue-400", icon: Timer },
+  offline:   { bg: "bg-slate-500/10", border: "border-slate-500/30", text: "text-slate-400", icon: WifiOff },
+  idle:      { bg: "bg-amber-500/10", border: "border-amber-500/30", text: "text-amber-400", icon: Clock },
+  paused:    { bg: "bg-orange-500/10", border: "border-orange-500/30", text: "text-orange-400", icon: StopCircle },
 };
 
 function elapsed(startedAt: string): string {
@@ -34,7 +34,6 @@ export default function OverviewDeviceCard({ id, name, status, hallId, activeSes
   const [showSessionModal, setShowSessionModal] = useState(false);
   const [currentSession, setCurrentSession] = useState(activeSession);
 
-  // Update session when activeSession prop changes
   useEffect(() => {
     setCurrentSession(activeSession);
   }, [activeSession]);
@@ -55,7 +54,7 @@ export default function OverviewDeviceCard({ id, name, status, hallId, activeSes
   return (
     <>
       <Card 
-        className="border-border/60 hover:border-primary/50 transition-all hover:shadow-lg group relative overflow-hidden cursor-pointer"
+        className={`border-2 ${s.border} ${s.bg} hover:border-primary/50 transition-all hover:shadow-lg group relative overflow-hidden cursor-pointer`}
         onDoubleClick={handleDoubleClick}
       >
         <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
@@ -64,25 +63,24 @@ export default function OverviewDeviceCard({ id, name, status, hallId, activeSes
           <div className="flex items-start justify-between gap-2 sm:gap-3">
             <div className="flex items-center gap-2 sm:gap-2.5 min-w-0 flex-1">
               <div
-                className="w-8 h-8 sm:w-9 sm:h-9 rounded-lg flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform duration-300"
-                style={{ background: "oklch(0.55 0.26 280 / 0.15)", border: "1.5px solid oklch(0.55 0.26 280 / 0.4)" }}
+                className={`w-8 h-8 sm:w-9 sm:h-9 rounded-lg flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform duration-300 ${s.bg} border ${s.border}`}
               >
-                <Monitor size={14} className="sm:w-4 sm:h-4" style={{ color: "oklch(0.65 0.22 280)" }} />
+                <Monitor size={14} className={`sm:w-4 sm:h-4 ${s.text}`} />
               </div>
               <div className="min-w-0 flex-1">
-                <p className="text-xs sm:text-sm font-bold text-foreground truncate">{name}</p>
+                <p className={`text-xs sm:text-sm font-bold truncate ${s.text}`}>{name}</p>
               </div>
             </div>
-            <span className={`flex items-center justify-center w-6 h-6 sm:w-7 sm:h-7 rounded-full shrink-0 ${s.cls}`}>
-              <StatusIcon size={12} className="sm:w-[14px] sm:h-[14px]" />
+            <span className={`flex items-center justify-center w-6 h-6 sm:w-7 sm:h-7 rounded-full shrink-0 ${s.bg} border ${s.border}`}>
+              <StatusIcon size={12} className={`sm:w-[14px] sm:h-[14px] ${s.text}`} />
             </span>
           </div>
 
           {currentSession && (status === "active" || status === "paused") && (
-            <div className={`flex items-center gap-1.5 sm:gap-2 p-1.5 sm:p-2 rounded-lg ${
+            <div className={`flex items-center gap-1.5 sm:gap-2 p-1.5 sm:p-2 rounded-lg border ${
               status === "paused" 
-                ? "bg-orange-500/10 border border-orange-500/20" 
-                : "bg-blue-500/10 border border-blue-500/20"
+                ? "bg-orange-500/15 border-orange-500/30" 
+                : "bg-blue-500/15 border-blue-500/30"
             }`}>
               <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${
                 status === "paused" ? "bg-orange-400" : "bg-blue-400 animate-pulse"

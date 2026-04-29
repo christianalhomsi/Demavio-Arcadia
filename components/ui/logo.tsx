@@ -33,11 +33,12 @@ export default function Logo({ href = "/halls", size = "sm", showText = true, cl
         <Image
           src="/assets/images/logos/arcadialogo.png"
           alt="Arcadia Gaming Hub Logo"
-          width={image}
-          height={image}
+          width={image * 2}
+          height={image * 2}
           className="object-cover w-full h-full rounded-full"
           priority={size === "lg" || size === "xl"}
-          quality={95}
+          quality={100}
+          unoptimized
         />
       </div>
       {showText && (

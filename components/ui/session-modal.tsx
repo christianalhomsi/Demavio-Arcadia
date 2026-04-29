@@ -158,6 +158,7 @@ export default function SessionModal({
     if (res.ok) {
       const newItem = await res.json();
       setSessionItems([...sessionItems, newItem]);
+      await updateInvoice();
       toast.success(`${product.name} added`);
     } else {
       toast.error("Failed to add item");
@@ -192,6 +193,7 @@ export default function SessionModal({
       setManualPrice("");
       setManualQuantity("1");
       setShowManualEntry(false);
+      await updateInvoice();
       toast.success("Item added");
     } else {
       toast.error("Failed to add item");
@@ -205,10 +207,27 @@ export default function SessionModal({
 
     if (res.ok) {
       setSessionItems(sessionItems.filter((item) => item.id !== itemId));
+      await updateInvoice();
       toast.success("Item removed");
     } else {
       toast.error("Failed to remove item");
     }
+  }
+
+  async function updateInvoice() {
+    // Update invoice with current items
+    await fetch(`/api/invoices/${sessionId}/update`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        items: sessionItems.map(item => ({
+          id: item.id,
+          product_name: item.product_name,
+          product_price: item.product_price,
+          quantity: item.quantity,
+        })),
+      }),
+    });
   }
 
   async function confirmPayment() {

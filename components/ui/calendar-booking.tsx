@@ -112,7 +112,9 @@ export default function CalendarBooking(props: Props) {
           const isBooked = reservations?.some(function (r) {
             const rStart = new Date(r.start_time);
             const rEnd = new Date(r.end_time);
-            return slotTime < rEnd && rStart < slotEnd;
+            // Check if slot overlaps with reservation
+            // Slot is booked if: slot starts before reservation ends AND slot ends after reservation starts
+            return slotTime < rEnd && slotEnd > rStart;
           });
 
           const isPast = slotEnd <= now;

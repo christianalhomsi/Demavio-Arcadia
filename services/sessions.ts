@@ -30,6 +30,30 @@ export async function createSession(
     .single();
 
   if (error) return { success: false, error: error.message };
+
+  // Create invoice immediately when session starts
+  const { error: invoiceError } = await supabase
+    .from("invoices")
+    .insert({
+      session_id: data.id,
+      hall_id: data.hall_id,
+      device_id: data.device_id,
+      user_id: data.user_id,
+      started_at: data.started_at,
+      ended_at: null,
+      duration_hours: 0,
+      rate_per_hour: 0,
+      session_price: 0,
+      items: [],
+      items_total: 0,
+      total_price: 0,
+      is_paid: false,
+    });
+
+  if (invoiceError) {
+    console.error("[createSession] Failed to create invoice:", invoiceError.message);
+  }
+
   return { success: true, data };
 }
 

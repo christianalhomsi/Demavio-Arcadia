@@ -203,7 +203,18 @@
     "noInvoices": "No invoices yet",
     "duration": "Duration",
     "sessionCost": "Session Cost",
-    "items": "Items"
+    "items": "Items",
+    "cashRegister": "Cash Register",
+    "transactions": "Transactions",
+    "auditLogs": "Audit Logs",
+    "closed": "Closed",
+    "noRegisterOpen": "No register currently open",
+    "open": "Open",
+    "opened": "Opened",
+    "openingBalance": "Opening Balance",
+    "totalIncome": "Total Income",
+    "expectedBalance": "Expected Balance",
+    "financeOverview": "Finance Overview"
   },
   "halls": {
     "title": "Halls",

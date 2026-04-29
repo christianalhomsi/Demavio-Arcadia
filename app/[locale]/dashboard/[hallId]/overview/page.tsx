@@ -34,7 +34,13 @@ async function OverviewContent({ hallId }: { hallId: string }) {
     supabase.from("sessions").select("id, device_id, started_at, user_id, reservations!inner(guest_name)").is("ended_at", null).eq("hall_id", hallId),
   ]);
 
-  const devices = devicesRes.data ?? [];
+  const devices = (devicesRes.data ?? []).map(d => {
+    const hasActiveSession = sessionsRes.data?.some(s => s.device_id === d.id);
+    return {
+      ...d,
+      status: hasActiveSession && d.status === "available" ? "active" : d.status
+    };
+  });
   const sessions = (sessionsRes.data ?? []) as unknown as {
     id: string;
     device_id: string;
