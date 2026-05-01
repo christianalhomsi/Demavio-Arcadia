@@ -1,4 +1,5 @@
 import { getServerClient } from "@/lib/supabase/server";
+import { getAdminClient } from "@/lib/supabase/admin";
 import type { ServiceResult } from "@/types/reservation";
 
 export type DeviceStatus = "active" | "available" | "offline" | "idle" | "paused";

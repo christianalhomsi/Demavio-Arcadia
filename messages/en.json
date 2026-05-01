@@ -157,6 +157,9 @@
   "dashboard": {
     "menu": "Menu",
     "allHalls": "All Halls",
+    "quickActions": "Quick Actions",
+    "products": "Products",
+    "wallets": "Wallets",
     "finance": "Finance",
     "revenueTransactions": "Revenue & Transactions",
     "todayRevenue": "Today's Revenue",

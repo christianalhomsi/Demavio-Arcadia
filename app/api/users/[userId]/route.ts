@@ -10,12 +10,12 @@ export async function GET(
 
   const { data, error } = await supabase
     .from("profiles")
-    .select("id, username")
+    .select("id, username, email")
     .eq("id", userId)
     .single();
 
   if (error || !data) {
-    return NextResponse.json({ error: "User not found" }, { status: 404 });
+    return NextResponse.json({ username: null, email: null }, { status: 200 });
   }
 
   return NextResponse.json(data);

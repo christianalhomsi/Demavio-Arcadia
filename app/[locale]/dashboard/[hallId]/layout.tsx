@@ -28,7 +28,6 @@ export default async function DashboardLayout({
       .single();
     hall = data;
   } catch (e) {
-    console.error("[DashboardLayout] Server error:", e);
     notFound();
   }
 

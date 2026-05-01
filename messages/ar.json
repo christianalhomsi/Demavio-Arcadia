@@ -158,6 +158,9 @@
   "dashboard": {
     "menu": "القائمة",
     "allHalls": "جميع الصالات",
+    "quickActions": "إجراءات سريعة",
+    "products": "المنتجات",
+    "wallets": "المحافظ",
     "finance": "المالية",
     "revenueTransactions": "الإيرادات والمعاملات",
     "todayRevenue": "إيرادات اليوم",

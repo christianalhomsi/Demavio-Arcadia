@@ -2,13 +2,18 @@ import { Suspense } from "react";
 import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
 import { getServerClient } from "@/lib/supabase/server";
+import { getAdminClient } from "@/lib/supabase/admin";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
-import { LayoutDashboard } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { LayoutDashboard, Receipt, Calendar, Package, Wallet, Users } from "lucide-react";
 import OverviewDeviceCard from "@/components/ui/overview-device-card";
 import PendingCheckInsTable from "@/components/ui/pending-checkins-table";
+import Link from "next/link";
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 export const metadata: Metadata = { title: "Overview" };
 
 function fmt(iso: string) {
@@ -35,7 +40,7 @@ async function OverviewContent({ hallId }: { hallId: string }) {
     supabase.from("sessions")
       .select("id, device_id, started_at, user_id, reservation_id, hall_id")
       .is("ended_at", null)
-      .or(`hall_id.eq.${hallId},hall_id.is.null`),
+      .eq("hall_id", hallId),
     supabase.from("reservations")
       .select("id, start_time, end_time, guest_name, user_id, device_id, devices!inner(name, hall_id)")
       .eq("devices.hall_id", hallId)
@@ -54,11 +59,123 @@ async function OverviewContent({ hallId }: { hallId: string }) {
     hall_id: string | null;
   }[];
 
-  // Filter sessions by hall_id on the client side
-  const hallSessions = sessions.filter(s => !s.hall_id || s.hall_id === hallId);
+  // Check if any sessions should be auto-ended based on reservation end time
+  if (sessions.length > 0) {
+    const sessionIds = sessions.filter(s => s.reservation_id).map(s => s.reservation_id!);
+    
+    if (sessionIds.length > 0) {
+      const { data: reservations } = await supabase
+        .from("reservations")
+        .select("id, end_time")
+        .in("id", sessionIds);
+
+      const now = new Date();
+      const expiredSessions = sessions.filter(s => {
+        if (!s.reservation_id) return false;
+        const reservation = reservations?.find(r => r.id === s.reservation_id);
+        if (!reservation) return false;
+        return new Date(reservation.end_time) < now;
+      });
+
+      if (expiredSessions.length > 0) {
+        const adminClient = getAdminClient();
+        const endedAt = now.toISOString();
+        
+        // End expired sessions
+        await adminClient
+          .from("sessions")
+          .update({ ended_at: endedAt })
+          .in("id", expiredSessions.map(s => s.id));
+        
+        // Set devices to available
+        await adminClient
+          .from("devices")
+          .update({ status: "available" })
+          .in("id", expiredSessions.map(s => s.device_id));
+        
+        // Update invoices with ended_at and calculate costs
+        for (const session of expiredSessions) {
+          const reservation = reservations?.find(r => r.id === session.reservation_id);
+          if (reservation) {
+            const durationMs = new Date(reservation.end_time).getTime() - new Date(session.started_at).getTime();
+            const durationHours = durationMs / (1000 * 60 * 60);
+            
+            // Get device price
+            const { data: device } = await adminClient
+              .from("devices")
+              .select("price_per_hour")
+              .eq("id", session.device_id)
+              .single();
+            
+            const ratePerHour = device?.price_per_hour || 0;
+            const sessionPrice = durationHours * ratePerHour;
+            
+            // Get session items total
+            const { data: sessionItems } = await adminClient
+              .from("session_items")
+              .select("product_price, quantity")
+              .eq("session_id", session.id);
+            
+            const itemsTotal = (sessionItems || []).reduce(
+              (sum, item) => sum + (item.product_price * item.quantity),
+              0
+            );
+            
+            const totalPrice = sessionPrice + itemsTotal;
+            
+            await adminClient
+              .from("invoices")
+              .update({
+                ended_at: endedAt,
+                duration_hours: durationHours,
+                rate_per_hour: ratePerHour,
+                session_price: sessionPrice,
+                items_total: itemsTotal,
+                total_price: totalPrice,
+              })
+              .eq("session_id", session.id);
+          }
+        }
+        
+        // Remove expired sessions from the list
+        const activeSessions = sessions.filter(s => !expiredSessions.find(es => es.id === s.id));
+        sessions.length = 0;
+        sessions.push(...activeSessions);
+      }
+    }
+  }
+
+  // Active sessions for this hall
+  const activeDeviceIds = new Set(sessions.map(s => s.device_id));
+  const devicesToReset = (devicesRes.data ?? []).filter(
+    d => d.status === "active" && !activeDeviceIds.has(d.id)
+  );
+
+  if (devicesToReset.length > 0) {
+    try {
+      const adminClient = getAdminClient();
+      const { error } = await adminClient
+        .from("devices")
+        .update({ status: "available" })
+        .in("id", devicesToReset.map(d => d.id));
+      
+      if (error) {
+        console.error(`[Overview] Failed to reset devices:`, error);
+      }
+    } catch (e) {
+      console.error("[Overview] Failed to reset device statuses:", e);
+    }
+  }
+
+  // Re-fetch devices to get updated status
+  const { data: updatedDevices } = await supabase
+    .from("devices")
+    .select("id, name, status")
+    .eq("hall_id", hallId)
+    .order("name", { ascending: true });
 
   // Get guest names for sessions with reservations
-  const reservationIds = hallSessions.filter(s => s.reservation_id).map(s => s.reservation_id!);
+  const reservationIds = sessions.filter(s => s.reservation_id).map(s => s.reservation_id!);
   const guestNamesMap = new Map<string, string>();
   
   if (reservationIds.length > 0) {
@@ -72,15 +189,10 @@ async function OverviewContent({ hallId }: { hallId: string }) {
     });
   }
 
-  const devices = (devicesRes.data ?? []).map(d => {
-    const hasActiveSession = hallSessions.some(s => s.device_id === d.id);
-    return {
-      ...d,
-      status: hasActiveSession ? "active" : d.status
-    };
-  });
+  // Use updated devices data
+  const devices = updatedDevices ?? devicesRes.data ?? [];
 
-  const sessionByDevice = new Map(hallSessions.map((s) => [s.device_id, {
+  const sessionByDevice = new Map(sessions.map((s) => [s.device_id, {
     id: s.id,
     started_at: s.started_at,
     user_id: s.user_id,
@@ -113,8 +225,6 @@ async function OverviewContent({ hallId }: { hallId: string }) {
       .from("reservations")
       .update({ status: "confirmed" })
       .in("id", orphanedIds);
-    
-    console.log(`[Overview] Reset ${orphanedIds.length} orphaned active reservations to confirmed`);
   }
 
   // Get user emails for pending check-ins
@@ -132,6 +242,47 @@ async function OverviewContent({ hallId }: { hallId: string }) {
 
   return (
     <>
+      {/* Quick Actions */}
+      <div className="mb-4 sm:mb-6">
+        <h2 className="text-xs sm:text-sm font-semibold text-muted-foreground mb-2.5 sm:mb-3">{t("quickActions")}</h2>
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 sm:gap-3">
+          <Link href={`/dashboard/${hallId}/finance/invoices`}>
+            <Button variant="outline" className="w-full h-auto flex-col gap-2 py-3 sm:py-4">
+              <Receipt size={20} className="text-primary" />
+              <span className="text-xs sm:text-sm font-medium">{t("invoices")}</span>
+            </Button>
+          </Link>
+          
+          <Link href={`/dashboard/${hallId}/reservations`}>
+            <Button variant="outline" className="w-full h-auto flex-col gap-2 py-3 sm:py-4">
+              <Calendar size={20} className="text-primary" />
+              <span className="text-xs sm:text-sm font-medium">{t("reservations")}</span>
+            </Button>
+          </Link>
+          
+          <Link href={`/dashboard/${hallId}/products`}>
+            <Button variant="outline" className="w-full h-auto flex-col gap-2 py-3 sm:py-4">
+              <Package size={20} className="text-primary" />
+              <span className="text-xs sm:text-sm font-medium">{t("products")}</span>
+            </Button>
+          </Link>
+          
+          <Link href={`/dashboard/${hallId}/wallets`}>
+            <Button variant="outline" className="w-full h-auto flex-col gap-2 py-3 sm:py-4">
+              <Wallet size={20} className="text-primary" />
+              <span className="text-xs sm:text-sm font-medium">{t("wallets")}</span>
+            </Button>
+          </Link>
+          
+          <Link href={`/dashboard/${hallId}/devices`}>
+            <Button variant="outline" className="w-full h-auto flex-col gap-2 py-3 sm:py-4">
+              <Users size={20} className="text-primary" />
+              <span className="text-xs sm:text-sm font-medium">{t("devices")}</span>
+            </Button>
+          </Link>
+        </div>
+      </div>
+
       {/* devices grid */}
       {devices.length > 0 && (
         <div className="mb-4 sm:mb-6">

@@ -18,17 +18,6 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "hall_id is required" }, { status: 400 });
   }
 
-  const supabase = await getServerClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  const accessResult = await verifyStaffHallAccess(user.id, hallId);
-  if (!accessResult.success) {
-    return NextResponse.json({ error: accessResult.error }, { status: 403 });
-  }
-
   const result = await getHallProducts(hallId, false);
   if (!result.success) {
     return NextResponse.json({ error: result.error }, { status: 500 });

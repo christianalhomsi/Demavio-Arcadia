@@ -136,8 +136,6 @@ export default function SessionModal({
   async function loadWallet() {
     if (!userId && !guestName) return;
 
-    const supabase = await fetch('/api/auth/session').then(r => r.json());
-    
     // Get username if userId exists
     let username: string | null = null;
     if (userId) {
@@ -147,6 +145,8 @@ export default function SessionModal({
         username = user.username;
       }
     }
+
+    if (!username && !guestName) return;
 
     const params = new URLSearchParams({ hall_id: hallId });
     if (username) params.append("username", username);
