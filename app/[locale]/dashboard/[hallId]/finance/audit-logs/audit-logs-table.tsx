@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
+import { useTranslations } from "next-intl";
 import type { AuditAction, AuditLogEntry } from "@/types/audit";
 
 const ACTION_STYLE: Record<AuditAction, React.CSSProperties> = {
@@ -27,6 +28,7 @@ function shortId(id: string) {
 }
 
 export default function AuditLogsTable({ rows }: { rows: AuditLogEntry[] }) {
+  const t = useTranslations("dashboard");
   const [actionFilter,     setActionFilter]     = useState<AuditAction | "">("");
   const [entityTypeFilter, setEntityTypeFilter] = useState("");
   const [dateFrom,         setDateFrom]         = useState("");
@@ -61,27 +63,27 @@ export default function AuditLogsTable({ rows }: { rows: AuditLogEntry[] }) {
       {/* ── filters ── */}
       <div style={filterBar}>
         <div style={filterGroup}>
-          <label style={filterLabel}>Action</label>
+          <label style={filterLabel}>{t("action")}</label>
           <select
             value={actionFilter}
             onChange={(e) => setActionFilter(e.target.value as AuditAction | "")}
             style={selectStyle}
           >
-            <option value="">All actions</option>
+            <option value="">{t("allActions")}</option>
             {ALL_ACTIONS.map((a) => (
-              <option key={a} value={a}>{a.replace("_", " ")}</option>
+              <option key={a} value={a}>{t(a.replace("_", "") as any)}</option>
             ))}
           </select>
         </div>
 
         <div style={filterGroup}>
-          <label style={filterLabel}>Entity type</label>
+          <label style={filterLabel}>{t("entityType")}</label>
           <select
             value={entityTypeFilter}
             onChange={(e) => setEntityTypeFilter(e.target.value)}
             style={selectStyle}
           >
-            <option value="">All types</option>
+            <option value="">{t("allTypes")}</option>
             {entityTypes.map((t) => (
               <option key={t} value={t}>{t}</option>
             ))}
@@ -89,7 +91,7 @@ export default function AuditLogsTable({ rows }: { rows: AuditLogEntry[] }) {
         </div>
 
         <div style={filterGroup}>
-          <label style={filterLabel}>From</label>
+          <label style={filterLabel}>{t("from")}</label>
           <input
             type="date"
             value={dateFrom}
@@ -99,7 +101,7 @@ export default function AuditLogsTable({ rows }: { rows: AuditLogEntry[] }) {
         </div>
 
         <div style={filterGroup}>
-          <label style={filterLabel}>To</label>
+          <label style={filterLabel}>{t("to")}</label>
           <input
             type="date"
             value={dateTo}
@@ -109,21 +111,21 @@ export default function AuditLogsTable({ rows }: { rows: AuditLogEntry[] }) {
         </div>
 
         {hasFilters && (
-          <button onClick={clearFilters} style={clearBtn}>Clear</button>
+          <button onClick={clearFilters} style={clearBtn}>{t("clear")}</button>
         )}
       </div>
 
       {/* ── table ── */}
       {filtered.length === 0 ? (
         <p style={empty}>
-          {hasFilters ? "No entries match the current filters." : "No audit log entries found."}
+          {hasFilters ? t("noEntriesMatch") : t("noAuditLogs")}
         </p>
       ) : (
         <div style={{ overflowX: "auto" }}>
           <table style={table}>
             <thead>
               <tr>
-                {["Date", "User", "Action", "Entity type", "Entity ID"].map((h) => (
+                {[t("date"), t("user"), t("action"), t("entityType"), t("entityId")].map((h) => (
                   <th key={h} style={th}>{h}</th>
                 ))}
               </tr>
@@ -141,7 +143,7 @@ export default function AuditLogsTable({ rows }: { rows: AuditLogEntry[] }) {
                     </td>
                     <td style={td}>
                       <span style={{ ...badgeBase, ...badge }}>
-                        {r.action.replace("_", " ")}
+                        {t(r.action.replace("_", "") as any)}
                       </span>
                     </td>
                     <td style={{ ...td, color: "#374151" }}>{r.entity_type}</td>
@@ -157,7 +159,7 @@ export default function AuditLogsTable({ rows }: { rows: AuditLogEntry[] }) {
       )}
 
       <p style={countLabel}>
-        {filtered.length} of {rows.length} entr{rows.length !== 1 ? "ies" : "y"}
+        {filtered.length} {t("of")} {rows.length} {rows.length !== 1 ? t("entries") : t("entry")}
       </p>
     </div>
   );

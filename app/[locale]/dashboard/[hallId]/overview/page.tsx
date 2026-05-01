@@ -7,6 +7,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
 import { LayoutDashboard } from "lucide-react";
 import OverviewDeviceCard from "@/components/ui/overview-device-card";
+import PendingCheckInsTable from "@/components/ui/pending-checkins-table";
 
 export const metadata: Metadata = { title: "Overview" };
 
@@ -24,41 +25,110 @@ async function OverviewContent({ hallId }: { hallId: string }) {
   const t = await getTranslations("dashboard");
 
   // all queries in parallel
-  const [devicesRes, reservationsRes, sessionsRes] = await Promise.all([
+  const [devicesRes, reservationsRes, sessionsRes, pendingCheckInsRes] = await Promise.all([
     supabase.from("devices").select("id, name, status").eq("hall_id", hallId).order("name", { ascending: true }),
     supabase.from("reservations")
       .select("id, start_time, end_time, status, devices!inner(name, hall_id)")
       .eq("devices.hall_id", hallId)
       .order("start_time", { ascending: false })
       .limit(5),
-    supabase.from("sessions").select("id, device_id, started_at, user_id, reservations!inner(guest_name)").is("ended_at", null).eq("hall_id", hallId),
+    supabase.from("sessions")
+      .select("id, device_id, started_at, user_id, reservation_id, hall_id")
+      .is("ended_at", null)
+      .or(`hall_id.eq.${hallId},hall_id.is.null`),
+    supabase.from("reservations")
+      .select("id, start_time, end_time, guest_name, user_id, device_id, devices!inner(name, hall_id)")
+      .eq("devices.hall_id", hallId)
+      .eq("status", "confirmed")
+      .lte("start_time", new Date().toISOString())
+      .gte("end_time", new Date().toISOString())
+      .order("start_time", { ascending: true }),
   ]);
 
-  const devices = (devicesRes.data ?? []).map(d => {
-    const hasActiveSession = sessionsRes.data?.some(s => s.device_id === d.id);
-    return {
-      ...d,
-      status: hasActiveSession && d.status === "available" ? "active" : d.status
-    };
-  });
-  const sessions = (sessionsRes.data ?? []) as unknown as {
+  const sessions = (sessionsRes.data ?? []) as {
     id: string;
     device_id: string;
     started_at: string;
     user_id: string | null;
-    reservations: { guest_name: string | null } | null;
+    reservation_id: string | null;
+    hall_id: string | null;
   }[];
-  const sessionByDevice = new Map(sessions.map((s) => [s.device_id, {
+
+  // Filter sessions by hall_id on the client side
+  const hallSessions = sessions.filter(s => !s.hall_id || s.hall_id === hallId);
+
+  // Get guest names for sessions with reservations
+  const reservationIds = hallSessions.filter(s => s.reservation_id).map(s => s.reservation_id!);
+  const guestNamesMap = new Map<string, string>();
+  
+  if (reservationIds.length > 0) {
+    const { data: reservationsData } = await supabase
+      .from("reservations")
+      .select("id, guest_name")
+      .in("id", reservationIds);
+    
+    (reservationsData ?? []).forEach(r => {
+      if (r.guest_name) guestNamesMap.set(r.id, r.guest_name);
+    });
+  }
+
+  const devices = (devicesRes.data ?? []).map(d => {
+    const hasActiveSession = hallSessions.some(s => s.device_id === d.id);
+    return {
+      ...d,
+      status: hasActiveSession ? "active" : d.status
+    };
+  });
+
+  const sessionByDevice = new Map(hallSessions.map((s) => [s.device_id, {
     id: s.id,
     started_at: s.started_at,
     user_id: s.user_id,
-    guest_name: s.reservations?.guest_name ?? null,
+    guest_name: s.reservation_id ? guestNamesMap.get(s.reservation_id) ?? null : null,
   }]));
 
   const rows = (reservationsRes.data ?? []) as unknown as {
     id: string; start_time: string; end_time: string; status: string;
     devices: { name: string } | null;
   }[];
+
+  const pendingCheckIns = (pendingCheckInsRes.data ?? []) as unknown as {
+    id: string; start_time: string; end_time: string; guest_name: string | null;
+    user_id: string | null; device_id: string;
+    devices: { name: string } | null;
+  }[];
+
+  // Fix reservations that are 'active' but have no session (from old cron job)
+  // Reset them back to 'confirmed'
+  const activeReservationsRes = await supabase
+    .from("reservations")
+    .select("id, device_id")
+    .eq("status", "active")
+    .eq("devices.hall_id", hallId)
+    .not("id", "in", `(${sessions.map(s => s.reservation_id).filter(Boolean).join(",") || "'00000000-0000-0000-0000-000000000000'"})`);
+
+  if (activeReservationsRes.data && activeReservationsRes.data.length > 0) {
+    const orphanedIds = activeReservationsRes.data.map((r: { id: string }) => r.id);
+    await supabase
+      .from("reservations")
+      .update({ status: "confirmed" })
+      .in("id", orphanedIds);
+    
+    console.log(`[Overview] Reset ${orphanedIds.length} orphaned active reservations to confirmed`);
+  }
+
+  // Get user emails for pending check-ins
+  const userIds = pendingCheckIns.filter(r => r.user_id).map(r => r.user_id!);
+  const userEmailsMap = new Map<string, string>();
+  if (userIds.length > 0) {
+    const { data: profilesData } = await supabase
+      .from("profiles")
+      .select("id, email")
+      .in("id", userIds);
+    (profilesData ?? []).forEach((p: { id: string; email: string }) => {
+      userEmailsMap.set(p.id, p.email);
+    });
+  }
 
   return (
     <>
@@ -83,6 +153,19 @@ async function OverviewContent({ hallId }: { hallId: string }) {
               />
             ))}
           </div>
+        </div>
+      )}
+
+      {/* Pending check-ins */}
+      {pendingCheckIns.length > 0 && (
+        <div className="mb-4 sm:mb-6">
+          <PendingCheckInsTable
+            checkIns={pendingCheckIns.map(r => ({
+              ...r,
+              email: r.user_id ? userEmailsMap.get(r.user_id) : undefined,
+            }))}
+            hallId={hallId}
+          />
         </div>
       )}
 

@@ -51,10 +51,35 @@ export async function POST(request: Request) {
 
   // Only confirmed reservations can be checked in
   if (reservation.status !== "confirmed") {
-    return NextResponse.json(
-      { error: `Cannot check in a reservation with status '${reservation.status}'` },
-      { status: 422 }
-    );
+    // If reservation is active but has no session, reset it to confirmed
+    if (reservation.status === "active") {
+      const { data: existingSessionCheck } = await supabase
+        .from("sessions")
+        .select("id")
+        .eq("reservation_id", reservation_id)
+        .is("ended_at", null)
+        .maybeSingle();
+      
+      if (!existingSessionCheck) {
+        // No active session found, reset to confirmed
+        await supabase
+          .from("reservations")
+          .update({ status: "confirmed" })
+          .eq("id", reservation_id);
+        
+        // Continue with check-in
+      } else {
+        return NextResponse.json(
+          { error: "Reservation already has an active session" },
+          { status: 409 }
+        );
+      }
+    } else {
+      return NextResponse.json(
+        { error: `Cannot check in a reservation with status '${reservation.status}'` },
+        { status: 422 }
+      );
+    }
   }
 
   // Prevent double session on the same device
@@ -78,7 +103,7 @@ export async function POST(request: Request) {
 
   // Create session — unique partial index on sessions(device_id) WHERE ended_at IS NULL
   // guards against TOCTOU race; handle constraint violation as 409
-  const sessionResult = await createSession(reservation_id, device_id, reservation.user_id);
+  const sessionResult = await createSession(reservation_id, device_id, reservation.user_id, hall_id);
   if (!sessionResult.success) {
     if (sessionResult.error?.includes("unique") || sessionResult.error?.includes("duplicate")) {
       return NextResponse.json({ error: "Device already has an active session" }, { status: 409 });

@@ -7,17 +7,10 @@ export async function processReservationStatuses(): Promise<{
   const supabase = getAdminClient();
   const now = new Date().toISOString();
 
-  // confirmed + وقت البداية وصل → active
-  const { data: activated, error: activateErr } = await supabase
-    .from("reservations")
-    .update({ status: "active" })
-    .eq("status", "confirmed")
-    .lte("start_time", now)
-    .gt("end_time", now)
-    .select("id");
-
-  if (activateErr) throw new Error(`activate failed: ${activateErr.message}`);
-
+  // NOTE: We don't auto-activate reservations anymore.
+  // Staff must manually check-in via the devices page.
+  // This ensures proper session tracking and prevents ghost sessions.
+  
   // active + وقت النهاية فات → completed
   const { data: completed, error: completeErr } = await supabase
     .from("reservations")
@@ -29,7 +22,7 @@ export async function processReservationStatuses(): Promise<{
   if (completeErr) throw new Error(`complete failed: ${completeErr.message}`);
 
   return {
-    activated: (activated ?? []).length,
+    activated: 0, // No longer auto-activating
     completed: (completed ?? []).length,
   };
 }

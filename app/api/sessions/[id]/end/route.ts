@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { endSessionSchema } from "@/schemas/end-session";
 import { getServerClient } from "@/lib/supabase/server";
 import { calculateDuration, calculatePrice } from "@/lib/pricing";
@@ -179,6 +180,11 @@ export async function POST(
   if (invoiceError) {
     console.error("[end-session] Failed to update invoice:", invoiceError);
   }
+
+  // Revalidate overview pages to update device status
+  revalidatePath(`/dashboard/${hall_id}/overview`, "page");
+  revalidatePath(`/ar/dashboard/${hall_id}/overview`, "page");
+  revalidatePath(`/en/dashboard/${hall_id}/overview`, "page");
 
   return NextResponse.json(
     {

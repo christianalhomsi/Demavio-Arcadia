@@ -5,7 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Monitor, Timer, Clock, WifiOff, CheckCircle2, StopCircle } from "lucide-react";
 import { useTranslations } from "next-intl";
 import SessionModal from "@/components/ui/session-modal";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 
 type Props = {
   id: string;
@@ -32,23 +32,21 @@ function elapsed(startedAt: string): string {
 export default function OverviewDeviceCard({ id, name, status, hallId, activeSession }: Props) {
   const t = useTranslations("devices");
   const [showSessionModal, setShowSessionModal] = useState(false);
-  const [currentSession, setCurrentSession] = useState(activeSession);
 
-  useEffect(() => {
-    setCurrentSession(activeSession);
-  }, [activeSession]);
+  // Sync with server state - if no active session or status changed, clear local state
+  const shouldShowSession = activeSession && (status === "active" || status === "paused");
 
   const s = STATUS[status] ?? STATUS.offline;
   const StatusIcon = s.icon;
 
   function handleDoubleClick() {
-    if (currentSession) {
+    if (shouldShowSession) {
       setShowSessionModal(true);
     }
   }
 
   function handleSessionEnd() {
-    setCurrentSession(null);
+    // Session ended, modal will close and page will revalidate
   }
 
   return (
@@ -76,7 +74,7 @@ export default function OverviewDeviceCard({ id, name, status, hallId, activeSes
             </span>
           </div>
 
-          {currentSession && (status === "active" || status === "paused") && (
+          {shouldShowSession && (
             <div className={`flex items-center gap-1.5 sm:gap-2 p-1.5 sm:p-2 rounded-lg border ${
               status === "paused" 
                 ? "bg-orange-500/15 border-orange-500/30" 
@@ -88,23 +86,24 @@ export default function OverviewDeviceCard({ id, name, status, hallId, activeSes
               <p className={`text-[10px] sm:text-xs font-medium ${
                 status === "paused" ? "text-orange-400" : "text-blue-400"
               }`}>
-                {status === "paused" ? t("paused") : t("running")} · {elapsed(currentSession.started_at)}
+                {status === "paused" ? t("paused") : t("running")} · {elapsed(activeSession.started_at)}
               </p>
             </div>
           )}
         </CardContent>
       </Card>
       
-      {currentSession && (
+      {shouldShowSession && (
         <SessionModal
           open={showSessionModal}
           onClose={() => setShowSessionModal(false)}
-          sessionId={currentSession.id}
+          sessionId={activeSession.id}
+          deviceId={id}
           deviceName={name}
           hallId={hallId}
-          startedAt={currentSession.started_at}
-          userId={currentSession.user_id}
-          guestName={currentSession.guest_name}
+          startedAt={activeSession.started_at}
+          userId={activeSession.user_id}
+          guestName={activeSession.guest_name}
           onSessionEnd={handleSessionEnd}
         />
       )}

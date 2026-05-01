@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 import type { Metadata } from "next";
 import Link from "next/link";
+import { getTranslations } from "next-intl/server";
 import { getServerClient } from "@/lib/supabase/server";
 import type { AuditLogEntry } from "@/types/audit";
 import AuditLogsTable from "./audit-logs-table";
@@ -56,18 +57,19 @@ function TableSkeleton() {
 
 // ─── page ─────────────────────────────────────────────────────────────────────
 
-export default function AuditLogsPage({
+export default async function AuditLogsPage({
   params,
 }: {
   params: { hallId: string };
 }) {
+  const t = await getTranslations("dashboard");
   return (
     <div className="page-shell">
       <div className="flex items-center justify-between">
-        <h1 className="text-xl font-bold">Audit Logs</h1>
+        <h1 className="text-xl font-bold">{t("auditLogs")}</h1>
         <Link href={`/dashboard/${params.hallId}/finance`}
           className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors px-2 py-1 rounded-lg hover:bg-muted">
-          ← Finance overview
+          ← {t("financeOverview")}
         </Link>
       </div>
       <div className="rounded-2xl border border-border/50 bg-card p-5">

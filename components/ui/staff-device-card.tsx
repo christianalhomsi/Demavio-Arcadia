@@ -290,6 +290,7 @@ export default function StaffDeviceCard(props: StaffDeviceCardProps) {
         open={showSessionModal}
         onClose={() => setShowSessionModal(false)}
         sessionId={session.id}
+        deviceId={id}
         deviceName={name}
         hallId={hallId}
         startedAt={session.started_at}

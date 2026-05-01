@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
+import { useTranslations } from "next-intl";
 import type { TransactionType } from "@/types/transaction";
 
 export type TransactionRow = {
@@ -41,6 +42,7 @@ function fmtDate(iso: string) {
 }
 
 export default function TransactionsTable({ rows }: { rows: TransactionRow[] }) {
+  const t = useTranslations("dashboard");
   const [typeFilter, setTypeFilter]       = useState<TransactionType | "">("");
   const [dateFrom,   setDateFrom]         = useState("");
   const [dateTo,     setDateTo]           = useState("");
@@ -65,21 +67,21 @@ export default function TransactionsTable({ rows }: { rows: TransactionRow[] }) 
       {/* ── filters ── */}
       <div style={filterBar}>
         <div style={filterGroup}>
-          <label style={filterLabel}>Type</label>
+          <label style={filterLabel}>{t("type")}</label>
           <select
             value={typeFilter}
             onChange={(e) => setTypeFilter(e.target.value as TransactionType | "")}
             style={selectStyle}
           >
-            <option value="">All types</option>
-            {ALL_TYPES.map((t) => (
-              <option key={t} value={t}>{TX_LABEL[t]}</option>
+            <option value="">{t("allTypes")}</option>
+            {ALL_TYPES.map((type) => (
+              <option key={type} value={type}>{TX_LABEL[type]}</option>
             ))}
           </select>
         </div>
 
         <div style={filterGroup}>
-          <label style={filterLabel}>From</label>
+          <label style={filterLabel}>{t("from")}</label>
           <input
             type="date"
             value={dateFrom}
@@ -89,7 +91,7 @@ export default function TransactionsTable({ rows }: { rows: TransactionRow[] }) 
         </div>
 
         <div style={filterGroup}>
-          <label style={filterLabel}>To</label>
+          <label style={filterLabel}>{t("to")}</label>
           <input
             type="date"
             value={dateTo}
@@ -103,7 +105,7 @@ export default function TransactionsTable({ rows }: { rows: TransactionRow[] }) 
             onClick={() => { setTypeFilter(""); setDateFrom(""); setDateTo(""); }}
             style={clearBtn}
           >
-            Clear
+            {t("clear")}
           </button>
         )}
       </div>
@@ -111,14 +113,14 @@ export default function TransactionsTable({ rows }: { rows: TransactionRow[] }) 
       {/* ── table ── */}
       {filtered.length === 0 ? (
         <p style={empty}>
-          {hasFilters ? "No transactions match the current filters." : "No transactions recorded yet."}
+          {hasFilters ? t("noTransactionsMatch") : t("noTransactionsRecorded")}
         </p>
       ) : (
         <div style={{ overflowX: "auto" }}>
           <table style={table}>
             <thead>
               <tr>
-                {["Date", "Type", "Amount", "Method", "Notes"].map((h) => (
+                {[t("date"), t("type"), t("amount"), t("method"), t("notes")].map((h) => (
                   <th key={h} style={th}>{h}</th>
                 ))}
               </tr>
@@ -152,7 +154,7 @@ export default function TransactionsTable({ rows }: { rows: TransactionRow[] }) 
       )}
 
       <p style={countLabel}>
-        {filtered.length} of {rows.length} transaction{rows.length !== 1 ? "s" : ""}
+        {filtered.length} {t("of")} {rows.length} {rows.length !== 1 ? t("transactions") : t("transaction")}
       </p>
     </div>
   );

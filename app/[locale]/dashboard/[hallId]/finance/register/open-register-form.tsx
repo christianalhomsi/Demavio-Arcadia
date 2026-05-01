@@ -1,9 +1,11 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import { openRegisterAction } from "./actions";
 
 export default function OpenRegisterForm({ hallId }: { hallId: string }) {
+  const t = useTranslations("dashboard");
   const [value, setValue]   = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError]   = useState<string | null>(null);
@@ -12,7 +14,7 @@ export default function OpenRegisterForm({ hallId }: { hallId: string }) {
     e.preventDefault();
     const balance = parseFloat(value);
     if (isNaN(balance) || balance < 0) {
-      setError("Enter a valid opening balance.");
+      setError(t("enterValidBalance"));
       return;
     }
     setError(null);
@@ -26,7 +28,7 @@ export default function OpenRegisterForm({ hallId }: { hallId: string }) {
     <form onSubmit={handleSubmit} style={form}>
       <div style={fieldWrap}>
         <label htmlFor="opening_balance" style={labelStyle}>
-          Opening balance
+          {t("openingBalance")}
         </label>
         <input
           id="opening_balance"
@@ -41,7 +43,7 @@ export default function OpenRegisterForm({ hallId }: { hallId: string }) {
       </div>
       {error && <span style={errorStyle}>{error}</span>}
       <button type="submit" disabled={loading || !value} style={btnStyle(loading || !value)}>
-        {loading ? "Opening…" : "Open register"}
+        {loading ? t("opening") : t("openRegister")}
       </button>
     </form>
   );

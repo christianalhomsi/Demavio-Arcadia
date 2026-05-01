@@ -17,6 +17,7 @@ type SessionModalProps = {
   open: boolean;
   onClose: () => void;
   sessionId: string;
+  deviceId: string;
   deviceName: string;
   hallId: string;
   startedAt: string;
@@ -35,6 +36,7 @@ export default function SessionModal({
   open,
   onClose,
   sessionId,
+  deviceId,
   deviceName,
   hallId,
   startedAt,
@@ -65,6 +67,7 @@ export default function SessionModal({
       loadData();
       loadFromLocalStorage();
       loadWallet();
+      loadDevicePrice();
     }
   }, [open, sessionId]);
 
@@ -94,6 +97,20 @@ export default function SessionModal({
       }
     }
   }, [sessionItems, ratePerHour, storageKey]);
+
+  async function loadDevicePrice() {
+    try {
+      const res = await fetch(`/api/devices/${deviceId}/price?hall_id=${hallId}`);
+      if (res.ok) {
+        const data = await res.json();
+        if (data.price_per_hour && !ratePerHour) {
+          setRatePerHour(data.price_per_hour.toString());
+        }
+      }
+    } catch (e) {
+      console.error("Failed to load device price", e);
+    }
+  }
 
   async function loadData() {
     setLoading(true);
@@ -159,9 +176,9 @@ export default function SessionModal({
       const newItem = await res.json();
       setSessionItems([...sessionItems, newItem]);
       await updateInvoice();
-      toast.success(`${product.name} added`);
+      toast.success(t("itemAdded"));
     } else {
-      toast.error("Failed to add item");
+      toast.error(t("failedToAddItem"));
     }
   }
 
@@ -170,7 +187,7 @@ export default function SessionModal({
     const quantity = parseInt(manualQuantity);
 
     if (!manualName || !price || price < 0 || !quantity || quantity < 1) {
-      toast.error("Please fill all fields correctly");
+      toast.error(t("fillAllFields"));
       return;
     }
 
@@ -194,9 +211,9 @@ export default function SessionModal({
       setManualQuantity("1");
       setShowManualEntry(false);
       await updateInvoice();
-      toast.success("Item added");
+      toast.success(t("itemAdded"));
     } else {
-      toast.error("Failed to add item");
+      toast.error(t("failedToAddItem"));
     }
   }
 
@@ -206,11 +223,11 @@ export default function SessionModal({
     });
 
     if (res.ok) {
-      setSessionItems(sessionItems.filter((item) => item.id !== itemId));
-      await updateInvoice();
-      toast.success("Item removed");
+      const updatedItems = sessionItems.filter((item) => item.id !== itemId);
+      setSessionItems(updatedItems);
+      toast.success(t("itemRemoved"));
     } else {
-      toast.error("Failed to remove item");
+      toast.error(t("failedToRemoveItem"));
     }
   }
 
@@ -233,7 +250,7 @@ export default function SessionModal({
   async function confirmPayment() {
     const rate = parseFloat(ratePerHour);
     if (!rate || rate <= 0) {
-      toast.error("Enter valid rate per hour");
+      toast.error(t("enterValidRate"));
       return;
     }
 
@@ -242,32 +259,34 @@ export default function SessionModal({
       const sessionCost = walletRate * durationHours;
       
       if (!wallet || wallet.balance < sessionCost) {
-        toast.error("Insufficient wallet balance");
+        toast.error(t("insufficientBalance"));
         return;
       }
     }
 
-    setLoading(true);
-    const res = await fetch(`/api/sessions/${sessionId}/end`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ 
-        hall_id: hallId, 
-        rate_per_hour: rate,
-        payment_method: paymentMethod,
-        wallet_price_per_hour: walletPricePerHour ? parseFloat(walletPricePerHour) : undefined,
-      }),
-    });
-    setLoading(false);
+    try {
+      const res = await fetch(`/api/sessions/${sessionId}/end`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ 
+          hall_id: hallId, 
+          rate_per_hour: rate,
+          payment_method: paymentMethod,
+          wallet_price_per_hour: walletPricePerHour ? parseFloat(walletPricePerHour) : undefined,
+        }),
+      });
 
-    if (res.ok) {
-      localStorage.removeItem(storageKey);
-      toast.success("Payment confirmed");
-      onSessionEnd();
-      onClose();
-    } else {
-      const json = await res.json().catch(() => ({}));
-      toast.error(json?.error ?? "Failed to end session");
+      if (res.ok) {
+        localStorage.removeItem(storageKey);
+        toast.success(t("paymentConfirmed"));
+        onSessionEnd();
+        onClose();
+      } else {
+        const json = await res.json().catch(() => ({}));
+        toast.error(json?.error ?? t("failedToEndSession"));
+      }
+    } catch (error) {
+      toast.error(t("failedToEndSession"));
     }
   }
 
@@ -297,12 +316,12 @@ export default function SessionModal({
           <div className="flex items-center gap-4 p-3 rounded-lg bg-blue-500/10 border border-blue-500/20">
             <Clock size={16} className="text-blue-400" />
             <span className="text-sm font-medium text-blue-400">
-              Duration: {elapsed(startedAt)}
+              {t("duration")}: {elapsed(startedAt)}
             </span>
           </div>
 
           <div className="space-y-2">
-            <Label className="text-sm font-semibold">Quick Add Products</Label>
+            <Label className="text-sm font-semibold">{t("quickAddProducts")}</Label>
             <div className="grid grid-cols-2 gap-2">
               {products.map((product) => (
                 <Button
@@ -314,7 +333,7 @@ export default function SessionModal({
                 >
                   <span className="truncate">{product.name}</span>
                   <span className="text-xs text-muted-foreground ml-2">
-                    ${product.price.toFixed(2)}
+                    {product.price.toFixed(0)} {t("syrianPound")}
                   </span>
                 </Button>
               ))}
@@ -330,12 +349,12 @@ export default function SessionModal({
                 className="w-full"
               >
                 <Plus size={14} className="mr-1" />
-                Add Custom Item
+                {t("addCustomItem")}
               </Button>
             ) : (
               <div className="space-y-2 p-3 border rounded-lg">
                 <div className="flex items-center justify-between">
-                  <Label className="text-sm font-semibold">Custom Item</Label>
+                  <Label className="text-sm font-semibold">{t("customItem")}</Label>
                   <Button
                     size="sm"
                     variant="ghost"
@@ -345,7 +364,7 @@ export default function SessionModal({
                   </Button>
                 </div>
                 <Input
-                  placeholder="Item name"
+                  placeholder={t("itemName")}
                   value={manualName}
                   onChange={(e) => setManualName(e.target.value)}
                   className="h-8 text-sm"
@@ -353,16 +372,16 @@ export default function SessionModal({
                 <div className="grid grid-cols-2 gap-2">
                   <Input
                     type="number"
-                    placeholder="Price"
+                    placeholder={t("price")}
                     value={manualPrice}
                     onChange={(e) => setManualPrice(e.target.value)}
                     className="h-8 text-sm"
                     min="0"
-                    step="0.01"
+                    step="1"
                   />
                   <Input
                     type="number"
-                    placeholder="Qty"
+                    placeholder={t("qty")}
                     value={manualQuantity}
                     onChange={(e) => setManualQuantity(e.target.value)}
                     className="h-8 text-sm"
@@ -375,7 +394,7 @@ export default function SessionModal({
                   className="w-full"
                   style={{ background: "oklch(0.55 0.26 280)", color: "white" }}
                 >
-                  Add Item
+                  {t("addItem")}
                 </Button>
               </div>
             )}
@@ -384,10 +403,10 @@ export default function SessionModal({
           <Separator />
 
           <div className="space-y-2">
-            <Label className="text-sm font-semibold">Session Items</Label>
+            <Label className="text-sm font-semibold">{t("sessionItems")}</Label>
             {sessionItems.length === 0 ? (
               <p className="text-sm text-muted-foreground text-center py-4">
-                No items added yet
+                {t("noItems")}
               </p>
             ) : (
               <div className="space-y-1">
@@ -399,12 +418,12 @@ export default function SessionModal({
                     <div className="flex-1">
                       <p className="text-sm font-medium">{item.product_name}</p>
                       <p className="text-xs text-muted-foreground">
-                        ${item.product_price.toFixed(2)} × {item.quantity}
+                        {item.product_price.toFixed(0)} {t("syrianPound")} × {item.quantity}
                       </p>
                     </div>
                     <div className="flex items-center gap-2">
                       <span className="text-sm font-semibold">
-                        ${(item.product_price * item.quantity).toFixed(2)}
+                        {(item.product_price * item.quantity).toFixed(0)} {t("syrianPound")}
                       </span>
                       <Button
                         size="sm"
@@ -428,44 +447,44 @@ export default function SessionModal({
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <Wallet size={16} className="text-green-400" />
-                  <span className="text-sm font-medium text-green-400">Wallet Balance</span>
+                  <span className="text-sm font-medium text-green-400">{t("walletBalance")}</span>
                 </div>
-                <span className="text-sm font-bold text-green-400">${wallet.balance.toFixed(2)}</span>
+                <span className="text-sm font-bold text-green-400">{wallet.balance.toFixed(0)} {t("syrianPound")}</span>
               </div>
             </div>
           )}
 
           <div className="space-y-1">
-            <Label className="text-sm">Cash Rate per Hour ($)</Label>
+            <Label className="text-sm">{t("cashRatePerHour")}</Label>
             <Input
               type="number"
-              placeholder="e.g. 5.00"
+              placeholder="5000"
               value={ratePerHour}
               onChange={(e) => setRatePerHour(e.target.value)}
               className="h-9"
               min="0"
-              step="0.01"
+              step="100"
             />
           </div>
 
           {wallet && (
             <div className="space-y-1">
-              <Label className="text-sm">Wallet Rate per Hour ($) - Optional</Label>
+              <Label className="text-sm">{t("walletRatePerHour")}</Label>
               <Input
                 type="number"
-                placeholder="Leave empty to use cash rate"
+                placeholder={t("leaveEmptyToUseCashRate")}
                 value={walletPricePerHour}
                 onChange={(e) => setWalletPricePerHour(e.target.value)}
                 className="h-9"
                 min="0"
-                step="0.01"
+                step="100"
               />
             </div>
           )}
 
           {wallet && (
             <div className="space-y-2">
-              <Label className="text-sm font-semibold">Payment Method</Label>
+              <Label className="text-sm font-semibold">{t("paymentMethod")}</Label>
               <div className="grid grid-cols-2 gap-2">
                 <Button
                   type="button"
@@ -474,7 +493,7 @@ export default function SessionModal({
                   className="h-12"
                 >
                   <DollarSign size={16} className="mr-1" />
-                  Full Cash
+                  {t("fullCash")}
                 </Button>
                 <Button
                   type="button"
@@ -484,12 +503,12 @@ export default function SessionModal({
                   disabled={!wallet || wallet.balance < sessionCost}
                 >
                   <Wallet size={16} className="mr-1" />
-                  Wallet + Cash
+                  {t("walletAndCash")}
                 </Button>
               </div>
               {paymentMethod === 'wallet' && (
                 <p className="text-xs text-muted-foreground">
-                  Session cost paid from wallet, products paid in cash
+                  {t("sessionPaidFromWallet")}
                 </p>
               )}
             </div>
@@ -499,26 +518,26 @@ export default function SessionModal({
 
           <div className="space-y-2 p-3 rounded-lg bg-primary/5 border border-primary/20">
             <div className="flex justify-between text-sm">
-              <span>Session ({durationHours.toFixed(2)}h)</span>
+              <span>{t("sessionCost")} ({durationHours.toFixed(2)}h)</span>
               <div className="flex items-center gap-2">
-                <span>${sessionCost.toFixed(2)}</span>
+                <span>{sessionCost.toFixed(0)} {t("syrianPound")}</span>
                 {paymentMethod === 'wallet' && (
-                  <span className="text-xs text-green-400">(Wallet)</span>
+                  <span className="text-xs text-green-400">({t("walletBalance")})</span>
                 )}
               </div>
             </div>
             <div className="flex justify-between text-sm">
-              <span>Items ({sessionItems.length})</span>
-              <span>${itemsTotal.toFixed(2)}</span>
+              <span>{t("items")} ({sessionItems.length})</span>
+              <span>{itemsTotal.toFixed(0)} {t("syrianPound")}</span>
             </div>
             <Separator />
             <div className="flex justify-between text-base font-bold">
-              <span>Total</span>
-              <span className="text-primary">${grandTotal.toFixed(2)}</span>
+              <span>{t("total")}</span>
+              <span className="text-primary">{grandTotal.toFixed(0)} {t("syrianPound")}</span>
             </div>
             {paymentMethod === 'wallet' && (
               <p className="text-xs text-muted-foreground">
-                Cash to collect: ${itemsTotal.toFixed(2)}
+                {t("cashToCollect")} {itemsTotal.toFixed(0)} {t("syrianPound")}
               </p>
             )}
           </div>
@@ -527,11 +546,11 @@ export default function SessionModal({
             <Button
               className="flex-1"
               onClick={confirmPayment}
-              disabled={loading || !ratePerHour}
+              disabled={!ratePerHour}
               style={{ background: "oklch(0.55 0.26 280)", color: "white" }}
             >
               <DollarSign size={14} className="mr-1" />
-              {loading ? "Processing..." : "Confirm Payment"}
+              {t("confirmPayment")}
             </Button>
             <Button variant="outline" onClick={onClose} className="flex-1">
               {tc("cancel")}

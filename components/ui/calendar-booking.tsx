@@ -18,10 +18,11 @@ type Props = {
   onSelectSlot: (start: Date | null, end: Date | null) => void;
   pricePerHour?: number;
   locale?: string;
+  isStaffView?: boolean;
 };
 
 export default function CalendarBooking(props: Props) {
-  const { deviceId, hallId, selectedDate, onSelectSlot, pricePerHour = 0, locale = "en" } = props;
+  const { deviceId, hallId, selectedDate, onSelectSlot, pricePerHour = 0, locale = "en", isStaffView = false } = props;
   const [slots, setSlots] = useState<TimeSlot[]>([]);
   const [loading, setLoading] = useState(true);
   const [localStart, setLocalStart] = useState<Date | null>(null);
@@ -84,7 +85,10 @@ export default function CalendarBooking(props: Props) {
           .eq("device_id", deviceId)
           .gte("start_time", startOfDay.toISOString())
           .lte("end_time", endOfDay.toISOString())
-          .in("status", ["pending", "confirmed", "active"]);
+          .in("status", isStaffView 
+            ? ["pending", "confirmed", "active"] 
+            : ["pending", "confirmed", "active"]
+          );
 
         if (resError) {
           setSlots([]);
@@ -112,12 +116,10 @@ export default function CalendarBooking(props: Props) {
           const isBooked = reservations?.some(function (r) {
             const rStart = new Date(r.start_time);
             const rEnd = new Date(r.end_time);
-            // Check if slot overlaps with reservation
-            // Slot is booked if: slot starts before reservation ends AND slot ends after reservation starts
             return slotTime < rEnd && slotEnd > rStart;
           });
 
-          const isPast = slotEnd <= now;
+          const isPast = slotTime < now;
 
           timeSlots.push({
             time: slotTime,
@@ -286,7 +288,10 @@ export default function CalendarBooking(props: Props) {
                   isInRange ? "text-primary" : "text-muted-foreground"
                 )}>
                   {!slot.available 
-                    ? (locale === "ar" ? "انتهى" : "Past")
+                    ? (slot.time < new Date() 
+                        ? (locale === "ar" ? "انتهى" : "Past")
+                        : (locale === "ar" ? "محجوز" : "Booked")
+                      )
                     : (locale === "ar" ? "متاح" : "Available")
                   }
                 </span>

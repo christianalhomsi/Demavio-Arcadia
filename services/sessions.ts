@@ -1,4 +1,4 @@
-import { getServerClient } from "@/lib/supabase/server";
+import { getAdminClient } from "@/lib/supabase/admin";
 import type { ServiceResult } from "@/types/reservation";
 
 export type Session = {
@@ -14,9 +14,10 @@ export type Session = {
 export async function createSession(
   reservationId: string,
   deviceId: string,
-  userId: string | null
+  userId: string | null,
+  hallId: string
 ): Promise<ServiceResult<Session>> {
-  const supabase = await getServerClient();
+  const supabase = getAdminClient();
 
   const { data, error } = await supabase
     .from("sessions")
@@ -24,6 +25,7 @@ export async function createSession(
       reservation_id: reservationId,
       device_id: deviceId,
       user_id: userId,
+      hall_id: hallId,
       started_at: new Date().toISOString(),
     })
     .select("id, reservation_id, device_id, hall_id, user_id, started_at, ended_at")
@@ -60,7 +62,7 @@ export async function createSession(
 export async function getActiveSession(
   sessionId: string
 ): Promise<ServiceResult<Session>> {
-  const supabase = await getServerClient();
+  const supabase = getAdminClient();
 
   const { data, error } = await supabase
     .from("sessions")
@@ -77,7 +79,7 @@ export async function endSession(
   sessionId: string,
   endedAt: string
 ): Promise<ServiceResult<true>> {
-  const supabase = await getServerClient();
+  const supabase = getAdminClient();
 
   const { error } = await supabase
     .from("sessions")

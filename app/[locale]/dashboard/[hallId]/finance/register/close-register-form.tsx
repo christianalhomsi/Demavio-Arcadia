@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import { calculateVariance } from "@/lib/cash-register";
 import { closeRegisterAction } from "./actions";
 
@@ -13,6 +14,7 @@ export default function CloseRegisterForm({
   hallId: string;
   expectedBalance: number;
 }) {
+  const t = useTranslations("dashboard");
   const [value, setValue]     = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError]     = useState<string | null>(null);
@@ -23,7 +25,7 @@ export default function CloseRegisterForm({
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!validInput) { setError("Enter a valid actual balance."); return; }
+    if (!validInput) { setError(t("enterValidActualBalance")); return; }
     setError(null);
     setLoading(true);
     const result = await closeRegisterAction(registerId, hallId, actualBalance);
@@ -35,7 +37,7 @@ export default function CloseRegisterForm({
     <form onSubmit={handleSubmit} style={form}>
       <div style={fieldWrap}>
         <label htmlFor="actual_balance" style={labelStyle}>
-          Actual balance (cash counted)
+          {t("actualBalance")}
         </label>
         <input
           id="actual_balance"
@@ -51,10 +53,10 @@ export default function CloseRegisterForm({
 
       {variance !== null && (
         <div style={varianceRow}>
-          <span style={varianceLabel}>Variance</span>
+          <span style={varianceLabel}>{t("variance")}</span>
           <span style={{ ...varianceValue, color: variance === 0 ? "#15803d" : variance > 0 ? "#1d4ed8" : "#b91c1c" }}>
             {variance > 0 ? "+" : ""}${Math.abs(variance).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-            {variance > 0 ? " surplus" : variance < 0 ? " shortage" : " balanced"}
+            {variance > 0 ? ` ${t("surplus")}` : variance < 0 ? ` ${t("shortage")}` : ` ${t("balanced")}`}
           </span>
         </div>
       )}
@@ -66,7 +68,7 @@ export default function CloseRegisterForm({
         disabled={loading || !validInput}
         style={closeBtn(loading || !validInput)}
       >
-        {loading ? "Closing…" : "Close register"}
+        {loading ? t("closing") : t("closeRegister")}
       </button>
     </form>
   );
