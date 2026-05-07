@@ -2,8 +2,7 @@ import { Suspense } from "react";
 import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
 import { getServerClient } from "@/lib/supabase/server";
-import { getAdminClient } from "@/lib/supabase/admin";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
@@ -29,7 +28,6 @@ async function OverviewContent({ hallId }: { hallId: string }) {
   const supabase = await getServerClient();
   const t = await getTranslations("dashboard");
 
-  // all queries in parallel
   const [devicesRes, reservationsRes, sessionsRes, pendingCheckInsRes] = await Promise.all([
     supabase.from("devices").select("id, name, status").eq("hall_id", hallId).order("name", { ascending: true }),
     supabase.from("reservations")
@@ -38,7 +36,7 @@ async function OverviewContent({ hallId }: { hallId: string }) {
       .order("start_time", { ascending: false })
       .limit(5),
     supabase.from("sessions")
-      .select("id, device_id, started_at, user_id, reservation_id, hall_id")
+      .select("id, device_id, started_at, user_id, reservation_id")
       .is("ended_at", null)
       .eq("hall_id", hallId),
     supabase.from("reservations")
@@ -50,131 +48,11 @@ async function OverviewContent({ hallId }: { hallId: string }) {
       .order("start_time", { ascending: true }),
   ]);
 
-  const sessions = (sessionsRes.data ?? []) as {
-    id: string;
-    device_id: string;
-    started_at: string;
-    user_id: string | null;
-    reservation_id: string | null;
-    hall_id: string | null;
-  }[];
+  const devices = devicesRes.data || [];
+  const sessions = sessionsRes.data || [];
+  const rows = reservationsRes.data || [];
+  const pendingCheckIns = pendingCheckInsRes.data || [];
 
-  // Check if any sessions should be auto-ended based on reservation end time
-  if (sessions.length > 0) {
-    const sessionIds = sessions.filter(s => s.reservation_id).map(s => s.reservation_id!);
-    
-    if (sessionIds.length > 0) {
-      const { data: reservations } = await supabase
-        .from("reservations")
-        .select("id, end_time")
-        .in("id", sessionIds);
-
-      const now = new Date();
-      const expiredSessions = sessions.filter(s => {
-        if (!s.reservation_id) return false;
-        const reservation = reservations?.find(r => r.id === s.reservation_id);
-        if (!reservation) return false;
-        return new Date(reservation.end_time) < now;
-      });
-
-      if (expiredSessions.length > 0) {
-        const adminClient = getAdminClient();
-        const endedAt = now.toISOString();
-        
-        // End expired sessions
-        await adminClient
-          .from("sessions")
-          .update({ ended_at: endedAt })
-          .in("id", expiredSessions.map(s => s.id));
-        
-        // Set devices to available
-        await adminClient
-          .from("devices")
-          .update({ status: "available" })
-          .in("id", expiredSessions.map(s => s.device_id));
-        
-        // Update invoices with ended_at and calculate costs
-        for (const session of expiredSessions) {
-          const reservation = reservations?.find(r => r.id === session.reservation_id);
-          if (reservation) {
-            const durationMs = new Date(reservation.end_time).getTime() - new Date(session.started_at).getTime();
-            const durationHours = durationMs / (1000 * 60 * 60);
-            
-            // Get device price
-            const { data: device } = await adminClient
-              .from("devices")
-              .select("price_per_hour")
-              .eq("id", session.device_id)
-              .single();
-            
-            const ratePerHour = device?.price_per_hour || 0;
-            const sessionPrice = durationHours * ratePerHour;
-            
-            // Get session items total
-            const { data: sessionItems } = await adminClient
-              .from("session_items")
-              .select("product_price, quantity")
-              .eq("session_id", session.id);
-            
-            const itemsTotal = (sessionItems || []).reduce(
-              (sum, item) => sum + (item.product_price * item.quantity),
-              0
-            );
-            
-            const totalPrice = sessionPrice + itemsTotal;
-            
-            await adminClient
-              .from("invoices")
-              .update({
-                ended_at: endedAt,
-                duration_hours: durationHours,
-                rate_per_hour: ratePerHour,
-                session_price: sessionPrice,
-                items_total: itemsTotal,
-                total_price: totalPrice,
-              })
-              .eq("session_id", session.id);
-          }
-        }
-        
-        // Remove expired sessions from the list
-        const activeSessions = sessions.filter(s => !expiredSessions.find(es => es.id === s.id));
-        sessions.length = 0;
-        sessions.push(...activeSessions);
-      }
-    }
-  }
-
-  // Active sessions for this hall
-  const activeDeviceIds = new Set(sessions.map(s => s.device_id));
-  const devicesToReset = (devicesRes.data ?? []).filter(
-    d => d.status === "active" && !activeDeviceIds.has(d.id)
-  );
-
-  if (devicesToReset.length > 0) {
-    try {
-      const adminClient = getAdminClient();
-      const { error } = await adminClient
-        .from("devices")
-        .update({ status: "available" })
-        .in("id", devicesToReset.map(d => d.id));
-      
-      if (error) {
-        console.error(`[Overview] Failed to reset devices:`, error);
-      }
-    } catch (e) {
-      console.error("[Overview] Failed to reset device statuses:", e);
-    }
-  }
-
-  // Re-fetch devices to get updated status
-  const { data: updatedDevices } = await supabase
-    .from("devices")
-    .select("id, name, status")
-    .eq("hall_id", hallId)
-    .order("name", { ascending: true });
-
-  // Get guest names for sessions with reservations
   const reservationIds = sessions.filter(s => s.reservation_id).map(s => s.reservation_id!);
   const guestNamesMap = new Map<string, string>();
   
@@ -189,46 +67,7 @@ async function OverviewContent({ hallId }: { hallId: string }) {
     });
   }
 
-  // Use updated devices data
-  const devices = updatedDevices ?? devicesRes.data ?? [];
-
-  const sessionByDevice = new Map(sessions.map((s) => [s.device_id, {
-    id: s.id,
-    started_at: s.started_at,
-    user_id: s.user_id,
-    guest_name: s.reservation_id ? guestNamesMap.get(s.reservation_id) ?? null : null,
-  }]));
-
-  const rows = (reservationsRes.data ?? []) as unknown as {
-    id: string; start_time: string; end_time: string; status: string;
-    devices: { name: string } | null;
-  }[];
-
-  const pendingCheckIns = (pendingCheckInsRes.data ?? []) as unknown as {
-    id: string; start_time: string; end_time: string; guest_name: string | null;
-    user_id: string | null; device_id: string;
-    devices: { name: string } | null;
-  }[];
-
-  // Fix reservations that are 'active' but have no session (from old cron job)
-  // Reset them back to 'confirmed'
-  const activeReservationsRes = await supabase
-    .from("reservations")
-    .select("id, device_id")
-    .eq("status", "active")
-    .eq("devices.hall_id", hallId)
-    .not("id", "in", `(${sessions.map(s => s.reservation_id).filter(Boolean).join(",") || "'00000000-0000-0000-0000-000000000000'"})`);
-
-  if (activeReservationsRes.data && activeReservationsRes.data.length > 0) {
-    const orphanedIds = activeReservationsRes.data.map((r: { id: string }) => r.id);
-    await supabase
-      .from("reservations")
-      .update({ status: "confirmed" })
-      .in("id", orphanedIds);
-  }
-
-  // Get user emails for pending check-ins
-  const userIds = pendingCheckIns.filter(r => r.user_id).map(r => r.user_id!);
+  const userIds = pendingCheckIns.filter((r: any) => r.user_id).map((r: any) => r.user_id!);
   const userEmailsMap = new Map<string, string>();
   if (userIds.length > 0) {
     const { data: profilesData } = await supabase
@@ -242,7 +81,6 @@ async function OverviewContent({ hallId }: { hallId: string }) {
 
   return (
     <>
-      {/* Quick Actions */}
       <div className="mb-4 sm:mb-6">
         <h2 className="text-xs sm:text-sm font-semibold text-muted-foreground mb-2.5 sm:mb-3">{t("quickActions")}</h2>
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 sm:gap-3">
@@ -252,28 +90,24 @@ async function OverviewContent({ hallId }: { hallId: string }) {
               <span className="text-xs sm:text-sm font-medium">{t("invoices")}</span>
             </Button>
           </Link>
-          
           <Link href={`/dashboard/${hallId}/reservations`}>
             <Button variant="outline" className="w-full h-auto flex-col gap-2 py-3 sm:py-4">
               <Calendar size={20} className="text-primary" />
               <span className="text-xs sm:text-sm font-medium">{t("reservations")}</span>
             </Button>
           </Link>
-          
           <Link href={`/dashboard/${hallId}/products`}>
             <Button variant="outline" className="w-full h-auto flex-col gap-2 py-3 sm:py-4">
               <Package size={20} className="text-primary" />
               <span className="text-xs sm:text-sm font-medium">{t("products")}</span>
             </Button>
           </Link>
-          
           <Link href={`/dashboard/${hallId}/wallets`}>
             <Button variant="outline" className="w-full h-auto flex-col gap-2 py-3 sm:py-4">
               <Wallet size={20} className="text-primary" />
               <span className="text-xs sm:text-sm font-medium">{t("wallets")}</span>
             </Button>
           </Link>
-          
           <Link href={`/dashboard/${hallId}/devices`}>
             <Button variant="outline" className="w-full h-auto flex-col gap-2 py-3 sm:py-4">
               <Users size={20} className="text-primary" />
@@ -283,35 +117,36 @@ async function OverviewContent({ hallId }: { hallId: string }) {
         </div>
       </div>
 
-      {/* devices grid */}
       {devices.length > 0 && (
         <div className="mb-4 sm:mb-6">
           <h2 className="text-xs sm:text-sm font-semibold text-muted-foreground mb-2.5 sm:mb-3">{t("devices")}</h2>
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2.5 sm:gap-3">
-            {devices.map((device) => (
-              <OverviewDeviceCard
-                key={device.id}
-                id={device.id}
-                name={device.name}
-                status={device.status}
-                hallId={hallId}
-                activeSession={sessionByDevice.get(device.id) ? {
-                  id: sessionByDevice.get(device.id)!.id,
-                  started_at: sessionByDevice.get(device.id)!.started_at,
-                  user_id: sessionByDevice.get(device.id)!.user_id,
-                  guest_name: sessionByDevice.get(device.id)!.guest_name,
-                } : null}
-              />
-            ))}
+            {devices.map((device: any) => {
+              const session = sessions.find((s: any) => s.device_id === device.id);
+              return (
+                <OverviewDeviceCard
+                  key={device.id}
+                  id={device.id}
+                  name={device.name}
+                  status={device.status}
+                  hallId={hallId}
+                  activeSession={session ? {
+                    id: session.id,
+                    started_at: session.started_at,
+                    user_id: session.user_id,
+                    guest_name: session.reservation_id ? guestNamesMap.get(session.reservation_id) ?? null : null,
+                  } : null}
+                />
+              );
+            })}
           </div>
         </div>
       )}
 
-      {/* Pending check-ins */}
       {pendingCheckIns.length > 0 && (
         <div className="mb-4 sm:mb-6">
           <PendingCheckInsTable
-            checkIns={pendingCheckIns.map(r => ({
+            checkIns={pendingCheckIns.map((r: any) => ({
               ...r,
               email: r.user_id ? userEmailsMap.get(r.user_id) : undefined,
             }))}
@@ -320,7 +155,6 @@ async function OverviewContent({ hallId }: { hallId: string }) {
         </div>
       )}
 
-      {/* recent reservations */}
       <Card className="border-border/60">
         <CardHeader className="pb-2.5 sm:pb-3">
           <h2 className="text-xs sm:text-sm font-semibold text-muted-foreground">{t("recentReservations")}</h2>
@@ -341,7 +175,7 @@ async function OverviewContent({ hallId }: { hallId: string }) {
                 </tr>
               </thead>
               <tbody>
-                {rows.map((r) => (
+                {rows.map((r: any) => (
                   <tr key={r.id} className="table-row-hover border-b border-border/20 last:border-0">
                     <td className="px-3 py-2.5 sm:px-4 sm:py-3 font-medium text-foreground">{r.devices?.name ?? "—"}</td>
                     <td className="px-3 py-2.5 sm:px-4 sm:py-3 text-muted-foreground whitespace-nowrap text-[10px] sm:text-xs">{fmt(r.start_time)}</td>
@@ -388,15 +222,37 @@ function OverviewSkeleton() {
 export default async function OverviewPage({ params }: { params: Promise<{ hallId: string }> }) {
   const { hallId } = await params;
   const t = await getTranslations("dashboard");
+  const tn = await getTranslations("nav");
   return (
     <div className="page-shell">
-      <div className="flex items-center gap-2 sm:gap-2.5">
-        <LayoutDashboard size={16} className="sm:w-[18px] sm:h-[18px] text-muted-foreground" />
-        <div>
-          <h1 className="text-lg sm:text-xl font-bold leading-none">{t("overview")}</h1>
-          <p className="text-xs sm:text-sm text-muted-foreground mt-0.5">{t("hallStatusGlance")}</p>
+      <div className="relative rounded-2xl overflow-hidden border border-border/50 bg-card mb-6">
+        <div 
+          className="absolute inset-0 opacity-[0.03]"
+          style={{ 
+            backgroundImage: "radial-gradient(circle at 20% 50%, oklch(0.55 0.26 280) 0%, transparent 50%), radial-gradient(circle at 80% 30%, oklch(0.82 0.14 200) 0%, transparent 40%)" 
+          }} 
+        />
+        <div 
+          className="absolute inset-x-0 top-0 h-px"
+          style={{ background: "linear-gradient(90deg, transparent, oklch(0.55 0.26 280 / 0.5), transparent)" }}
+        />
+        <div className="relative p-5 sm:p-6 flex items-center gap-4">
+          <div 
+            className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0"
+            style={{ 
+              background: "linear-gradient(135deg, oklch(0.55 0.26 280 / 0.15), oklch(0.55 0.26 280 / 0.08))",
+              border: "1px solid oklch(0.55 0.26 280 / 0.3)"
+            }}
+          >
+            <LayoutDashboard size={22} style={{ color: "oklch(0.65 0.22 280)" }} />
+          </div>
+          <div className="flex-1 min-w-0">
+            <h1 className="text-xl sm:text-2xl font-bold tracking-tight">{tn("dashboard")}</h1>
+            <p className="text-sm text-muted-foreground mt-0.5">{t("hallStatusGlance")}</p>
+          </div>
         </div>
       </div>
+
       <Suspense fallback={<OverviewSkeleton />}>
         <OverviewContent hallId={hallId} />
       </Suspense>

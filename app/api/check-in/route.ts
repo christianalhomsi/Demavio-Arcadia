@@ -61,13 +61,11 @@ export async function POST(request: Request) {
         .maybeSingle();
       
       if (!existingSessionCheck) {
-        // No active session found, reset to confirmed
+        // No active session found, reset to confirmed and continue
         await supabase
           .from("reservations")
           .update({ status: "confirmed" })
           .eq("id", reservation_id);
-        
-        // Continue with check-in
       } else {
         return NextResponse.json(
           { error: "Reservation already has an active session" },
@@ -82,17 +80,13 @@ export async function POST(request: Request) {
     }
   }
 
-  // Prevent double session on the same device
-  const { data: existingSession, error: sessionCheckErr } = await supabase
+  // Check for existing session on device (combined check)
+  const { data: existingSession } = await supabase
     .from("sessions")
     .select("id")
     .eq("device_id", device_id)
     .is("ended_at", null)
     .maybeSingle();
-
-  if (sessionCheckErr) {
-    return NextResponse.json({ error: "Failed to check device session status" }, { status: 500 });
-  }
 
   if (existingSession) {
     return NextResponse.json(

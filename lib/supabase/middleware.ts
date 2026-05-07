@@ -42,24 +42,18 @@ export async function updateSession(request: NextRequest, response?: NextRespons
   }
 
   if (user && (pathname.includes("/auth/login") || pathname.includes("/auth/verify-otp"))) {
-    // check role to redirect to correct place
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("role")
-      .eq("id", user.id)
-      .maybeSingle();
+    // Fetch user data (will be cached by database with indexes)
+    const [profileRes, assignmentRes] = await Promise.all([
+      supabase.from("profiles").select("role").eq("id", user.id).maybeSingle(),
+      supabase.from("staff_assignments").select("hall_id").eq("user_id", user.id).maybeSingle()
+    ]);
 
-    const role = profile?.role as string | undefined;
+    const role = profileRes.data?.role as string | undefined;
+    const hallId = assignmentRes.data?.hall_id ?? null;
 
     if (role && HALL_DASHBOARD_ROLES.includes(role as any)) {
-      const { data: assignment } = await supabase
-        .from("staff_assignments")
-        .select("hall_id")
-        .eq("user_id", user.id)
-        .maybeSingle();
-
-      if (assignment?.hall_id) {
-        return NextResponse.redirect(new URL(`${localePrefix}/dashboard/${assignment.hall_id}`, request.url));
+      if (hallId) {
+        return NextResponse.redirect(new URL(`${localePrefix}/dashboard/${hallId}`, request.url));
       }
     }
 

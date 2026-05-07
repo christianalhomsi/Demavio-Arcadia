@@ -25,7 +25,44 @@ type DeviceStats = { total: number; available: number; active: number; offline: 
 async function HallsGrid() {
   const t = await getTranslations('halls');
   const supabase = await getServerClient();
-  const halls = await getHalls();
+  
+  // Try to get all halls with stats in ONE database call
+  const { data: hallsData, error } = await supabase.rpc('get_all_halls_with_stats');
+  
+  let halls = hallsData || [];
+
+  // Fallback: fetch data manually if function doesn't exist
+  if (error || !hallsData) {
+    console.warn('[Halls] Database function not available, using fallback queries');
+    
+    const hallsList = await getHalls();
+    
+    if (hallsList.length === 0) {
+      halls = [];
+    } else {
+      // Fetch device stats for all halls
+      const { data: devices } = await supabase
+        .from("devices")
+        .select("hall_id, status")
+        .in("hall_id", hallsList.map(h => h.id));
+
+      const statsMap = new Map<string, DeviceStats>();
+      for (const d of devices ?? []) {
+        const s = statsMap.get(d.hall_id) ?? { total: 0, available: 0, active: 0, offline: 0 };
+        s.total++;
+        if (d.status === "available") s.available++;
+        if (d.status === "active")    s.active++;
+        if (d.status === "offline")   s.offline++;
+        statsMap.set(d.hall_id, s);
+      }
+
+      const empty: DeviceStats = { total: 0, available: 0, active: 0, offline: 0 };
+      halls = hallsList.map(hall => ({
+        ...hall,
+        stats: statsMap.get(hall.id) ?? empty
+      }));
+    }
+  }
 
   if (halls.length === 0) {
     return (
@@ -40,28 +77,10 @@ async function HallsGrid() {
     );
   }
 
-  // single query for all halls' device stats
-  const { data: devices } = await supabase
-    .from("devices")
-    .select("hall_id, status")
-    .in("hall_id", halls.map(h => h.id));
-
-  const statsMap = new Map<string, DeviceStats>();
-  for (const d of devices ?? []) {
-    const s = statsMap.get(d.hall_id) ?? { total: 0, available: 0, active: 0, offline: 0 };
-    s.total++;
-    if (d.status === "available") s.available++;
-    if (d.status === "active")    s.active++;
-    if (d.status === "offline")   s.offline++;
-    statsMap.set(d.hall_id, s);
-  }
-
-  const empty: DeviceStats = { total: 0, available: 0, active: 0, offline: 0 };
-
   return (
     <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-      {halls.map((hall) => (
-        <HallCard key={hall.id} hall={hall} stats={statsMap.get(hall.id) ?? empty} />
+      {halls.map((hall: any) => (
+        <HallCard key={hall.id} hall={hall} stats={hall.stats} />
       ))}
     </div>
   );
@@ -71,7 +90,63 @@ function HallsGridSkeleton() {
   return (
     <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
       {Array.from({ length: 6 }).map((_, i) => (
-        <Skeleton key={i} className="h-48 rounded-2xl skeleton-shimmer" />
+        <div 
+          key={i} 
+          className="rounded-2xl border border-border/60 bg-card p-6 space-y-4 animate-pulse"
+        >
+          {/* Header Skeleton */}
+          <div className="flex items-start justify-between gap-3">
+            <div className="flex items-center gap-3 flex-1">
+              <div 
+                className="w-12 h-12 rounded-xl"
+                style={{ background: "oklch(0.55 0.26 280 / 0.1)" }}
+              />
+              <div className="flex-1 space-y-2">
+                <div 
+                  className="h-5 rounded w-3/4"
+                  style={{ background: "oklch(0.55 0.26 280 / 0.1)" }}
+                />
+                <div 
+                  className="h-3 rounded w-1/2"
+                  style={{ background: "oklch(0.55 0.26 280 / 0.08)" }}
+                />
+              </div>
+            </div>
+            <div 
+              className="w-16 h-7 rounded-full"
+              style={{ background: "oklch(0.45 0.20 145 / 0.1)" }}
+            />
+          </div>
+
+          {/* Total Devices Skeleton */}
+          <div 
+            className="flex items-center justify-between p-4 rounded-xl"
+            style={{ background: "oklch(0.55 0.26 280 / 0.05)" }}
+          >
+            <div className="space-y-2">
+              <div 
+                className="h-3 w-20 rounded"
+                style={{ background: "oklch(0.55 0.26 280 / 0.1)" }}
+              />
+              <div 
+                className="h-8 w-12 rounded"
+                style={{ background: "oklch(0.55 0.26 280 / 0.15)" }}
+              />
+            </div>
+            <div 
+              className="w-16 h-16 rounded-xl"
+              style={{ background: "oklch(0.55 0.26 280 / 0.15)" }}
+            />
+          </div>
+
+          {/* Footer Skeleton */}
+          <div className="flex items-center justify-end pt-2 border-t border-border/40">
+            <div 
+              className="h-4 w-24 rounded"
+              style={{ background: "oklch(0.55 0.26 280 / 0.1)" }}
+            />
+          </div>
+        </div>
       ))}
     </div>
   );

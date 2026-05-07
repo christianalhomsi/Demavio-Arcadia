@@ -73,9 +73,9 @@
   --color-info:        oklch(0.65 0.18 230);
 
   /* ── Semantic: Gaming Brand ── */
-  --color-brand:       oklch(0.55 0.26 280);
-  --color-brand-glow:  oklch(0.55 0.26 280 / 0.25);
-  --color-neon:        oklch(0.82 0.14 200);
+  --color-brand:       #004EEB;
+  --color-brand-glow:  #004EEB40;
+  --color-neon:        #07B1FC;
 
   /* ── Typography ── */
   --font-sans:    var(--font-geist-sans), "Inter", system-ui, sans-serif;
@@ -116,39 +116,39 @@
 :root {
   --radius: 0.625rem;
 
-  --background:           oklch(0.10 0.012 265);
-  --foreground:           oklch(0.96 0.006 265);
-  --card:                 oklch(0.14 0.014 265);
-  --card-foreground:      oklch(0.96 0.006 265);
-  --popover:              oklch(0.14 0.014 265);
-  --popover-foreground:   oklch(0.96 0.006 265);
-  --primary:              oklch(0.55 0.26 280);
-  --primary-foreground:   oklch(0.98 0.005 265);
-  --secondary:            oklch(0.19 0.015 265);
-  --secondary-foreground: oklch(0.96 0.006 265);
-  --muted:                oklch(0.19 0.015 265);
-  --muted-foreground:     oklch(0.58 0.018 265);
-  --accent:               oklch(0.22 0.018 265);
-  --accent-foreground:    oklch(0.96 0.006 265);
+  --background:           #01022A;
+  --foreground:           #F7F6F8;
+  --card:                 #01063B;
+  --card-foreground:      #F7F6F8;
+  --popover:              #01063B;
+  --popover-foreground:   #F7F6F8;
+  --primary:              #004EEB;
+  --primary-foreground:   #F7F6F8;
+  --secondary:            #010C50;
+  --secondary-foreground: #F7F6F8;
+  --muted:                #010C50;
+  --muted-foreground:     #07B1FC;
+  --accent:               #01063B;
+  --accent-foreground:    #F7F6F8;
   --destructive:          oklch(0.63 0.24 25);
-  --border:               oklch(0.24 0.016 265);
-  --input:                oklch(0.22 0.016 265);
-  --ring:                 oklch(0.55 0.26 280);
+  --border:               #010C50;
+  --input:                #01063B;
+  --ring:                 #004EEB;
 
-  --chart-1: oklch(0.55 0.26 280);
-  --chart-2: oklch(0.82 0.14 200);
+  --chart-1: #004EEB;
+  --chart-2: #07B1FC;
   --chart-3: oklch(0.64 0.20 145);
   --chart-4: oklch(0.78 0.18 75);
   --chart-5: oklch(0.63 0.24 25);
 
-  --sidebar:                    oklch(0.12 0.013 265);
-  --sidebar-foreground:         oklch(0.96 0.006 265);
-  --sidebar-primary:            oklch(0.55 0.26 280);
-  --sidebar-primary-foreground: oklch(0.98 0.005 265);
-  --sidebar-accent:             oklch(0.19 0.015 265);
-  --sidebar-accent-foreground:  oklch(0.96 0.006 265);
-  --sidebar-border:             oklch(0.24 0.016 265);
-  --sidebar-ring:               oklch(0.55 0.26 280);
+  --sidebar:                    #01022A;
+  --sidebar-foreground:         #F7F6F8;
+  --sidebar-primary:            #004EEB;
+  --sidebar-primary-foreground: #F7F6F8;
+  --sidebar-accent:             #01063B;
+  --sidebar-accent-foreground:  #F7F6F8;
+  --sidebar-border:             #010C50;
+  --sidebar-ring:               #004EEB;
 }
 
 /* ── Base Layer ── */
@@ -181,7 +181,7 @@
 
   /* Focus ring */
   :focus-visible {
-    outline: 2px solid oklch(0.55 0.26 280);
+    outline: 2px solid #004EEB;
     outline-offset: 2px;
   }
 }
@@ -191,11 +191,11 @@
 
   /* ── Glow effects ── */
   .glow-primary {
-    box-shadow: 0 0 20px oklch(0.55 0.26 280 / 0.3),
-                0 0 40px oklch(0.55 0.26 280 / 0.1);
+    box-shadow: 0 0 20px #004EEB4D,
+                0 0 40px #004EEB1A;
   }
   .glow-neon {
-    box-shadow: 0 0 20px oklch(0.82 0.14 200 / 0.3);
+    box-shadow: 0 0 20px #07B1FC4D;
   }
 
   /* ── Status badges ── */
@@ -249,9 +249,9 @@
   .skeleton-shimmer {
     background: linear-gradient(
       90deg,
-      oklch(0.19 0.015 265) 25%,
-      oklch(0.24 0.016 265) 50%,
-      oklch(0.19 0.015 265) 75%
+      #01063B 25%,
+      #010C50 50%,
+      #01063B 75%
     );
     background-size: 200% 100%;
     animation: shimmer 1.8s ease-in-out infinite;
@@ -261,6 +261,14 @@
   @keyframes loading {
     0%   { transform: translateX(-100%); }
     100% { transform: translateX(400%); }
+  }
+
+  /* ── Float animation ── */
+  @keyframes float {
+    0%, 100% { transform: translateY(0) translateX(0); opacity: 0; }
+    10% { opacity: 0.3; }
+    50% { transform: translateY(-100px) translateX(50px); opacity: 0.6; }
+    90% { opacity: 0.3; }
   }
 
   /* ── Nav link active ── */
@@ -278,9 +286,9 @@
   input:-webkit-autofill:hover,
   input:-webkit-autofill:focus,
   input:-webkit-autofill:active {
-    -webkit-box-shadow: 0 0 0 999px oklch(0.19 0.015 265) inset !important;
-    -webkit-text-fill-color: oklch(0.96 0.006 265) !important;
-    caret-color: oklch(0.96 0.006 265) !important;
+    -webkit-box-shadow: 0 0 0 999px #01063B inset !important;
+    -webkit-text-fill-color: #F7F6F8 !important;
+    caret-color: #F7F6F8 !important;
   }
 
   /* Table row hover */
@@ -308,7 +316,7 @@
   }
 
   select:hover {
-    @apply bg-slate-900/70;
+    background-color: #01063B;
   }
 
   select:focus {
@@ -316,18 +324,20 @@
   }
 
   select option {
-    @apply bg-slate-900 text-foreground py-2 px-3;
+    background-color: #01022A;
+    color: #F7F6F8;
+    padding: 0.5rem 0.75rem;
     border-radius: 0.5rem;
     margin: 0.25rem;
   }
 
   select option:hover {
-    @apply bg-white/10;
+    background-color: #01063B;
   }
 
   select option:checked {
-    background: linear-gradient(90deg, oklch(0.55 0.26 280 / 0.2), oklch(0.55 0.26 280 / 0.1));
-    color: oklch(0.65 0.22 280);
+    background: linear-gradient(90deg, #004EEB33, #004EEB1A);
+    color: #07B1FC;
     font-weight: 500;
   }
 
@@ -335,13 +345,13 @@
   .react-calendar {
     width: 320px !important;
     max-width: 100% !important;
-    background: linear-gradient(135deg, oklch(0.16 0.02 265), oklch(0.12 0.015 265)) !important;
-    border: 1px solid oklch(0.3 0.02 265) !important;
+    background: linear-gradient(135deg, #01063B, #01022A) !important;
+    border: 1px solid #010C50 !important;
     border-radius: 16px !important;
     font-family: var(--font-sans) !important;
     line-height: 1.125em !important;
     padding: 16px !important;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), 0 0 0 1px oklch(0.3 0.02 265 / 0.5) !important;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), 0 0 0 1px #010C5080 !important;
     direction: rtl !important;
   }
 
@@ -389,9 +399,9 @@
   .react-calendar__navigation button {
     min-width: 40px !important;
     height: 40px !important;
-    background: oklch(0.2 0.02 265) !important;
-    color: oklch(0.96 0.006 265) !important;
-    border: 1px solid oklch(0.25 0.02 265) !important;
+    background: #01063B !important;
+    color: #F7F6F8 !important;
+    border: 1px solid #010C50 !important;
     border-radius: 12px !important;
     font-size: 14px !important;
     font-weight: 700 !important;
@@ -417,10 +427,10 @@
   }
 
   .react-calendar__navigation button:enabled:hover {
-    background: oklch(0.25 0.02 265) !important;
-    border-color: oklch(0.55 0.26 280) !important;
+    background: #010C50 !important;
+    border-color: #004EEB !important;
     transform: translateY(-2px) !important;
-    box-shadow: 0 4px 16px oklch(0.55 0.26 280 / 0.3) !important;
+    box-shadow: 0 4px 16px #004EEB4D !important;
   }
 
   .react-calendar__navigation button:disabled {
@@ -443,7 +453,7 @@
   }
 
   .react-calendar__navigation__arrow {
-    color: oklch(0.65 0.26 280) !important;
+    color: #07B1FC !important;
     font-size: 18px !important;
   }
 
@@ -452,7 +462,7 @@
     text-transform: uppercase !important;
     font-weight: 800 !important;
     font-size: 11px !important;
-    color: oklch(0.65 0.15 280) !important;
+    color: #07B1FC !important;
     margin-bottom: 12px !important;
     letter-spacing: 1px !important;
     display: flex !important;
@@ -484,11 +494,11 @@
   }
 
   .react-calendar__month-view__days__day--weekend {
-    color: oklch(0.96 0.006 265) !important;
+    color: #F7F6F8 !important;
   }
 
   .react-calendar__month-view__days__day--neighboringMonth {
-    color: oklch(0.45 0.01 265) !important;
+    color: #010C50 !important;
     opacity: 0.4 !important;
   }
 
@@ -503,7 +513,7 @@
     height: 42px !important;
     padding: 10px 8px !important;
     background: transparent !important;
-    color: oklch(0.9 0.006 265) !important;
+    color: #F7F6F8 !important;
     text-align: center !important;
     line-height: 22px !important;
     border: 1px solid transparent !important;
@@ -531,50 +541,50 @@
 
   .react-calendar__tile:enabled:hover,
   .react-calendar__tile:enabled:focus {
-    background: oklch(0.22 0.02 265) !important;
-    border-color: oklch(0.3 0.02 265) !important;
+    background: #01063B !important;
+    border-color: #010C50 !important;
     transform: scale(1.08) !important;
   }
 
   .react-calendar__tile--now {
-    background: oklch(0.2 0.02 265) !important;
-    border-color: oklch(0.55 0.26 280 / 0.4) !important;
+    background: #01063B !important;
+    border-color: #004EEB66 !important;
     font-weight: 800 !important;
-    color: oklch(0.65 0.26 280) !important;
+    color: #07B1FC !important;
   }
 
   .react-calendar__tile--now:enabled:hover,
   .react-calendar__tile--now:enabled:focus {
-    background: oklch(0.25 0.02 265) !important;
-    border-color: oklch(0.55 0.26 280) !important;
+    background: #010C50 !important;
+    border-color: #004EEB !important;
   }
 
   .react-calendar__tile--hasActive {
-    background: oklch(0.25 0.02 265) !important;
+    background: #010C50 !important;
   }
 
   .react-calendar__tile--hasActive:enabled:hover,
   .react-calendar__tile--hasActive:enabled:focus {
-    background: oklch(0.28 0.02 265) !important;
+    background: #01063B !important;
   }
 
   .react-calendar__tile--active {
-    background: linear-gradient(135deg, oklch(0.6 0.26 280), oklch(0.5 0.26 280)) !important;
-    color: white !important;
-    border-color: oklch(0.55 0.26 280) !important;
+    background: linear-gradient(135deg, #004EEB, #004EEB) !important;
+    color: #F7F6F8 !important;
+    border-color: #004EEB !important;
     font-weight: 800 !important;
-    box-shadow: 0 4px 20px oklch(0.55 0.26 280 / 0.5), 0 0 0 3px oklch(0.55 0.26 280 / 0.2) !important;
+    box-shadow: 0 4px 20px #004EEB80, 0 0 0 3px #004EEB33 !important;
     transform: scale(1.1) !important;
   }
 
   .react-calendar__tile--active:enabled:hover,
   .react-calendar__tile--active:enabled:focus {
-    background: linear-gradient(135deg, oklch(0.65 0.26 280), oklch(0.55 0.26 280)) !important;
-    box-shadow: 0 6px 24px oklch(0.55 0.26 280 / 0.6), 0 0 0 3px oklch(0.55 0.26 280 / 0.3) !important;
+    background: linear-gradient(135deg, #07B1FC, #004EEB) !important;
+    box-shadow: 0 6px 24px #004EEB99, 0 0 0 3px #004EEB4D !important;
     transform: scale(1.12) !important;
   }
 
   .react-calendar--selectRange .react-calendar__tile--hover {
-    background-color: oklch(0.25 0.02 265) !important;
+    background-color: #010C50 !important;
   }
 }

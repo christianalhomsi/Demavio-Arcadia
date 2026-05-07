@@ -1,59 +1,61 @@
 import { Skeleton } from "./skeleton";
-import { Gamepad2, MapPin, Wifi } from "lucide-react";
+import { Building2, MapPin } from "lucide-react";
 
 // Skeleton لبطاقة القاعة - يطابق HallCard الجديد
 function HallCardSkeleton() {
   return (
-    <div className="relative rounded-xl sm:rounded-2xl bg-gradient-to-br from-slate-900 via-purple-900/20 to-slate-900 p-[1px] overflow-hidden">
-      <div className="relative rounded-xl sm:rounded-2xl bg-slate-950 p-4 sm:p-6 space-y-4 sm:space-y-5">
-        
-        {/* Header */}
-        <div className="flex items-start justify-between gap-2 sm:gap-3">
-          <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg sm:rounded-xl bg-gradient-to-br from-purple-500/20 to-blue-500/20 flex items-center justify-center border border-purple-500/30 shrink-0">
-              <Gamepad2 size={20} className="sm:w-6 sm:h-6 text-purple-400 opacity-50" />
-            </div>
-            <div className="space-y-1.5 sm:space-y-2 min-w-0">
-              <Skeleton className="w-24 sm:w-32 h-4 sm:h-5 bg-slate-800" />
-              <div className="flex items-center gap-1">
-                <MapPin size={10} className="text-slate-600 shrink-0" />
-                <Skeleton className="w-20 sm:w-24 h-2.5 sm:h-3 bg-slate-800" />
-              </div>
-            </div>
+    <div className="rounded-2xl border border-border/60 bg-card p-6 space-y-4 animate-pulse">
+      {/* Header Skeleton */}
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex items-center gap-3 flex-1">
+          <div 
+            className="w-12 h-12 rounded-xl"
+            style={{ background: "oklch(0.55 0.26 280 / 0.1)" }}
+          />
+          <div className="flex-1 space-y-2">
+            <div 
+              className="h-5 rounded w-3/4"
+              style={{ background: "oklch(0.55 0.26 280 / 0.1)" }}
+            />
+            <div 
+              className="h-3 rounded w-1/2"
+              style={{ background: "oklch(0.55 0.26 280 / 0.08)" }}
+            />
           </div>
-          
-          <Skeleton className="w-14 sm:w-16 h-6 sm:h-7 rounded-full bg-slate-800 shrink-0" />
         </div>
+        <div 
+          className="w-16 h-7 rounded-full"
+          style={{ background: "oklch(0.45 0.20 145 / 0.1)" }}
+        />
+      </div>
 
-        {/* Stats Grid */}
-        <div className="grid grid-cols-3 gap-2 sm:gap-3">
-          {[1, 2, 3].map((i) => (
-            <div key={i} className="bg-slate-900/50 rounded-lg p-2 sm:p-3 border border-slate-800">
-              <Skeleton className="w-6 sm:w-8 h-6 sm:h-7 mb-1.5 sm:mb-2 bg-slate-800" />
-              <Skeleton className="w-10 sm:w-12 h-2.5 sm:h-3 bg-slate-800" />
-            </div>
-          ))}
+      {/* Total Devices Skeleton */}
+      <div 
+        className="flex items-center justify-between p-4 rounded-xl"
+        style={{ background: "oklch(0.55 0.26 280 / 0.05)" }}
+      >
+        <div className="space-y-2">
+          <div 
+            className="h-3 w-20 rounded"
+            style={{ background: "oklch(0.55 0.26 280 / 0.1)" }}
+          />
+          <div 
+            className="h-8 w-12 rounded"
+            style={{ background: "oklch(0.55 0.26 280 / 0.15)" }}
+          />
         </div>
+        <div 
+          className="w-16 h-16 rounded-xl"
+          style={{ background: "oklch(0.55 0.26 280 / 0.15)" }}
+        />
+      </div>
 
-        {/* Progress Bar */}
-        <div className="space-y-1.5 sm:space-y-2">
-          <div className="flex items-center justify-between">
-            <Skeleton className="w-12 sm:w-16 h-2.5 sm:h-3 bg-slate-800" />
-            <Skeleton className="w-10 sm:w-12 h-2.5 sm:h-3 bg-slate-800" />
-          </div>
-          <div className="h-1.5 sm:h-2 rounded-full bg-slate-800 overflow-hidden">
-            <Skeleton className="h-full w-2/3 bg-gradient-to-r from-purple-500/50 to-blue-500/50" />
-          </div>
-        </div>
-
-        {/* Footer */}
-        <div className="flex items-center justify-between pt-2 sm:pt-3 border-t border-slate-800">
-          <div className="flex items-center gap-1 sm:gap-1.5">
-            <Wifi size={12} className="text-slate-600 shrink-0" />
-            <Skeleton className="w-14 sm:w-16 h-2.5 sm:h-3 bg-slate-800" />
-          </div>
-          <Skeleton className="w-16 sm:w-20 h-3 sm:h-4 bg-slate-800" />
-        </div>
+      {/* Footer Skeleton */}
+      <div className="flex items-center justify-end pt-2 border-t border-border/40">
+        <div 
+          className="h-4 w-24 rounded"
+          style={{ background: "oklch(0.55 0.26 280 / 0.1)" }}
+        />
       </div>
     </div>
   );

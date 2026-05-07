@@ -16,6 +16,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Mail, Lock, AlertCircle, Send, LogIn, MailCheck } from "lucide-react";
 import Logo from "@/components/ui/logo";
+import AnimatedBackground from "@/components/ui/animated-background";
 
 const loginSchema = z.object({
   email: z.string().email("Invalid email address"),
@@ -72,8 +73,9 @@ export default function AuthForm() {
   const t = useTranslations('auth');
 
   return (
-    <div className="min-h-screen w-full flex items-center justify-center bg-gradient-to-br from-slate-950 via-violet-950/30 to-slate-950 p-4">
-      <div className="w-full max-w-md">
+    <div className="min-h-screen w-full flex items-center justify-center p-4 relative">
+      <AnimatedBackground />
+      <div className="w-full max-w-md relative z-10">
         {/* Logo/Title */}
         <div className="text-center mb-8 flex flex-col items-center">
           <div className="mb-4 p-4 rounded-2xl" style={{ background: "oklch(0.55 0.26 280 / 0.08)", border: "1px solid oklch(0.55 0.26 280 / 0.15)" }}>

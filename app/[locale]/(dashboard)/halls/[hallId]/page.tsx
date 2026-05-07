@@ -9,6 +9,7 @@ import DeviceCard from "@/components/ui/device-card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
 import { getTranslations } from "next-intl/server";
+import Logo from "@/components/ui/logo";
 import {
   Gamepad2, ChevronRight, ChevronLeft, Building2,
   MapPin, Monitor, Plus, CheckCircle2, Timer, Clock, WifiOff,
@@ -113,10 +114,57 @@ async function HallContent({ hallId, locale }: { hallId: string; locale: string 
 function HallContentSkeleton() {
   return (
     <>
-      <Skeleton className="h-36 rounded-2xl skeleton-shimmer mb-8" />
+      {/* Hall Header Skeleton */}
+      <div className="rounded-2xl border border-border/50 bg-card p-6 sm:p-8 mb-8 animate-pulse">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-5">
+          <div 
+            className="w-14 h-14 rounded-2xl shrink-0"
+            style={{ background: "oklch(0.55 0.26 280 / 0.12)" }}
+          />
+          <div className="flex-1 space-y-3">
+            <div 
+              className="h-7 rounded w-48"
+              style={{ background: "oklch(0.55 0.26 280 / 0.1)" }}
+            />
+            <div 
+              className="h-4 rounded w-64"
+              style={{ background: "oklch(0.55 0.26 280 / 0.08)" }}
+            />
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <div 
+                key={i}
+                className="h-7 w-20 rounded-full"
+                style={{ background: "oklch(0.55 0.26 280 / 0.1)" }}
+              />
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Devices Grid Skeleton */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         {Array.from({ length: 8 }).map((_, i) => (
-          <Skeleton key={i} className="h-32 rounded-xl skeleton-shimmer" />
+          <div 
+            key={i} 
+            className="rounded-xl border border-border/60 bg-card p-4 space-y-3 animate-pulse"
+          >
+            <div className="flex items-center justify-between">
+              <div 
+                className="h-5 w-24 rounded"
+                style={{ background: "oklch(0.55 0.26 280 / 0.1)" }}
+              />
+              <div 
+                className="h-6 w-16 rounded-full"
+                style={{ background: "oklch(0.55 0.26 280 / 0.1)" }}
+              />
+            </div>
+            <div 
+              className="h-4 w-32 rounded"
+              style={{ background: "oklch(0.55 0.26 280 / 0.08)" }}
+            />
+          </div>
         ))}
       </div>
     </>
@@ -130,16 +178,7 @@ export default async function HallDetailPage({ params }: { params: Promise<{ hal
     <div className="min-h-screen bg-background">
       <header className="sticky top-0 z-50 border-b border-border/50 bg-background/80 backdrop-blur-md">
         <div className="max-w-6xl mx-auto px-5 h-14 flex items-center gap-3">
-          <Link href="/halls" className="flex items-center gap-2 group shrink-0">
-            <div className="w-8 h-8 rounded-xl flex items-center justify-center transition-all group-hover:scale-105"
-              style={{ background: "oklch(0.55 0.26 280 / 0.15)", border: "1px solid oklch(0.55 0.26 280 / 0.3)" }}>
-              <Gamepad2 size={16} style={{ color: "oklch(0.65 0.22 280)" }} />
-            </div>
-            <span className="text-sm font-bold tracking-tight hidden sm:block">
-              <span style={{ color: "oklch(0.55 0.26 280)" }}>Arc</span>
-              <span style={{ color: "oklch(0.82 0.14 200)" }}>adia</span>
-            </span>
-          </Link>
+          <Logo href="/halls" size="sm" showText={true} />
           <Separator orientation="vertical" className="h-5 opacity-30" />
           <nav className="flex items-center gap-1 text-sm">
             <Link href="/halls" className="text-muted-foreground hover:text-foreground transition-colors">{t("title")}</Link>

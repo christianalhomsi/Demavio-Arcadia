@@ -22,7 +22,21 @@ async function fetchPageData(hallId: string): Promise<{
 }> {
   const supabase = await getServerClient();
 
-  // Fetch devices with device types
+  // Try to get all data in ONE database call
+  const { data, error } = await supabase.rpc('get_hall_devices_with_sessions', { hall_uuid: hallId });
+
+  if (!error && data) {
+    return {
+      devices: data.devices || [],
+      deviceTypes: data.device_types || [],
+      sessions: data.sessions || [],
+      reservations: data.reservations || []
+    };
+  }
+
+  // Fallback: fetch data manually if function doesn't exist
+  console.warn('[Devices] Database function not available, using fallback queries');
+  
   const { data: deviceData } = await supabase
     .from("devices")
     .select(`
