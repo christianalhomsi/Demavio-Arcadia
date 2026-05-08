@@ -74,7 +74,9 @@ export default function AuthForm() {
 
   return (
     <div className="min-h-screen w-full flex items-center justify-center p-4 relative">
-      <AnimatedBackground />
+      <div className="fixed inset-0 z-0">
+        <AnimatedBackground className="w-full h-full" />
+      </div>
       <div className="w-full max-w-md relative z-10">
         {/* Logo/Title */}
         <div className="text-center mb-8 flex flex-col items-center">

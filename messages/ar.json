@@ -392,7 +392,19 @@
     "saveChanges": "حفظ التغييرات",
     "saving": "جاري الحفظ...",
     "updateError": "فشل تحديث الأسعار",
-    "requestFailed": "فشل الطلب"
+    "requestFailed": "فشل الطلب",
+    "addStaff": "إضافة موظف",
+    "email": "البريد الإلكتروني",
+    "role": "الدور",
+    "cancel": "إلغاء",
+    "add": "إضافة",
+    "adding": "جاري الإضافة...",
+    "staffAdded": "تم إضافة الموظف بنجاح",
+    "staffRemoved": "تم حذف الموظف",
+    "invalidEmail": "البريد الإلكتروني غير صالح",
+    "addFailed": "فشل إضافة الموظف",
+    "removeFailed": "فشل حذف الموظف",
+    "onlyManagers": "فقط المدراء يمكنهم إضافة موظفين"
   },
   "products": {
     "title": "المنتجات",

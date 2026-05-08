@@ -16,14 +16,14 @@ export default function DashboardLayoutClient({
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   return (
-    <div className="flex flex-col min-h-screen bg-background">
+    <div className="flex flex-col h-screen bg-background">
       <DashboardHeader 
         hallName={hallName} 
         hallId={hallId} 
         onMenuClick={() => setMobileMenuOpen(true)}
       />
       <div className="flex flex-1 overflow-hidden">
-        <aside className="w-48 sm:w-52 shrink-0 border-r border-border/60 overflow-y-auto bg-card/50 hidden md:block">
+        <aside className="w-48 sm:w-52 shrink-0 border-r border-border/60 bg-card/50 hidden md:flex md:flex-col overflow-y-auto">
           <DashboardSidebar 
             hallId={hallId} 
             mobileMenuOpen={false}

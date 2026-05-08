@@ -84,35 +84,109 @@ async function OverviewContent({ hallId }: { hallId: string }) {
       <div className="mb-4 sm:mb-6">
         <h2 className="text-xs sm:text-sm font-semibold text-muted-foreground mb-2.5 sm:mb-3">{t("quickActions")}</h2>
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 sm:gap-3">
-          <Link href={`/dashboard/${hallId}/finance/invoices`}>
-            <Button variant="outline" className="w-full h-auto flex-col gap-2 py-3 sm:py-4">
-              <Receipt size={20} className="text-primary" />
-              <span className="text-xs sm:text-sm font-medium">{t("invoices")}</span>
-            </Button>
+          <Link href={`/dashboard/${hallId}/finance/invoices`} className="group">
+            <div className="relative overflow-hidden rounded-xl border border-border/50 bg-card hover:border-border transition-all duration-300 hover:shadow-lg hover:scale-[1.02] cursor-pointer">
+              <div 
+                className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                style={{ background: "linear-gradient(135deg, oklch(0.65 0.20 140 / 0.05), transparent)" }}
+              />
+              <div className="relative p-4 sm:p-5 flex flex-col items-center gap-3">
+                <div 
+                  className="w-12 h-12 rounded-xl flex items-center justify-center transition-all duration-300 group-hover:scale-110"
+                  style={{
+                    background: "linear-gradient(135deg, oklch(0.65 0.20 140 / 0.15), oklch(0.65 0.20 140 / 0.08))",
+                    border: "1px solid oklch(0.65 0.20 140 / 0.25)"
+                  }}
+                >
+                  <Receipt size={20} style={{ color: "oklch(0.65 0.20 140)" }} />
+                </div>
+                <span className="text-xs sm:text-sm font-semibold text-center">{t("invoices")}</span>
+              </div>
+            </div>
           </Link>
-          <Link href={`/dashboard/${hallId}/reservations`}>
-            <Button variant="outline" className="w-full h-auto flex-col gap-2 py-3 sm:py-4">
-              <Calendar size={20} className="text-primary" />
-              <span className="text-xs sm:text-sm font-medium">{t("reservations")}</span>
-            </Button>
+          
+          <Link href={`/dashboard/${hallId}/reservations`} className="group">
+            <div className="relative overflow-hidden rounded-xl border border-border/50 bg-card hover:border-border transition-all duration-300 hover:shadow-lg hover:scale-[1.02] cursor-pointer">
+              <div 
+                className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                style={{ background: "linear-gradient(135deg, oklch(0.55 0.26 280 / 0.05), transparent)" }}
+              />
+              <div className="relative p-4 sm:p-5 flex flex-col items-center gap-3">
+                <div 
+                  className="w-12 h-12 rounded-xl flex items-center justify-center transition-all duration-300 group-hover:scale-110"
+                  style={{
+                    background: "linear-gradient(135deg, oklch(0.55 0.26 280 / 0.15), oklch(0.55 0.26 280 / 0.08))",
+                    border: "1px solid oklch(0.55 0.26 280 / 0.25)"
+                  }}
+                >
+                  <Calendar size={20} style={{ color: "oklch(0.55 0.26 280)" }} />
+                </div>
+                <span className="text-xs sm:text-sm font-semibold text-center">{t("reservations")}</span>
+              </div>
+            </div>
           </Link>
-          <Link href={`/dashboard/${hallId}/products`}>
-            <Button variant="outline" className="w-full h-auto flex-col gap-2 py-3 sm:py-4">
-              <Package size={20} className="text-primary" />
-              <span className="text-xs sm:text-sm font-medium">{t("products")}</span>
-            </Button>
+          
+          <Link href={`/dashboard/${hallId}/products`} className="group">
+            <div className="relative overflow-hidden rounded-xl border border-border/50 bg-card hover:border-border transition-all duration-300 hover:shadow-lg hover:scale-[1.02] cursor-pointer">
+              <div 
+                className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                style={{ background: "linear-gradient(135deg, oklch(0.82 0.14 200 / 0.05), transparent)" }}
+              />
+              <div className="relative p-4 sm:p-5 flex flex-col items-center gap-3">
+                <div 
+                  className="w-12 h-12 rounded-xl flex items-center justify-center transition-all duration-300 group-hover:scale-110"
+                  style={{
+                    background: "linear-gradient(135deg, oklch(0.82 0.14 200 / 0.15), oklch(0.82 0.14 200 / 0.08))",
+                    border: "1px solid oklch(0.82 0.14 200 / 0.25)"
+                  }}
+                >
+                  <Package size={20} style={{ color: "oklch(0.82 0.14 200)" }} />
+                </div>
+                <span className="text-xs sm:text-sm font-semibold text-center">{t("products")}</span>
+              </div>
+            </div>
           </Link>
-          <Link href={`/dashboard/${hallId}/wallets`}>
-            <Button variant="outline" className="w-full h-auto flex-col gap-2 py-3 sm:py-4">
-              <Wallet size={20} className="text-primary" />
-              <span className="text-xs sm:text-sm font-medium">{t("wallets")}</span>
-            </Button>
+          
+          <Link href={`/dashboard/${hallId}/wallets`} className="group">
+            <div className="relative overflow-hidden rounded-xl border border-border/50 bg-card hover:border-border transition-all duration-300 hover:shadow-lg hover:scale-[1.02] cursor-pointer">
+              <div 
+                className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                style={{ background: "linear-gradient(135deg, oklch(0.70 0.18 60 / 0.05), transparent)" }}
+              />
+              <div className="relative p-4 sm:p-5 flex flex-col items-center gap-3">
+                <div 
+                  className="w-12 h-12 rounded-xl flex items-center justify-center transition-all duration-300 group-hover:scale-110"
+                  style={{
+                    background: "linear-gradient(135deg, oklch(0.70 0.18 60 / 0.15), oklch(0.70 0.18 60 / 0.08))",
+                    border: "1px solid oklch(0.70 0.18 60 / 0.25)"
+                  }}
+                >
+                  <Wallet size={20} style={{ color: "oklch(0.70 0.18 60)" }} />
+                </div>
+                <span className="text-xs sm:text-sm font-semibold text-center">{t("wallets")}</span>
+              </div>
+            </div>
           </Link>
-          <Link href={`/dashboard/${hallId}/devices`}>
-            <Button variant="outline" className="w-full h-auto flex-col gap-2 py-3 sm:py-4">
-              <Users size={20} className="text-primary" />
-              <span className="text-xs sm:text-sm font-medium">{t("devices")}</span>
-            </Button>
+          
+          <Link href={`/dashboard/${hallId}/devices`} className="group">
+            <div className="relative overflow-hidden rounded-xl border border-border/50 bg-card hover:border-border transition-all duration-300 hover:shadow-lg hover:scale-[1.02] cursor-pointer">
+              <div 
+                className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                style={{ background: "linear-gradient(135deg, oklch(0.60 0.22 320 / 0.05), transparent)" }}
+              />
+              <div className="relative p-4 sm:p-5 flex flex-col items-center gap-3">
+                <div 
+                  className="w-12 h-12 rounded-xl flex items-center justify-center transition-all duration-300 group-hover:scale-110"
+                  style={{
+                    background: "linear-gradient(135deg, oklch(0.60 0.22 320 / 0.15), oklch(0.60 0.22 320 / 0.08))",
+                    border: "1px solid oklch(0.60 0.22 320 / 0.25)"
+                  }}
+                >
+                  <Users size={20} style={{ color: "oklch(0.60 0.22 320)" }} />
+                </div>
+                <span className="text-xs sm:text-sm font-semibold text-center">{t("devices")}</span>
+              </div>
+            </div>
           </Link>
         </div>
       </div>
