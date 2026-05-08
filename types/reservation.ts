@@ -7,6 +7,7 @@ export type Reservation = {
   end_time: string;
   status: string;
   created_at: string;
+  players_count?: number;
 };
 
 export type ServiceResult<T> =

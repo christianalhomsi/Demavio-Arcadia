@@ -14,7 +14,7 @@ export async function POST(request: Request) {
     );
   }
 
-  const { hall_id, device_id, start_time, end_time, guest_name } = parsed.data;
+  const { hall_id, device_id, start_time, end_time, guest_name, players_count = 2 } = parsed.data;
 
   // Validate end > start
   if (new Date(end_time) <= new Date(start_time)) {
@@ -59,7 +59,7 @@ export async function POST(request: Request) {
 
   // Insert reservation — DB exclusion constraint handles overlap
   const result = await createReservation(
-    { hall_id, device_id, start_time, end_time, guest_name },
+    { hall_id, device_id, start_time, end_time, guest_name, players_count },
     guest_name ? null : user.id
   );
 

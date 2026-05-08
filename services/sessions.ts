@@ -19,6 +19,15 @@ export async function createSession(
 ): Promise<ServiceResult<Session>> {
   const supabase = getAdminClient();
 
+  // جلب معلومات الحجز لمعرفة عدد اللاعبين
+  const { data: reservation } = await supabase
+    .from("reservations")
+    .select("players_count")
+    .eq("id", reservationId)
+    .single();
+
+  const playersCount = reservation?.players_count || 2;
+
   const { data, error } = await supabase
     .from("sessions")
     .insert({
@@ -50,6 +59,7 @@ export async function createSession(
       items_total: 0,
       total_price: 0,
       is_paid: false,
+      players_count: playersCount,
     });
 
   if (invoiceError) {

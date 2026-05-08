@@ -11,7 +11,7 @@ export async function getReservation(
 
   const { data, error } = await supabase
     .from("reservations")
-    .select("id, device_id, user_id, guest_name, start_time, end_time, created_at, status")
+    .select("id, device_id, user_id, guest_name, start_time, end_time, created_at, status, players_count")
     .eq("id", reservationId)
     .single();
 
@@ -52,8 +52,9 @@ export async function createReservation(
       start_time: input.start_time.toISOString(),
       end_time: input.end_time.toISOString(),
       status: status,
+      players_count: input.players_count || 2,
     })
-    .select("id, device_id, user_id, guest_name, start_time, end_time, created_at, status")
+    .select("id, device_id, user_id, guest_name, start_time, end_time, created_at, status, players_count")
     .single();
 
   if (error) {

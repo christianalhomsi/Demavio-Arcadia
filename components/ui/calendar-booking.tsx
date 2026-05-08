@@ -19,10 +19,11 @@ type Props = {
   pricePerHour?: number;
   locale?: string;
   isStaffView?: boolean;
+  playersCount?: number;
 };
 
 export default function CalendarBooking(props: Props) {
-  const { deviceId, hallId, selectedDate, onSelectSlot, pricePerHour = 0, locale = "en", isStaffView = false } = props;
+  const { deviceId, hallId, selectedDate, onSelectSlot, pricePerHour = 0, locale = "en", isStaffView = false, playersCount = 2 } = props;
   const [slots, setSlots] = useState<TimeSlot[]>([]);
   const [loading, setLoading] = useState(true);
   const [localStart, setLocalStart] = useState<Date | null>(null);
@@ -232,7 +233,7 @@ export default function CalendarBooking(props: Props) {
           <div className="mb-4 p-3 rounded-lg bg-primary/10 border border-primary/30">
             <div className="flex items-center justify-center gap-2 text-sm">
               <span className="text-muted-foreground">
-                {locale === "ar" ? "سعر الجلسة (30 دقيقة):" : "Session Price (30 min):"}
+                {locale === "ar" ? `سعر الجلسة (30 دقيقة) - ${playersCount} لاعبين:` : `Session Price (30 min) - ${playersCount} players:`}
               </span>
               <span className="font-bold text-lg" style={{ color: "oklch(0.55 0.26 280)" }}>
                 {(pricePerHour / 2).toFixed(2)}

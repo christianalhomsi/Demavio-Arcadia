@@ -25,6 +25,7 @@ const formSchema = z.object({
   booking_date: z.string().min(1, "Required"),
   start_time:   z.string().optional(),
   end_time:     z.string().optional(),
+  players_count: z.number().int().min(2).max(4),
 });
 type FormValues = z.infer<typeof formSchema>;
 type E = Record<string, { message?: string } | undefined>;
@@ -39,16 +40,18 @@ export default function BookingForm({ halls, locale }: { halls: Hall[]; locale: 
   const [success, setSuccess]         = useState(false);
   const [selectedSlot, setSelectedSlot] = useState<{ start: Date; end: Date } | null>(null);
   const [pricePerHour, setPricePerHour] = useState<number>(0);
+  const [priceLoading, setPriceLoading] = useState(false);
 
   const { register, handleSubmit, watch, setValue, formState: { errors: rawErrors, isSubmitting } } = useForm<FormValues>({
     resolver: zodResolver(formSchema),
-    defaultValues: { hall_id: "", device_id: "", booking_date: new Date().toISOString().split('T')[0] },
+    defaultValues: { hall_id: "", device_id: "", booking_date: new Date().toISOString().split('T')[0], players_count: 2, start_time: "", end_time: "" },
   });
   const e = rawErrors as E;
 
   const selectedHallId   = watch("hall_id");
   const selectedDeviceId = watch("device_id");
   const bookingDate      = watch("booking_date");
+  const playersCount     = watch("players_count");
 
   // لما يتغير الهول → جيب أنواع الأجهزة المتاحة
   useEffect(() => {
@@ -86,7 +89,7 @@ export default function BookingForm({ halls, locale }: { halls: Hall[]; locale: 
       });
   }, [selectedHallId, setValue]);
 
-  // لما يتغير النوع → جيب الأجهزة المتاحة من هذا النوع والسعر
+  // لما يتغير النوع → جيب الأجهزة المتاحة من هذا النوع
   useEffect(() => {
     setDevices([]);
     setValue("device_id", "");
@@ -94,17 +97,6 @@ export default function BookingForm({ halls, locale }: { halls: Hall[]; locale: 
     if (!selectedHallId || !selectedTypeId) return;
     setDevicesLoading(true);
     const supabase = getBrowserClient();
-    
-    // جلب السعر من hall_devices
-    void supabase
-      .from("hall_devices")
-      .select("price_per_hour")
-      .eq("hall_id", selectedHallId)
-      .eq("device_type_id", selectedTypeId)
-      .single()
-      .then(({ data }) => {
-        if (data) setPricePerHour(data.price_per_hour || 0);
-      });
     
     void supabase
       .from("devices")
@@ -116,12 +108,37 @@ export default function BookingForm({ halls, locale }: { halls: Hall[]; locale: 
       .then(({ data }) => { setDevices(data ?? []); setDevicesLoading(false); }, () => setDevicesLoading(false));
   }, [selectedHallId, selectedTypeId, setValue]);
 
+  // لما يتغير عدد اللاعبين أو الوقت → جيب السعر الديناميكي
+  useEffect(() => {
+    if (!selectedHallId || !selectedTypeId || !bookingDate) return;
+    
+    setPriceLoading(true);
+    const time = selectedSlot?.start 
+      ? selectedSlot.start.toTimeString().slice(0, 5)
+      : new Date().toTimeString().slice(0, 5);
+    
+    fetch(`/api/pricing/dynamic?hall_id=${selectedHallId}&device_type_id=${selectedTypeId}&time=${time}&players_count=${playersCount}`)
+      .then(res => res.json())
+      .then(data => {
+        setPricePerHour(data.price_per_hour || 0);
+        setPriceLoading(false);
+      })
+      .catch(() => {
+        setPriceLoading(false);
+      });
+  }, [selectedHallId, selectedTypeId, playersCount, bookingDate, selectedSlot]);
+
   async function onSubmit(data: FormValues) {
     if (!selectedSlot) { toast.error(t("selectTimeSlotError")); return; }
     const res = await fetch("/api/reservations", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ ...data, start_time: selectedSlot.start.toISOString(), end_time: selectedSlot.end.toISOString() }),
+      body: JSON.stringify({ 
+        ...data, 
+        start_time: selectedSlot.start.toISOString(), 
+        end_time: selectedSlot.end.toISOString(),
+        players_count: data.players_count || 2,
+      }),
     });
     if (res.status === 201) { setSuccess(true); toast.success(t("reservationConfirmedMsg")); return; }
     const json = await res.json().catch(() => ({} as { error?: string }));
@@ -232,6 +249,41 @@ export default function BookingForm({ halls, locale }: { halls: Hall[]; locale: 
             {e.booking_date && <p className="text-xs text-destructive">{e.booking_date.message}</p>}
           </div>
 
+          {/* عدد اللاعبين */}
+          {selectedDeviceId && (
+            <div className="space-y-1.5">
+              <Label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                {locale === "ar" ? "عدد اللاعبين" : "Number of Players"}
+              </Label>
+              <div className="grid grid-cols-2 gap-3">
+                <button
+                  type="button"
+                  onClick={() => setValue("players_count", 2)}
+                  className={cn(
+                    "h-12 rounded-lg border-2 transition-all font-medium",
+                    playersCount === 2
+                      ? "border-primary bg-primary/10 text-primary"
+                      : "border-border bg-card hover:border-primary/40"
+                  )}
+                >
+                  {locale === "ar" ? "لاعبين (2)" : "2 Players"}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setValue("players_count", 4)}
+                  className={cn(
+                    "h-12 rounded-lg border-2 transition-all font-medium",
+                    playersCount === 4
+                      ? "border-primary bg-primary/10 text-primary"
+                      : "border-border bg-card hover:border-primary/40"
+                  )}
+                >
+                  {locale === "ar" ? "أربعة لاعبين (4)" : "4 Players"}
+                </button>
+              </div>
+            </div>
+          )}
+
           {/* اختيار الوقت */}
           {selectedDeviceId && bookingDate && (
             <div className="space-y-1.5">
@@ -246,6 +298,7 @@ export default function BookingForm({ halls, locale }: { halls: Hall[]; locale: 
                 onSelectSlot={handleSelectSlot}
                 pricePerHour={pricePerHour}
                 locale={locale}
+                playersCount={playersCount}
               />
             </div>
           )}

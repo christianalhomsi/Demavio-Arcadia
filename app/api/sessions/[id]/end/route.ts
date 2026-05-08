@@ -58,11 +58,43 @@ export async function POST(
     return NextResponse.json({ error: "Session does not belong to this hall" }, { status: 403 });
   }
 
+  // جلب عدد اللاعبين من الحجز
+  const { data: reservation } = await supabase
+    .from("reservations")
+    .select("players_count")
+    .eq("id", session.reservation_id)
+    .single();
+
+  const playersCount = reservation?.players_count || 2;
+
+  // جلب نوع الجهاز لحساب السعر الديناميكي
+  const { data: device } = await supabase
+    .from("devices")
+    .select("device_type_id")
+    .eq("id", session.device_id)
+    .single();
+
+  // حساب السعر بناءً على وقت بداية الجلسة وعدد اللاعبين
+  let dynamicRate = rate_per_hour;
+  if (device?.device_type_id) {
+    const startTime = new Date(session.started_at).toTimeString().slice(0, 5);
+    const { data: priceData } = await supabase.rpc("get_current_device_price", {
+      p_device_type_id: device.device_type_id,
+      p_hall_id: hall_id,
+      p_time: startTime,
+      p_players_count: playersCount,
+    });
+    
+    if (priceData && priceData > 0) {
+      dynamicRate = priceData;
+    }
+  }
+
   const endedAt = new Date().toISOString();
 
   // Calculate duration and price
   const durationHours = calculateDuration(session.started_at, endedAt);
-  const effectiveRate = payment_method === 'wallet' && wallet_price_per_hour ? wallet_price_per_hour : rate_per_hour;
+  const effectiveRate = payment_method === 'wallet' && wallet_price_per_hour ? wallet_price_per_hour : dynamicRate;
   const sessionPrice = calculatePrice(durationHours, effectiveRate);
 
   // Get session items total
@@ -174,6 +206,7 @@ export async function POST(
       payment_method: payment_method || null,
       wallet_transaction_id: walletTransactionId,
       is_paid: isPaid,
+      players_count: playersCount,
     })
     .eq("session_id", session.id);
 
