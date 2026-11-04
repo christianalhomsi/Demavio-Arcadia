@@ -74,3 +74,18 @@ export async function setWorkingHoursAction(
     return r;
   });
 }
+
+/** `path` is a key in the hall-covers bucket (already uploaded by the browser), or null to remove the cover. */
+export async function setHallCoverAction(
+  hallId: string,
+  path: string | null,
+): Promise<ActionResult<null>> {
+  return withPermission(hallId, "hall.settings.manage", async () => {
+    const r = await callRpc<null>("set_hall_cover", { p_hall_id: hallId, p_path: path });
+    if (r.ok) {
+      revalidatePath(`/halls/${hallId}/settings`);
+      revalidatePath("/");
+    }
+    return r;
+  });
+}

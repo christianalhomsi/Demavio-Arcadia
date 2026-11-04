@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronRight, Gamepad2, Search } from "lucide-react";
+import { ChevronRight, Gamepad2, MapPin, Search } from "lucide-react";
 import Link from "next/link";
 import * as React from "react";
 import { cn } from "@/lib/cn";
@@ -13,6 +13,9 @@ export interface HallCard {
   id: string;
   name: string;
   deviceCount: number;
+  coverUrl: string | null;
+  address: string | null;
+  deviceKinds: string[];
 }
 
 /** "No devices yet", "1 device", "جهازان", "5 أجهزة", "12 جهاز": the right form for the count. */
@@ -130,25 +133,58 @@ export function HallPicker({ halls }: { halls: HallCard[] }) {
         <ul className="mt-6 grid gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3">
           {shown.map((h) => {
             const ready = h.deviceCount > 0;
+            const cover = (
+              <span
+                aria-hidden
+                className={cn(
+                  "relative block aspect-[16/7] w-full overflow-hidden bg-gradient-to-br from-primary/25 via-surface-raised to-accent/25",
+                  !ready && "grayscale",
+                )}
+              >
+                {h.coverUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element -- remote Supabase Storage URL, already resized on upload
+                  <img
+                    src={h.coverUrl}
+                    alt=""
+                    loading="lazy"
+                    decoding="async"
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  <Gamepad2 className="absolute inset-0 m-auto h-10 w-10 text-primary/40" />
+                )}
+              </span>
+            );
             const body = (
-              <>
-                <span
-                  aria-hidden
-                  className={cn(
-                    "grid h-14 w-14 shrink-0 place-items-center rounded-2xl text-xl font-bold",
-                    ready
-                      ? "bg-gradient-to-br from-primary to-accent text-primary-foreground shadow-[0_0_18px_var(--glow)]"
-                      : "bg-neutral-bg text-muted",
-                  )}
-                >
-                  {h.name.trim().charAt(0).toUpperCase() || <Gamepad2 className="h-6 w-6" />}
-                </span>
+              <span className="flex items-center gap-4 p-4">
                 <span className="min-w-0 flex-1">
                   <span className="block truncate text-lg font-semibold">{h.name}</span>
-                  <span className="mt-0.5 flex items-center gap-1.5 text-sm text-muted">
-                    <Gamepad2 className="h-4 w-4 shrink-0" aria-hidden />
-                    {ready ? devicesLabel(t, locale, h.deviceCount) : t.hallSoon}
-                  </span>
+                  {h.address && (
+                    <span className="mt-0.5 flex items-center gap-1.5 text-sm text-muted">
+                      <MapPin className="h-4 w-4 shrink-0" aria-hidden />
+                      <span className="truncate">{h.address}</span>
+                    </span>
+                  )}
+                  {ready ? (
+                    <span className="mt-2 flex flex-wrap items-center gap-1.5">
+                      {(h.deviceKinds ?? []).map((k) => (
+                        <span
+                          key={k}
+                          className="rounded-full bg-neutral-bg px-2.5 py-0.5 text-xs font-medium"
+                        >
+                          {k}
+                        </span>
+                      ))}
+                      <span className="text-xs text-muted">
+                        {devicesLabel(t, locale, h.deviceCount)}
+                      </span>
+                    </span>
+                  ) : (
+                    <span className="mt-0.5 flex items-center gap-1.5 text-sm text-muted">
+                      <Gamepad2 className="h-4 w-4 shrink-0" aria-hidden />
+                      {t.hallSoon}
+                    </span>
+                  )}
                 </span>
                 {ready && (
                   <ChevronRight
@@ -156,22 +192,24 @@ export function HallPicker({ halls }: { halls: HallCard[] }) {
                     aria-hidden
                   />
                 )}
-              </>
+              </span>
             );
             return (
               <li key={h.id}>
                 {ready ? (
                   <Link
                     href={`/book/${h.id}`}
-                    className="group flex min-h-24 items-center gap-4 rounded-3xl border border-border bg-surface p-4 shadow-card transition-[background-color,border-color,transform] duration-150 hover:border-primary/50 hover:bg-surface-raised active:scale-[0.99] active:bg-surface-raised"
+                    className="group flex min-h-24 flex-col overflow-hidden rounded-3xl border border-border bg-surface shadow-card transition-[background-color,border-color,transform] duration-150 hover:border-primary/50 hover:bg-surface-raised active:scale-[0.99] active:bg-surface-raised"
                   >
+                    {cover}
                     {body}
                   </Link>
                 ) : (
                   <div
                     aria-disabled
-                    className="flex min-h-24 items-center gap-4 rounded-3xl border border-dashed border-border bg-surface/60 p-4 opacity-80"
+                    className="flex min-h-24 flex-col overflow-hidden rounded-3xl border border-dashed border-border bg-surface/60 opacity-80"
                   >
+                    {cover}
                     {body}
                   </div>
                 )}

@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronLeft, ChevronRight, CircleCheck } from "lucide-react";
+import { CalendarDays, ChevronLeft, ChevronRight, CircleCheck } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import * as React from "react";
@@ -8,14 +8,16 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/cn";
 import { useI18n } from "@/lib/i18n/client";
 import { formatLocale, type Locale, type Messages } from "@/lib/i18n/messages";
+import { shiftDate } from "@/lib/dayWindow";
 import { newIdempotencyKey } from "@/lib/idempotency";
 import { formatMoney } from "@/lib/money";
 import { createPlayerReservationAction, quotePriceAction } from "../actions";
 import type { Quote } from "../queries";
 import {
   buildSlots,
+  DURATIONS,
+  MAX_SLOTS,
   monthGrid,
-  pickRange,
   type Interval,
   type Range,
   type WorkingRange,
@@ -70,6 +72,7 @@ export function BookingPicker(props: BookingPickerProps) {
   const { t, locale } = useI18n();
   const router = useRouter();
   const pathname = usePathname();
+  const [calendar, setCalendar] = React.useState(false);
   const [navPending, startNav] = React.useTransition();
   const [booking, startBooking] = React.useTransition();
 
@@ -142,6 +145,48 @@ export function BookingPicker(props: BookingPickerProps) {
     startNav(() => router.push(`${pathname}?date=${d}`));
   }
 
+  // The next three weeks as one swipeable row; anything further away is in the calendar.
+  const strip = React.useMemo(
+    () => Array.from({ length: 21 }, (_, i) => shiftDate(today, i)),
+    [today],
+  );
+  const rel = React.useMemo(
+    () => new Intl.RelativeTimeFormat(formatLocale(locale), { numeric: "auto" }),
+    [locale],
+  );
+  const stripRef = React.useRef<HTMLUListElement>(null);
+  React.useEffect(() => {
+    stripRef.current
+      ?.querySelector<HTMLElement>('[aria-pressed="true"]')
+      ?.scrollIntoView({ inline: "center", block: "nearest" });
+  }, []);
+
+  /** True when every 30 minute cell from `start` for `minutes` is free. */
+  const fits = React.useCallback(
+    (start: number, minutes: number) => {
+      const need = minutes / 30;
+      if (need > MAX_SLOTS) return false;
+      const free = new Map(slots.map((s) => [Date.parse(s.startIso), s.available]));
+      for (let i = 0; i < need; i++) if (!free.get(start + i * 30 * 60_000)) return false;
+      return true;
+    },
+    [slots],
+  );
+  const minutesNow = selected ? (selected.end - selected.start) / 60_000 : 60;
+
+  function pickStart(x: number) {
+    setError(null);
+    if (selected && selected.start === x) return setRange(null);
+    // Keep the length the player had chosen, shrinking only when the time after it is taken.
+    const want = [...DURATIONS].reverse().find((m) => m <= minutesNow && fits(x, m)) ?? 30;
+    setRange({ start: x, end: x + want * 60_000 });
+  }
+  function pickDuration(m: number) {
+    if (!selected) return;
+    setError(null);
+    setRange({ start: selected.start, end: selected.start + m * 60_000 });
+  }
+
   function reserve() {
     if (!startIso || !endIso) return;
     setError(null);
@@ -182,13 +227,13 @@ export function BookingPicker(props: BookingPickerProps) {
 
   if (done) {
     return (
-      <div className="mt-6 rounded-2xl border border-border bg-surface p-6 text-center shadow-card">
-        <CircleCheck className="mx-auto h-10 w-10 text-success" aria-hidden />
-        <h2 className="mt-3 text-lg font-semibold">{t.requestSent}</h2>
+      <div className="mt-6 rounded-3xl border border-border bg-surface p-6 text-center shadow-card">
+        <CircleCheck className="mx-auto h-12 w-12 text-success" aria-hidden />
+        <h2 className="mt-3 text-xl font-semibold">{t.requestSent}</h2>
         <p className="mt-1 text-sm text-muted">
           {deviceName} · {hallName}
         </p>
-        <p className="mt-2 font-medium">
+        <p className="mt-3 text-lg font-semibold tabular-nums">
           {fmt(done.start, timeZone, locale, {
             weekday: "short",
             day: "numeric",
@@ -211,80 +256,21 @@ export function BookingPicker(props: BookingPickerProps) {
   }
 
   const money = (minor: number, cur: string) => formatMoney(minor, cur, formatLocale(locale));
+  const visible = slots.filter((s) => s.state !== "past");
+  const stepTitle = "flex items-center gap-2 text-sm font-semibold";
+  const stepNo =
+    "grid h-6 w-6 place-items-center rounded-full bg-primary/15 text-xs font-bold text-accent";
 
   return (
-    <div className="mt-6 grid gap-6 md:grid-cols-[minmax(0,20rem)_1fr]">
-      <section
-        aria-label={t.chooseDay}
-        className="rounded-2xl border border-border bg-surface p-4 shadow-card"
-      >
-        <div className="mb-3 flex items-center justify-between">
-          <Button
-            variant="ghost"
-            size="sm"
-            aria-label={t.prevMonth}
-            disabled={atFirstMonth}
-            onClick={() => stepMonth(-1)}
-          >
-            <ChevronLeft className="h-4 w-4 rtl:-scale-x-100" aria-hidden />
-          </Button>
-          <h2 className="text-sm font-semibold">
-            {fmt(Date.UTC(view.year, view.month - 1, 1), "UTC", locale, {
-              month: "long",
-              year: "numeric",
-            })}
-          </h2>
-          <Button variant="ghost" size="sm" aria-label={t.nextMonth} onClick={() => stepMonth(1)}>
-            <ChevronRight className="h-4 w-4 rtl:-scale-x-100" aria-hidden />
-          </Button>
-        </div>
-        <div className="grid grid-cols-7 gap-1 text-center text-xs text-muted">
-          {WEEKDAY_BASE.map((d) => (
-            <div key={d} className="py-1">
-              {fmt(d, "UTC", locale, { weekday: "narrow" })}
-            </div>
-          ))}
-          {weeks.flat().map((d, i) =>
-            d ? (
-              <button
-                key={d}
-                type="button"
-                disabled={d < today || navPending}
-                aria-pressed={d === date}
-                aria-label={d}
-                onClick={() => pickDay(d)}
-                className={cn(
-                  "h-10 cursor-pointer rounded-lg text-sm transition-colors",
-                  "disabled:cursor-not-allowed disabled:opacity-30",
-                  d === date ? "bg-primary text-primary-foreground" : "hover:bg-neutral-bg",
-                  d === today && d !== date && "ring-1 ring-accent",
-                )}
-              >
-                {Number(d.slice(8))}
-              </button>
-            ) : (
-              <div key={`pad-${i}`} />
-            ),
-          )}
-        </div>
-      </section>
-
-      <section
-        aria-label={t.chooseTime}
-        className="rounded-2xl border border-border bg-surface p-4 shadow-card"
-      >
-        <h2 className="text-sm font-semibold">
-          {fmt(`${date}T12:00:00Z`, "UTC", locale, {
-            weekday: "long",
-            day: "numeric",
-            month: "long",
-          })}
-        </h2>
-
+    <div className="mt-5 grid gap-5 md:grid-cols-[1fr_20rem] md:items-start">
+      <div className="min-w-0 space-y-6 pb-4 md:pb-0">
         {playerOptions.length > 0 && (
-          <div className="mt-3">
-            <p className="mb-2 text-sm text-muted">{t.players}</p>
-            <div className="grid grid-cols-2 gap-2 sm:max-w-xs">
+          <section aria-label={t.players}>
+            <h2 className={stepTitle}>
+              <span className={stepNo}>1</span>
+              {t.players}
+            </h2>
+            <div className="mt-3 grid max-w-sm grid-cols-2 gap-2">
               {playerOptions.map((n) => (
                 <button
                   key={n}
@@ -292,7 +278,7 @@ export function BookingPicker(props: BookingPickerProps) {
                   aria-pressed={players === n}
                   onClick={() => setPlayers(n)}
                   className={cn(
-                    "h-11 cursor-pointer rounded-lg border-2 text-sm font-medium transition-colors",
+                    "h-12 cursor-pointer rounded-xl border-2 text-sm font-medium transition-colors",
                     players === n
                       ? "border-primary bg-primary/15 text-accent"
                       : "border-border hover:border-primary/50",
@@ -302,91 +288,252 @@ export function BookingPicker(props: BookingPickerProps) {
                 </button>
               ))}
             </div>
-          </div>
+          </section>
         )}
 
-        <p className="mt-4 text-center text-sm text-muted">{t.rangeHint}</p>
-        <div className={cn("mt-3", navPending && "opacity-60")} aria-busy={navPending}>
-          {slots.length === 0 ? (
-            <p className="py-8 text-center text-sm text-muted">
-              {hallName} {t.closed}
-            </p>
-          ) : (
-            <ul className="grid grid-cols-3 gap-2 sm:grid-cols-4 lg:grid-cols-5">
-              {slots.map((s) => {
-                const x = Date.parse(s.startIso);
-                const inRange = Boolean(selected && x >= selected.start && x < selected.end);
-                return (
-                  <li key={s.startIso}>
+        <section aria-label={t.chooseDay}>
+          <div className="flex items-center justify-between gap-2">
+            <h2 className={stepTitle}>
+              <span className={stepNo}>{playerOptions.length > 0 ? 2 : 1}</span>
+              {t.chooseDay}
+            </h2>
+            <button
+              type="button"
+              aria-expanded={calendar}
+              onClick={() => setCalendar((v) => !v)}
+              className="inline-flex min-h-11 cursor-pointer items-center gap-1.5 rounded-xl px-2 text-sm text-accent hover:bg-neutral-bg"
+            >
+              <CalendarDays className="h-4 w-4" aria-hidden />
+              {calendar ? t.bookHideCalendar : t.bookMoreDates}
+            </button>
+          </div>
+
+          <ul
+            ref={stripRef}
+            className="-mx-4 mt-3 flex snap-x gap-2 overflow-x-auto px-4 pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          >
+            {strip.map((d, i) => {
+              const on = d === date;
+              return (
+                <li key={d} className="snap-start">
+                  <button
+                    type="button"
+                    disabled={navPending}
+                    aria-pressed={on}
+                    aria-label={d}
+                    onClick={() => pickDay(d)}
+                    className={cn(
+                      "flex h-[4.5rem] w-16 cursor-pointer flex-col items-center justify-center rounded-2xl border-2 transition-colors",
+                      on
+                        ? "border-primary bg-primary text-primary-foreground"
+                        : "border-border bg-surface hover:border-primary/50",
+                    )}
+                  >
+                    <span className={cn("text-xs", on ? "opacity-90" : "text-muted")}>
+                      {i < 2
+                        ? rel.format(i, "day")
+                        : fmt(`${d}T12:00:00Z`, "UTC", locale, { weekday: "short" })}
+                    </span>
+                    <span className="text-xl font-bold tabular-nums">{Number(d.slice(8))}</span>
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+
+          {calendar && (
+            <div className="mt-2 rounded-2xl border border-border bg-surface p-4 shadow-card">
+              <div className="mb-3 flex items-center justify-between">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  aria-label={t.prevMonth}
+                  disabled={atFirstMonth}
+                  onClick={() => stepMonth(-1)}
+                >
+                  <ChevronLeft className="h-4 w-4 rtl:-scale-x-100" aria-hidden />
+                </Button>
+                <h3 className="text-sm font-semibold">
+                  {fmt(Date.UTC(view.year, view.month - 1, 1), "UTC", locale, {
+                    month: "long",
+                    year: "numeric",
+                  })}
+                </h3>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  aria-label={t.nextMonth}
+                  onClick={() => stepMonth(1)}
+                >
+                  <ChevronRight className="h-4 w-4 rtl:-scale-x-100" aria-hidden />
+                </Button>
+              </div>
+              <div className="grid grid-cols-7 gap-1 text-center text-xs text-muted">
+                {WEEKDAY_BASE.map((d) => (
+                  <div key={d} className="py-1">
+                    {fmt(d, "UTC", locale, { weekday: "narrow" })}
+                  </div>
+                ))}
+                {weeks.flat().map((d, i) =>
+                  d ? (
                     <button
+                      key={d}
                       type="button"
-                      disabled={!s.available}
-                      aria-pressed={inRange}
-                      onClick={() => setRange((cur) => pickRange(cur, x, slots))}
+                      disabled={d < today || navPending}
+                      aria-pressed={d === date}
+                      aria-label={d}
+                      onClick={() => {
+                        setCalendar(false);
+                        pickDay(d);
+                      }}
                       className={cn(
-                        "flex h-14 w-full cursor-pointer flex-col items-center justify-center rounded-lg border-2 transition-colors",
-                        "disabled:cursor-not-allowed disabled:opacity-40",
-                        inRange
-                          ? "border-primary bg-primary/15"
-                          : "border-border hover:border-primary/60 hover:bg-primary/5",
+                        "h-11 cursor-pointer rounded-lg text-sm tabular-nums transition-colors",
+                        "disabled:cursor-not-allowed disabled:opacity-30",
+                        d === date
+                          ? "bg-primary text-primary-foreground"
+                          : "text-foreground hover:bg-neutral-bg",
+                        d === today && d !== date && "ring-1 ring-accent",
                       )}
                     >
-                      <span className={cn("text-sm font-bold", inRange && "text-accent")}>
-                        {s.label}
-                      </span>
-                      <span className="text-[10px] text-muted">
-                        {s.state === "available"
-                          ? t.slotAvailable
-                          : s.state === "past"
-                            ? t.slotPast
-                            : t.slotBooked}
-                      </span>
+                      {Number(d.slice(8))}
                     </button>
-                  </li>
-                );
-              })}
-            </ul>
-          )}
-        </div>
-
-        <div className="mt-5 border-t border-border pt-4">
-          {selected && startIso && endIso ? (
-            <div className="space-y-1 text-sm">
-              <p>
-                {deviceName} · {fmt(startIso, timeZone, locale, HM)} –{" "}
-                {fmt(endIso, timeZone, locale, HM)} (
-                {durationLabel(selected.end - selected.start, t)})
-                {players ? ` · ${players} ${t.playersN}` : ""}
-              </p>
-              {quote && quote.ratePerHourMinor > 0 && (
-                <p className="text-muted">
-                  {t.estimate}:{" "}
-                  <span className="font-semibold text-foreground">
-                    {money(quote.estimatedMinor, quote.currency || currency)}
-                  </span>{" "}
-                  ({money(quote.ratePerHourMinor, quote.currency || currency)} {t.perHour})
-                </p>
-              )}
+                  ) : (
+                    <div key={`pad-${i}`} />
+                  ),
+                )}
+              </div>
             </div>
-          ) : (
-            <p className="text-sm text-muted">{t.pickPrompt}</p>
           )}
-          {error && (
-            <p role="alert" className="mt-2 text-sm text-danger">
-              {error}
+        </section>
+
+        <section aria-label={t.chooseTime}>
+          <h2 className={stepTitle}>
+            <span className={stepNo}>{playerOptions.length > 0 ? 3 : 2}</span>
+            {t.bookStartTime}
+          </h2>
+          <p className="mt-1 text-sm text-muted">
+            {fmt(`${date}T12:00:00Z`, "UTC", locale, {
+              weekday: "long",
+              day: "numeric",
+              month: "long",
+            })}
+          </p>
+          <div className={cn("mt-3", navPending && "opacity-60")} aria-busy={navPending}>
+            {visible.length === 0 ? (
+              <p className="rounded-2xl border border-dashed border-border py-8 text-center text-sm text-muted">
+                {hallName} {t.closed}
+              </p>
+            ) : (
+              <ul className="grid grid-cols-4 gap-2 sm:grid-cols-5 lg:grid-cols-6">
+                {visible.map((s) => {
+                  const x = Date.parse(s.startIso);
+                  const isStart = selected?.start === x;
+                  const inRange = Boolean(selected && x >= selected.start && x < selected.end);
+                  return (
+                    <li key={s.startIso}>
+                      <button
+                        type="button"
+                        disabled={!s.available}
+                        aria-pressed={inRange}
+                        aria-label={`${s.label} ${s.available ? t.slotAvailable : t.slotBooked}`}
+                        onClick={() => pickStart(x)}
+                        className={cn(
+                          "h-12 w-full cursor-pointer rounded-xl border-2 text-sm font-semibold tabular-nums transition-colors",
+                          "disabled:cursor-not-allowed disabled:border-transparent disabled:bg-neutral-bg disabled:text-muted/60 disabled:line-through",
+                          isStart
+                            ? "border-primary bg-primary text-primary-foreground"
+                            : inRange
+                              ? "border-primary/60 bg-primary/20 text-accent"
+                              : "border-border bg-surface hover:border-primary/60",
+                        )}
+                      >
+                        {s.label}
+                      </button>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+          </div>
+
+          {selected && (
+            <div className="mt-5">
+              <h3 className="text-sm font-semibold">{t.bookDuration}</h3>
+              <ul className="mt-2 flex flex-wrap gap-2">
+                {DURATIONS.map((m) => {
+                  const ok = fits(selected.start, m);
+                  return (
+                    <li key={m}>
+                      <button
+                        type="button"
+                        disabled={!ok}
+                        aria-pressed={minutesNow === m}
+                        onClick={() => pickDuration(m)}
+                        className={cn(
+                          "h-11 min-w-16 cursor-pointer rounded-full border-2 px-4 text-sm font-medium transition-colors",
+                          "disabled:cursor-not-allowed disabled:opacity-35",
+                          minutesNow === m
+                            ? "border-primary bg-primary/15 text-accent"
+                            : "border-border hover:border-primary/50",
+                        )}
+                      >
+                        {durationLabel(m * 60_000, t)}
+                      </button>
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+          )}
+        </section>
+      </div>
+
+      <aside
+        aria-label={t.reserve}
+        className={cn(
+          "sticky z-30 rounded-3xl border border-border bg-surface/95 p-4 shadow-float backdrop-blur",
+          "bottom-[calc(5.75rem+var(--safe-bottom))] md:bottom-auto md:top-24",
+        )}
+      >
+        {selected && startIso && endIso ? (
+          <div>
+            <p className="text-xs text-muted">
+              {deviceName} · {hallName}
             </p>
-          )}
-          <Button
-            className="mt-3 w-full sm:w-auto"
-            disabled={!selected}
-            pending={booking}
-            onClick={reserve}
-          >
-            {props.signedIn ? t.reserve : t.signInToReserve}
-          </Button>
-          {!props.signedIn && <p className="mt-2 text-xs text-muted">{t.accountLastStep}</p>}
-        </div>
-      </section>
+            <p className="mt-0.5 text-xl font-bold tabular-nums">
+              {fmt(startIso, timeZone, locale, HM)} – {fmt(endIso, timeZone, locale, HM)}
+            </p>
+            <p className="text-sm text-muted">
+              {durationLabel(selected.end - selected.start, t)}
+              {players ? ` · ${players} ${t.playersN}` : ""}
+            </p>
+            {quote && quote.ratePerHourMinor > 0 && (
+              <p className="mt-1 text-sm text-muted">
+                {t.estimate}:{" "}
+                <span className="font-semibold text-foreground">
+                  {money(quote.estimatedMinor, quote.currency || currency)}
+                </span>
+              </p>
+            )}
+          </div>
+        ) : (
+          <p className="text-sm text-muted">{t.pickPrompt}</p>
+        )}
+        {error && (
+          <p role="alert" className="mt-2 text-sm text-danger">
+            {error}
+          </p>
+        )}
+        <Button
+          className="mt-3 h-12 w-full"
+          disabled={!selected}
+          pending={booking}
+          onClick={reserve}
+        >
+          {props.signedIn ? t.reserve : t.signInToReserve}
+        </Button>
+        {!props.signedIn && <p className="mt-2 text-xs text-muted">{t.accountLastStep}</p>}
+      </aside>
     </div>
   );
 }

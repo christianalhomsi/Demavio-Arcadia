@@ -8,6 +8,9 @@ const hall = (i: number, deviceCount: number, name = `Hall ${i}`): HallCard => (
   id: `00000000-0000-4000-8000-00000000000${i}`,
   name,
   deviceCount,
+  coverUrl: null,
+  address: null,
+  deviceKinds: [],
 });
 
 const view = (halls: HallCard[], locale: "en" | "ar" = "en") =>

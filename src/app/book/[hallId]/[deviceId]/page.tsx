@@ -1,3 +1,4 @@
+import { ChevronRight } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
@@ -42,11 +43,15 @@ async function Booking({ params, searchParams }: { params: Params; searchParams:
 
   return (
     <>
-      <Link href={`/book/${hall.id}`} className="text-sm text-accent underline">
+      <Link
+        href={`/book/${hall.id}`}
+        className="inline-flex min-h-11 items-center gap-1.5 text-sm text-muted transition-colors hover:text-foreground"
+      >
+        <ChevronRight className="h-4 w-4 ltr:rotate-180" aria-hidden />
         {hall.name}
       </Link>
-      <h1 className="mt-2 text-2xl font-semibold">{device.name}</h1>
-      <p className="mt-1 text-sm text-muted">
+      <h1 className="text-2xl font-semibold">{device.name}</h1>
+      <p className="mt-1 text-xs text-muted">
         {t.timesIn} {hall.timeZone}
       </p>
       <BookingPicker
@@ -81,7 +86,7 @@ export default function DeviceBookingPage({
 }) {
   return (
     <PlayerPage>
-      <main className="mx-auto max-w-5xl px-4 py-10">
+      <main className="mx-auto max-w-5xl px-4 pb-8 pt-4 sm:py-8">
         <Suspense fallback={<Skeleton className="h-64 w-full" />}>
           <Booking params={params} searchParams={searchParams} />
         </Suspense>

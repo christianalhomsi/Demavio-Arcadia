@@ -8,6 +8,7 @@ export interface HallDetails {
   contactPhone: string | null;
   timeZone: string;
   currency: string;
+  coverPath: string | null;
 }
 
 export interface HallSettings {
@@ -31,7 +32,7 @@ export async function getHallSettingsBundle(hallId: string) {
   const [hall, settings, hours] = await Promise.all([
     supabase
       .from("halls")
-      .select("id,name,address,contact_phone,time_zone,currency")
+      .select("id,name,address,contact_phone,time_zone,currency,cover_path")
       .eq("id", hallId)
       .maybeSingle(),
     supabase.from("hall_settings").select("*").eq("hall_id", hallId).maybeSingle(),
@@ -54,6 +55,7 @@ export async function getHallSettingsBundle(hallId: string) {
       contactPhone: h.contact_phone,
       timeZone: h.time_zone,
       currency: h.currency,
+      coverPath: h.cover_path,
     } satisfies HallDetails,
     settings: {
       checkinGraceMinutes: s.checkin_grace_minutes,

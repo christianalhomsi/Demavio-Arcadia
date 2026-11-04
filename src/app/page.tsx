@@ -5,6 +5,7 @@ import { HallPicker } from "@/components/player/HallPicker";
 import { PlayerPage } from "@/components/player/PlayerPage";
 import { Skeleton } from "@/components/ui/skeleton";
 import { listPublicHalls } from "@/features/booking/queries";
+import { hallCoverUrl } from "@/features/halls/cover";
 import { isStaff, resolveLanding } from "@/lib/auth/context";
 import { getMyContext } from "@/lib/auth/session";
 import { getT } from "@/lib/i18n/server";
@@ -22,7 +23,14 @@ async function Halls() {
   const ordered = [...halls].sort((a, b) => Number(b.deviceCount > 0) - Number(a.deviceCount > 0));
   return (
     <HallPicker
-      halls={ordered.map((h) => ({ id: h.id, name: h.name, deviceCount: h.deviceCount }))}
+      halls={ordered.map((h) => ({
+        id: h.id,
+        name: h.name,
+        deviceCount: h.deviceCount,
+        coverUrl: hallCoverUrl(h.coverPath),
+        address: h.address,
+        deviceKinds: h.deviceKinds,
+      }))}
     />
   );
 }

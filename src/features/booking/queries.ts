@@ -7,6 +7,10 @@ export interface PublicHall {
   name: string;
   timeZone: string;
   deviceCount: number;
+  coverPath: string | null;
+  address: string | null;
+  /** Distinct kinds of active devices (e.g. PC, PS5), for the hall card. */
+  deviceKinds: string[];
 }
 
 export interface PublicHallDetail {
@@ -54,6 +58,9 @@ export async function listPublicHalls(): Promise<PublicHall[] | null> {
     name: r.name as string,
     timeZone: r.time_zone as string,
     deviceCount: (r.device_count as number) ?? 0,
+    coverPath: (r.cover_path as string | null) ?? null,
+    address: (r.address as string | null) ?? null,
+    deviceKinds: (r.device_kinds as string[] | null) ?? [],
   }));
 }
 

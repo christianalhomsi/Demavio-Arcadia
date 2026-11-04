@@ -7,6 +7,7 @@ import {
   PoliciesForm,
   WorkingHoursEditor,
 } from "@/features/halls/components/SettingsForms";
+import { HallCoverForm } from "@/features/halls/components/HallCoverForm";
 import { getHallSettingsBundle } from "@/features/halls/queries";
 import { requireHallPermission } from "@/lib/auth/guards";
 import { getT } from "@/lib/i18n/server";
@@ -27,6 +28,7 @@ async function Settings({ params }: { params: Promise<{ hallId: string }> }) {
         {(
           [
             ["profile", t.cfgProfile],
+            ["cover", t.cfgCover],
             ["hours", t.cfgHours],
             ["policies", t.cfgPolicies],
           ] as const
@@ -45,6 +47,12 @@ async function Settings({ params }: { params: Promise<{ hallId: string }> }) {
           {t.cfgProfile}
         </h2>
         <HallProfileForm hall={bundle.hall} />
+      </section>
+      <section id="cover" aria-labelledby="cover-h" className="scroll-mt-20">
+        <h2 id="cover-h" className="mb-3 text-lg font-medium">
+          {t.cfgCover}
+        </h2>
+        <HallCoverForm hallId={hallId} coverPath={bundle.hall.coverPath} />
       </section>
       <section id="hours" aria-labelledby="hours-h" className="scroll-mt-20">
         <h2 id="hours-h" className="mb-3 text-lg font-medium">
