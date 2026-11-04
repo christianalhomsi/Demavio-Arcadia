@@ -98,3 +98,89 @@ export async function voidInvoiceAction(
     return r;
   });
 }
+
+const adjustTimeSchema = z.discriminatedUnion("mode", [
+  z.object({ mode: z.literal("up") }),
+  z.object({ mode: z.literal("down") }),
+  z.object({
+    mode: z.literal("custom"),
+    amount: z.string().trim().min(1, "Enter the price for the time").max(20),
+    reason: z.string().trim().min(3, "Write a short reason").max(300),
+  }),
+]);
+export type AdjustTimeInput = z.infer<typeof adjustTimeSchema>;
+
+/**
+ * Owner-only: changes how the time on an unpaid invoice is charged (round up, round down, or their own
+ * price). The database recomputes the invoice and refuses once it has a payment, discount or write-off.
+ */
+export async function adjustInvoiceTimeAction(
+  hallId: string,
+  invoiceId: string,
+  input: AdjustTimeInput,
+): Promise<ActionResult<{ totalMinor: number }>> {
+  return withPermission(hallId, "payment.adjust", async () => {
+    const parsed = adjustTimeSchema.safeParse(input);
+    if (!parsed.success) {
+      const i = parsed.error.issues[0];
+      return invalid(String(i?.path[0] ?? "mode"), i?.message ?? "Invalid input");
+    }
+    if (!isUuid(invoiceId)) return invalid("mode", "Invalid request");
+    const d = parsed.data;
+
+    let amountMinor: number | null = null;
+    if (d.mode === "custom") {
+      const found = (await listInvoices(hallId, { limit: 1, offset: 0, invoiceId }))?.rows[0];
+      if (!found) return fail("NOT_FOUND", "That invoice could not be found.");
+      amountMinor = parseMoneyForCurrency(d.amount, found.currency);
+      if (amountMinor === null || amountMinor < 0) return invalid("amount", "Enter a valid price.");
+    }
+
+    const r = await callRpc<number>("adjust_invoice_time", {
+      p_invoice_id: invoiceId,
+      p_mode: d.mode,
+      p_amount_minor: amountMinor,
+      p_reason: d.mode === "custom" ? d.reason : null,
+    });
+    if (!r.ok) {
+      return r.code === "PRECONDITION_FAILED"
+        ? fail("PRECONDITION_FAILED", "This invoice can no longer be changed.")
+        : r;
+    }
+    refresh(hallId);
+    revalidatePath(`/halls/${hallId}/invoices/${invoiceId}`);
+    return { ok: true, data: { totalMinor: Number(r.data) } };
+  });
+}
+
+/** Fixes who an unpaid invoice is for: a registered player's username, or a guest name. */
+export async function setInvoicePayerAction(
+  hallId: string,
+  invoiceId: string,
+  input: { username: string; guestName: string },
+): Promise<ActionResult<null>> {
+  return withPermission(hallId, "payment.collect", async () => {
+    if (!isUuid(invoiceId)) return invalid("username", "Invalid request");
+    const username = input.username.trim().replace(/^@/, "");
+    const guestName = input.guestName.trim();
+    if (username && !/^[A-Za-z0-9_]{3,20}$/.test(username))
+      return invalid("username", "Enter the player's username (letters, numbers, _)");
+    if (!username && (guestName.length < 1 || guestName.length > 80))
+      return invalid("guestName", "Enter the customer's name or username");
+    const r = await callRpc<null>("set_invoice_payer", {
+      p_invoice_id: invoiceId,
+      p_username: username || null,
+      p_guest_name: username ? null : guestName,
+    });
+    if (!r.ok) {
+      if (r.code === "NOT_FOUND")
+        return invalid("username", "No player was found with that username.");
+      if (r.code === "PRECONDITION_FAILED")
+        return fail("PRECONDITION_FAILED", "This invoice can no longer be changed.");
+      return r;
+    }
+    refresh(hallId);
+    revalidatePath(`/halls/${hallId}/invoices/${invoiceId}`);
+    return { ok: true, data: null };
+  });
+}

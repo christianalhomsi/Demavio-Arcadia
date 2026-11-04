@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { useI18n } from "@/lib/i18n/client";
 import { tpl } from "@/lib/i18n/messages";
 import { voidInvoiceAction } from "../actions";
-import type { InvoiceRow, PaymentRow } from "../queries";
+import type { InvoicePayer, InvoiceRow, PaymentRow } from "../queries";
 import { RequestRefundDialog } from "@/features/refunds/components/RequestRefundDialog";
 import { CollectPaymentDialog, type WalletOption } from "./CollectPaymentDialog";
 
@@ -22,6 +22,7 @@ export function InvoiceActions({
   methods,
   partialAllowed,
   wallets,
+  payer = null,
 }: {
   hallId: string;
   invoice: InvoiceRow;
@@ -29,6 +30,7 @@ export function InvoiceActions({
   methods: readonly ("cash" | "wallet")[];
   partialAllowed: boolean;
   wallets: WalletOption[];
+  payer?: InvoicePayer | null;
 }) {
   const { t } = useI18n();
   const router = useRouter();
@@ -90,6 +92,7 @@ export function InvoiceActions({
         methods={methods}
         partialAllowed={partialAllowed}
         wallets={wallets}
+        payer={payer}
         open={collect}
         onOpenChange={setCollect}
         onDone={() => {

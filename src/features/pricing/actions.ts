@@ -66,37 +66,3 @@ export async function deleteRateAction(
     return r;
   });
 }
-
-const billingInput = z.object({
-  incrementMinutes: z
-    .number({ error: "Enter a number" })
-    .int()
-    .min(1, "At least 1")
-    .max(60, "At most 60"),
-  minBillableMinutes: z
-    .number({ error: "Enter a number" })
-    .int()
-    .min(0, "At least 0")
-    .max(240, "At most 240"),
-});
-export type BillingInput = z.infer<typeof billingInput>;
-
-export async function updateBillingRulesAction(
-  hallId: string,
-  input: BillingInput,
-): Promise<ActionResult<null>> {
-  return withPermission(hallId, "hall.settings.manage", async () => {
-    const parsed = billingInput.safeParse(input);
-    if (!parsed.success) {
-      const i = parsed.error.issues[0];
-      return invalid(String(i?.path[0] ?? "incrementMinutes"), i?.message ?? "Invalid input");
-    }
-    const r = await callRpc<null>("update_billing_rules", {
-      p_hall_id: hallId,
-      p_increment_minutes: parsed.data.incrementMinutes,
-      p_min_minutes: parsed.data.minBillableMinutes,
-    });
-    if (r.ok) revalidatePath(`/halls/${hallId}/pricing`);
-    return r;
-  });
-}

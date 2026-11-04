@@ -89,6 +89,8 @@ export function WalkInDialog({
   const [type, setType] = React.useState<"fixed" | "open">("fixed");
   const [minutes, setMinutes] = React.useState("60");
   const [guest, setGuest] = React.useState("");
+  const [hasAccount, setHasAccount] = React.useState(false);
+  const [username, setUsername] = React.useState("");
   // "" = regular hourly pricing, otherwise a package id.
   const [packageId, setPackageId] = React.useState("");
 
@@ -97,7 +99,12 @@ export function WalkInDialog({
       packageId
         ? startPackageSessionAction(
             hallId,
-            { packageId, deviceId: deviceId || free[0]?.id || "", guestName: guest },
+            {
+              packageId,
+              deviceId: deviceId || free[0]?.id || "",
+              guestName: hasAccount ? "" : guest,
+              username: hasAccount ? username : undefined,
+            },
             key,
           )
         : startWalkInAction(
@@ -106,13 +113,15 @@ export function WalkInDialog({
               deviceId: deviceId || free[0]?.id || "",
               type,
               durationMinutes: type === "fixed" ? Number(minutes) : null,
-              guestName: guest,
+              guestName: hasAccount ? "" : guest,
+              username: hasAccount ? username : undefined,
             },
             key,
           ),
     () => {
       setOpen(false);
       setGuest("");
+      setUsername("");
       onDone();
     },
   );
@@ -147,9 +156,37 @@ export function WalkInDialog({
               </select>
             )}
           </Field>
-          <Field id="wi-guest" label={t.rsCustomerName}>
-            {(p) => <Input {...p} value={guest} onChange={(e) => setGuest(e.target.value)} />}
-          </Field>
+          <div role="group" className="grid grid-cols-2 gap-1 rounded-xl bg-neutral-bg p-1 text-sm">
+            {[true, false].map((acc) => (
+              <button
+                key={String(acc)}
+                type="button"
+                aria-pressed={hasAccount === acc}
+                onClick={() => setHasAccount(acc)}
+                className="min-h-11 rounded-lg px-2 aria-pressed:bg-surface aria-pressed:font-medium aria-pressed:shadow-card"
+              >
+                {acc ? t.wiHasAccount : t.wiNoAccount}
+              </button>
+            ))}
+          </div>
+          {hasAccount ? (
+            <Field id="wi-user" label={t.wiUsername}>
+              {(p) => (
+                <Input
+                  {...p}
+                  dir="ltr"
+                  autoCapitalize="none"
+                  autoCorrect="off"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                />
+              )}
+            </Field>
+          ) : (
+            <Field id="wi-guest" label={t.rsCustomerName} hint={t.wiGuestHint}>
+              {(p) => <Input {...p} value={guest} onChange={(e) => setGuest(e.target.value)} />}
+            </Field>
+          )}
           {packages.length > 0 && (
             <Field id="wi-pkg" label={t.pkPricing}>
               {(p) => (

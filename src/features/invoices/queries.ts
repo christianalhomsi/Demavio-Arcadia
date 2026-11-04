@@ -130,3 +130,52 @@ export async function getInvoiceForSession(
     .maybeSingle();
   return data ? { id: data.id, number: data.number, status: data.status as InvoiceStatus } : null;
 }
+
+export interface InvoiceTimeOptions {
+  playedSeconds: number;
+  upMinutes: number;
+  upMinor: number;
+  downMinutes: number;
+  downMinor: number;
+  /** What the time part of the invoice is charged right now. */
+  currentMinor: number;
+  /** False once the invoice has a payment, discount, write-off or package. */
+  adjustable: boolean;
+}
+
+/** The owner's choices for charging the time on an invoice. Null when it cannot be loaded. */
+export async function getInvoiceTimeOptions(invoiceId: string): Promise<InvoiceTimeOptions | null> {
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("invoice_time_options", { p_invoice_id: invoiceId });
+  const r = (data as Record<string, unknown>[] | null)?.[0];
+  if (error || !r) return null;
+  return {
+    playedSeconds: Number(r.played_seconds),
+    upMinutes: Number(r.up_minutes),
+    upMinor: Number(r.up_minor),
+    downMinutes: Number(r.down_minutes),
+    downMinor: Number(r.down_minor),
+    currentMinor: Number(r.current_minor),
+    adjustable: Boolean(r.adjustable),
+  };
+}
+
+export interface InvoicePayer {
+  /** Who the invoice is for: "@username" for a registered player, or the guest name. */
+  label: string;
+  isGuest: boolean;
+  /** The wallet that belongs to this player in the hall, or null when they have none. */
+  walletId: string | null;
+}
+
+export async function getInvoicePayer(invoiceId: string): Promise<InvoicePayer | null> {
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("invoice_payer", { p_invoice_id: invoiceId });
+  const r = (data as Record<string, unknown>[] | null)?.[0];
+  if (error || !r) return null;
+  return {
+    label: String(r.label ?? ""),
+    isGuest: Boolean(r.is_guest),
+    walletId: (r.wallet_id as string | null) ?? null,
+  };
+}

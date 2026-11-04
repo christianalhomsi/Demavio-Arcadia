@@ -9,6 +9,10 @@ export interface WalletRow {
   status: "active" | "frozen";
   balanceMinor: number;
   lastActivity: string | null;
+  /** True for a wallet held by a name (and optional phone) instead of an account. */
+  isGuest: boolean;
+  username: string | null;
+  guestPhone: string | null;
 }
 
 type Row = Record<string, unknown>;
@@ -21,6 +25,9 @@ const toWallet = (r: Row): WalletRow => ({
   status: r.status as WalletRow["status"],
   balanceMinor: Number(r.balance_minor),
   lastActivity: (r.last_activity as string | null) ?? null,
+  isGuest: Boolean(r.is_guest),
+  username: (r.username as string | null) ?? null,
+  guestPhone: (r.guest_phone as string | null) ?? null,
 });
 
 export async function listWallets(

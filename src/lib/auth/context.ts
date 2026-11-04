@@ -1,4 +1,5 @@
 import type { Permission } from "@/contracts/permissions";
+import { HALL_NAV } from "@/components/shell/nav";
 import { safeNext } from "./redirect";
 
 /**
@@ -38,7 +39,7 @@ export function resolveLanding(ctx: MyContext): string {
   if (ctx.platform_roles.includes("super_admin")) return "/admin";
 
   const activeHalls = ctx.memberships.filter((m) => m.hall_status === "active");
-  if (activeHalls.length === 1 && activeHalls[0]) return `/halls/${activeHalls[0].hall_id}`;
+  if (activeHalls.length === 1 && activeHalls[0]) return hallLanding(activeHalls[0]);
   if (activeHalls.length > 1) return "/select-hall";
 
   if (ctx.platform_roles.some((r) => r === "sales_agent" || r === "sales_admin")) return "/sales";
@@ -63,10 +64,17 @@ export function postLoginDestination(ctx: MyContext, next: string | null | undef
 }
 
 function destinationAfterUsername(ctx: MyContext, next: string | null | undefined): string {
-  if (!isStaff(ctx)) return safeNext(next, "/");
+  if (!isStaff(ctx)) {
+    // Players only have the public pages; anything else would be a 404.
+    const dest = safeNext(next, "/");
+    const ok = dest === "/" || dest === "/reservations" || dest.startsWith("/book");
+    return ok ? dest : "/";
+  }
   const landing = resolveLanding(ctx);
   const dest = safeNext(next, landing);
-  return dest === "/" || dest === "/book" || dest.startsWith("/book/") ? landing : dest;
+  if (dest === "/" || dest === "/book" || dest.startsWith("/book/")) return landing;
+  // A target this account cannot open (another role's page, a hall it is not in) falls back to home.
+  return canOpenPath(ctx, dest) ? dest : landing;
 }
 
 /** True for an active account that has not chosen a username yet. */
@@ -77,4 +85,77 @@ export function needsUsername(ctx: MyContext): boolean {
 /** Where to go once the username is chosen (same rules as after sign-in). */
 export function destinationAfterChoosing(ctx: MyContext, next: string | null | undefined): string {
   return destinationAfterUsername(ctx, next);
+}
+
+/** Hall route segment -> nav path that carries its permission (see components/shell/nav.ts). */
+const HALL_SEGMENT_NAV: Record<string, string> = {
+  devices: "/devices",
+  reservations: "/reservations",
+  sessions: "/sessions",
+  products: "/products",
+  agents: "/agents",
+  commands: "/commands",
+  invoices: "/invoices",
+  payments: "/invoices",
+  wallets: "/wallets",
+  refunds: "/refunds",
+  adjustments: "/adjustments",
+  expenses: "/expenses",
+  shifts: "/shifts",
+  registers: "/registers",
+  reports: "/reports",
+  "my-activity": "/my-activity",
+  pricing: "/pricing",
+  packages: "/packages",
+  discounts: "/discounts",
+  employees: "/employees",
+  settings: "/settings",
+  audit: "/audit",
+};
+
+/** First hall page this membership may open (the overview needs device.view, not everyone has it). */
+export function hallLanding(m: HallMembership): string {
+  const base = `/halls/${m.hall_id}`;
+  for (const group of HALL_NAV) {
+    for (const item of group.items) {
+      if (!item.permission || m.permissions.includes(item.permission)) return base + item.path;
+    }
+  }
+  return base;
+}
+
+/**
+ * True when this user would actually be allowed to open `path`. Used to drop a stale `?next=` (from
+ * another account, an expired session, a bookmark) instead of sending someone to a 404/403 page.
+ */
+export function canOpenPath(ctx: MyContext, rawPath: string): boolean {
+  const path = rawPath.split(/[?#]/)[0] ?? "";
+  const seg = path.split("/").filter(Boolean);
+  const roles = ctx.platform_roles;
+  if (seg.length === 0) return true;
+
+  switch (seg[0]) {
+    case "admin":
+      return roles.includes("super_admin");
+    case "sales": {
+      if (seg[1] === "attribution" || seg[1] === "agents") return roles.includes("sales_admin");
+      if (seg[1] === "manager") return roles.includes("sales_agent");
+      return roles.includes("sales_agent") || roles.includes("sales_admin");
+    }
+    case "select-hall":
+      return ctx.memberships.length > 0;
+    case "halls": {
+      const m = ctx.memberships.find((x) => x.hall_id === seg[1] && x.hall_status === "active");
+      if (!m) return false;
+      if (seg.length === 2) return m.permissions.includes("device.view");
+      if (seg[2] === "devices" && (seg[3] === "new" || seg[4] === "edit"))
+        return m.permissions.includes("hall.settings.manage");
+      const navPath = HALL_SEGMENT_NAV[seg[2] ?? ""];
+      if (navPath === undefined) return false;
+      const item = HALL_NAV.flatMap((g) => g.items).find((i) => i.path === navPath);
+      return !item?.permission || m.permissions.includes(item.permission);
+    }
+    default:
+      return false;
+  }
 }

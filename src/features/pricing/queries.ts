@@ -32,18 +32,3 @@ export async function getPricing(hallId: string) {
     })),
   };
 }
-
-export async function getBillingRules(hallId: string) {
-  const supabase = await createClient();
-  const { data } = await supabase
-    .from("hall_settings")
-    .select("billing_increment_minutes,min_billable_minutes")
-    .eq("hall_id", hallId)
-    .maybeSingle();
-  return data
-    ? {
-        incrementMinutes: Number(data.billing_increment_minutes),
-        minBillableMinutes: Number(data.min_billable_minutes),
-      }
-    : null;
-}

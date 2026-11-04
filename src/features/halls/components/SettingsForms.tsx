@@ -29,9 +29,6 @@ function toStatus(r: ActionResult<unknown>, success: string): Status {
   return r.ok ? { ok: true, message: success } : { ok: false, message: r.message };
 }
 
-const select =
-  "h-11 w-full rounded-xl border border-border bg-surface px-3.5 text-base sm:h-10 sm:text-sm aria-[invalid=true]:border-danger";
-
 export function HallProfileForm({ hall }: { hall: HallDetails }) {
   const { t } = useI18n();
   const canEdit = useCan("hall.settings.manage");
@@ -235,58 +232,131 @@ export function WorkingHoursEditor({
     setPending(false);
   }
 
+  const dayName = (idx: number) =>
+    locale === "ar"
+      ? new Intl.DateTimeFormat(formatLocale("ar"), { weekday: "long", timeZone: "UTC" }).format(
+          new Date(Date.UTC(2026, 10, 1 + idx)),
+        )
+      : WEEKDAYS[idx];
+
+  function toggleDay(day: number, on: boolean) {
+    setRanges((rs) =>
+      on
+        ? [...rs, { weekday: day, opens: "09:00", closes: "22:00" }]
+        : rs.filter((r) => r.weekday !== day),
+    );
+  }
+  function addPeriod(day: number) {
+    setRanges((rs) => [...rs, { weekday: day, opens: "18:00", closes: "23:00" }]);
+  }
+  function copyToAll(day: number) {
+    setRanges((rs) => {
+      const src = rs.filter((r) => r.weekday === day);
+      return WEEKDAYS.flatMap((_, d) => src.map((r) => ({ ...r, weekday: d })));
+    });
+  }
+
   return (
     <div className="max-w-xl space-y-3">
-      <p className="text-sm text-muted">{t.cfgHoursNote}</p>
-      {ranges.length === 0 && <p className="text-sm text-muted">{t.cfgNoHours}</p>}
+      <p className="text-sm text-muted">{t.hrIntro}</p>
       <ul className="space-y-2">
-        {ranges.map((r, i) => (
-          <li key={i} className="flex flex-wrap items-center gap-2">
-            <select
-              aria-label={t.cfgDay}
-              className={`${select} w-36`}
-              disabled={!canEdit}
-              value={r.weekday}
-              onChange={(e) => update(i, { weekday: Number(e.target.value) })}
+        {WEEKDAYS.map((_, day) => {
+          const entries = ranges.map((r, i) => ({ r, i })).filter((e) => e.r.weekday === day);
+          const isOpen = entries.length > 0;
+          return (
+            <li
+              key={day}
+              role="group"
+              aria-label={dayName(day)}
+              className={
+                "rounded-2xl border bg-surface p-3 " +
+                (isOpen ? "border-primary/40" : "border-border")
+              }
             >
-              {WEEKDAYS.map((d, idx) => (
-                <option key={d} value={idx}>
-                  {locale === "ar"
-                    ? new Intl.DateTimeFormat(formatLocale("ar"), {
-                        weekday: "long",
-                        timeZone: "UTC",
-                      }).format(new Date(Date.UTC(2026, 10, 1 + idx)))
-                    : d}
-                </option>
-              ))}
-            </select>
-            <TimeField
-              aria-label={t.cfgOpens}
-              className="w-40"
-              disabled={!canEdit}
-              value={r.opens}
-              onChange={(v) => update(i, { opens: v })}
-            />
-            <span aria-hidden>–</span>
-            <TimeField
-              aria-label={t.cfgCloses}
-              className="w-40"
-              disabled={!canEdit}
-              value={r.closes}
-              onChange={(v) => update(i, { closes: v })}
-            />
-            {canEdit && (
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                onClick={() => setRanges((rs) => rs.filter((_, idx) => idx !== i))}
-              >
-                {t.pcRemove}
-              </Button>
-            )}
-          </li>
-        ))}
+              <div className="flex items-center justify-between gap-3">
+                <span className="font-medium">{dayName(day)}</span>
+                <label className="flex min-h-11 cursor-pointer items-center gap-2 text-sm">
+                  <span className={isOpen ? "text-success" : "text-muted"}>
+                    {isOpen ? t.hrOpen : t.hrClosedDay}
+                  </span>
+                  <input
+                    type="checkbox"
+                    role="switch"
+                    aria-label={dayName(day)}
+                    className="h-6 w-11 cursor-pointer accent-[var(--ring)]"
+                    disabled={!canEdit}
+                    checked={isOpen}
+                    onChange={(e) => toggleDay(day, e.target.checked)}
+                  />
+                </label>
+              </div>
+              {isOpen && (
+                <div className="mt-2 space-y-2">
+                  {entries.map(({ r, i }) => {
+                    const overnight = r.closes <= r.opens;
+                    return (
+                      <div key={i} className="space-y-1">
+                        <div className="flex flex-wrap items-end gap-2">
+                          <label className="space-y-1 text-xs text-muted">
+                            <span>{t.hrFrom}</span>
+                            <TimeField
+                              aria-label={t.cfgOpens}
+                              className="w-36"
+                              disabled={!canEdit}
+                              value={r.opens}
+                              onChange={(v) => update(i, { opens: v })}
+                            />
+                          </label>
+                          <label className="space-y-1 text-xs text-muted">
+                            <span>{t.hrTo}</span>
+                            <TimeField
+                              aria-label={t.cfgCloses}
+                              className="w-36"
+                              disabled={!canEdit}
+                              value={r.closes}
+                              onChange={(v) => update(i, { closes: v })}
+                            />
+                          </label>
+                          {canEdit && entries.length > 1 && (
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              className="min-h-11"
+                              aria-label={t.hrRemovePeriod}
+                              onClick={() => setRanges((rs) => rs.filter((_, idx) => idx !== i))}
+                            >
+                              ✕
+                            </Button>
+                          )}
+                        </div>
+                        {overnight && <p className="text-xs text-warning">{t.hrAfterMidnight}</p>}
+                      </div>
+                    );
+                  })}
+                  {canEdit && (
+                    <div className="flex flex-wrap gap-x-4 gap-y-1 pt-1">
+                      <button
+                        type="button"
+                        className="min-h-11 text-sm text-accent underline"
+                        onClick={() => addPeriod(day)}
+                      >
+                        {t.hrAddPeriod}
+                      </button>
+                      <button
+                        type="button"
+                        className="min-h-11 text-sm text-accent underline"
+                        onClick={() => copyToAll(day)}
+                      >
+                        {t.hrCopyAll}
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
+            </li>
+          );
+        })}
       </ul>
       {problem && (
         <p role="alert" className="text-sm text-danger">
@@ -295,15 +365,6 @@ export function WorkingHoursEditor({
       )}
       {canEdit && (
         <div className="flex items-center gap-3">
-          <Button
-            type="button"
-            variant="secondary"
-            onClick={() =>
-              setRanges((rs) => [...rs, { weekday: 1, opens: "09:00", closes: "22:00" }])
-            }
-          >
-            {t.cfgAddRange}
-          </Button>
           <Button type="button" onClick={save} pending={pending} disabled={!parsed.success}>
             {t.cfgSaveHours}
           </Button>

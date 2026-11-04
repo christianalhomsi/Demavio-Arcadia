@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { callRpc } from "@/lib/actions/rpc";
+import { resolvePlayer } from "./player";
 import { fail, type ActionResult } from "@/lib/actions/result";
 import { withPermission } from "@/lib/actions/withPermission";
 import { isUuid } from "@/lib/auth/authorize";
@@ -36,13 +37,15 @@ export async function startWalkInAction(
     }
     if (!isUuid(idempotencyKey)) return invalid("deviceId", "Invalid request");
     const d = parsed.data;
+    const player = await resolvePlayer(hallId, d.username);
+    if (!player.ok) return player;
     const r = await callRpc<string>("start_walk_in", {
       p_hall_id: hallId,
       p_device_id: d.deviceId,
       p_type: d.type,
       p_duration_minutes: d.type === "fixed" ? d.durationMinutes : null,
-      p_customer_id: null,
-      p_guest_name: d.guestName,
+      p_customer_id: player.data,
+      p_guest_name: player.data ? null : d.guestName,
       p_key: idempotencyKey,
     });
     if (!r.ok) return r;

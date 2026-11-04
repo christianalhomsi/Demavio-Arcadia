@@ -14,7 +14,12 @@ import { Input } from "@/components/ui/input";
 import { useI18n } from "@/lib/i18n/client";
 import { tpl } from "@/lib/i18n/messages";
 import { newIdempotencyKey } from "@/lib/idempotency";
-import { openWalletAction, topUpWalletAction } from "../actions";
+import {
+  linkGuestWalletAction,
+  openGuestWalletAction,
+  openWalletAction,
+  topUpWalletAction,
+} from "../actions";
 import type { WalletRow } from "../queries";
 
 export function WalletsPanel({ hallId, wallets }: { hallId: string; wallets: WalletRow[] }) {
@@ -59,9 +64,20 @@ export function WalletsPanel({ hallId, wallets }: { hallId: string; wallets: Wal
                       className="font-medium hover:underline"
                       href={`/halls/${hallId}/wallets/${w.id}`}
                     >
-                      {w.customerName ?? w.customerEmail}
+                      {w.customerName ?? (w.username ? `@${w.username}` : w.customerEmail)}
                     </Link>
-                    {w.customerName && <div className="text-xs text-muted">{w.customerEmail}</div>}
+                    {w.isGuest ? (
+                      <div className="mt-0.5 flex items-center gap-2 text-xs text-muted">
+                        <Badge tone="neutral">{t.wlGuestBadge}</Badge>
+                        {w.guestPhone && <span dir="ltr">{w.guestPhone}</span>}
+                      </div>
+                    ) : (
+                      w.customerName && (
+                        <div className="text-xs text-muted">
+                          {w.username ? `@${w.username}` : w.customerEmail}
+                        </div>
+                      )
+                    )}
                   </td>
                   <td className="px-4 py-2">
                     <Badge tone={w.status === "active" ? "success" : "warning"}>
@@ -90,7 +106,10 @@ function OpenWalletDialog({
 }) {
   const { t } = useI18n();
   const [open, setOpen] = React.useState(false);
+  const [guest, setGuest] = React.useState(false);
   const [email, setEmail] = React.useState("");
+  const [name, setName] = React.useState("");
+  const [phone, setPhone] = React.useState("");
   const [pending, setPending] = React.useState(false);
   const [error, setError] = React.useState<string | undefined>();
 
@@ -98,7 +117,9 @@ function OpenWalletDialog({
     e.preventDefault();
     setPending(true);
     setError(undefined);
-    const r = await openWalletAction(hallId, email);
+    const r = guest
+      ? await openGuestWalletAction(hallId, name, phone)
+      : await openWalletAction(hallId, email);
     setPending(false);
     if (r.ok) {
       setOpen(false);
@@ -111,11 +132,60 @@ function OpenWalletDialog({
       <Button onClick={() => setOpen(true)}>{t.wlOpen}</Button>
       <DialogContent title={t.wlOpenTitle} description={t.wlOpenDesc}>
         <form onSubmit={submit} className="space-y-3" noValidate>
-          <Field id="ow-email" label={t.wlEmail} error={error}>
-            {(p) => (
-              <Input {...p} type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
-            )}
-          </Field>
+          <div role="group" className="grid grid-cols-2 gap-1 rounded-xl bg-neutral-bg p-1 text-sm">
+            {[false, true].map((g) => (
+              <button
+                key={String(g)}
+                type="button"
+                aria-pressed={guest === g}
+                onClick={() => {
+                  setGuest(g);
+                  setError(undefined);
+                }}
+                className="min-h-11 rounded-lg px-2 aria-pressed:bg-surface aria-pressed:font-medium aria-pressed:shadow-card"
+              >
+                {g ? t.wlGuestTab : t.wlAccountTab}
+              </button>
+            ))}
+          </div>
+          {guest ? (
+            <>
+              <Field id="ow-name" label={t.wlGuestName} error={error}>
+                {(p) => (
+                  <Input
+                    {...p}
+                    maxLength={80}
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                  />
+                )}
+              </Field>
+              <Field id="ow-phone" label={t.wlGuestPhone} hint={t.wlGuestHint}>
+                {(p) => (
+                  <Input
+                    {...p}
+                    type="tel"
+                    inputMode="tel"
+                    dir="ltr"
+                    maxLength={30}
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                  />
+                )}
+              </Field>
+            </>
+          ) : (
+            <Field id="ow-email" label={t.wlEmail} error={error}>
+              {(p) => (
+                <Input
+                  {...p}
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                />
+              )}
+            </Field>
+          )}
           <div className="flex justify-end gap-2 pt-2">
             <DialogClose asChild>
               <Button type="button" variant="secondary">
@@ -201,5 +271,56 @@ export function TopUpDialog({
         </DialogContent>
       </Dialog>
     </PermissionGate>
+  );
+}
+
+/** Attaches a guest wallet to the account the player registered later (staff enter the email). */
+export function LinkWalletDialog({ hallId, walletId }: { hallId: string; walletId: string }) {
+  const { t } = useI18n();
+  const router = useRouter();
+  const [open, setOpen] = React.useState(false);
+  const [email, setEmail] = React.useState("");
+  const [pending, setPending] = React.useState(false);
+  const [error, setError] = React.useState<string | undefined>();
+
+  async function submit(e: React.FormEvent) {
+    e.preventDefault();
+    setPending(true);
+    setError(undefined);
+    const r = await linkGuestWalletAction(hallId, walletId, email);
+    setPending(false);
+    if (r.ok) {
+      setOpen(false);
+      router.refresh();
+    } else setError(r.fieldErrors ? (Object.values(r.fieldErrors)[0] ?? r.message) : r.message);
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <PermissionGate permission="wallet.top_up">
+        <Button variant="secondary" onClick={() => setOpen(true)}>
+          {t.wlLink}
+        </Button>
+      </PermissionGate>
+      <DialogContent title={t.wlLinkTitle} description={t.wlLinkDesc}>
+        <form onSubmit={submit} className="space-y-3" noValidate>
+          <Field id="lw-email" label={t.wlEmail} error={error}>
+            {(p) => (
+              <Input {...p} type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
+            )}
+          </Field>
+          <div className="flex justify-end gap-2 pt-2">
+            <DialogClose asChild>
+              <Button type="button" variant="secondary">
+                {t.cmCancel}
+              </Button>
+            </DialogClose>
+            <Button type="submit" pending={pending}>
+              {t.wlLinkBtn}
+            </Button>
+          </div>
+        </form>
+      </DialogContent>
+    </Dialog>
   );
 }

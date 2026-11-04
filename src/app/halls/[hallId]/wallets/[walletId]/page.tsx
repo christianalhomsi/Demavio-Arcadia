@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getHallTimeZone } from "@/features/halls/queries";
 import { WalletControls } from "@/features/wallets/components/WalletControls";
-import { TopUpDialog } from "@/features/wallets/components/WalletsPanel";
+import { LinkWalletDialog, TopUpDialog } from "@/features/wallets/components/WalletsPanel";
 import { listLedger, listWallets } from "@/features/wallets/queries";
 import { isUuid } from "@/lib/auth/authorize";
 import { requireHallPermission } from "@/lib/auth/guards";
@@ -56,14 +56,26 @@ async function WalletDetail({
       <LiveRefresh hallId={hallId} tables={["wallets"]} />
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-semibold">{w.customerName ?? w.customerEmail}</h1>
-          <p className="text-sm text-muted">{w.customerEmail}</p>
+          <h1 className="text-2xl font-semibold">
+            {w.customerName ?? (w.username ? `@${w.username}` : w.customerEmail)}
+          </h1>
+          {w.isGuest ? (
+            <p className="mt-1 flex items-center gap-2 text-sm text-muted">
+              <Badge tone="neutral">{t.wlGuestBadge}</Badge>
+              {w.guestPhone && <span dir="ltr">{w.guestPhone}</span>}
+            </p>
+          ) : (
+            <p className="text-sm text-muted">{w.username ? `@${w.username}` : w.customerEmail}</p>
+          )}
         </div>
-        <TopUpDialog
-          hallId={hallId}
-          wallet={{ id: w.id, currency: w.currency }}
-          frozen={w.status === "frozen"}
-        />
+        <div className="flex flex-wrap gap-2">
+          <TopUpDialog
+            hallId={hallId}
+            wallet={{ id: w.id, currency: w.currency }}
+            frozen={w.status === "frozen"}
+          />
+          {w.isGuest && <LinkWalletDialog hallId={hallId} walletId={w.id} />}
+        </div>
       </div>
       <WalletControls
         hallId={hallId}

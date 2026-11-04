@@ -8,7 +8,7 @@ vi.mock("@/lib/actions/rpc", () => ({ callRpc: (...a: unknown[]) => rpc(...a) })
 vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
 vi.mock("@/features/invoices/queries", () => ({ getHallCurrency: async () => "USD" }));
 
-import { deleteRateAction, setRateAction, updateBillingRulesAction } from "./actions";
+import { deleteRateAction, setRateAction } from "./actions";
 
 const DEV = "44444444-0000-0000-0000-000000000001";
 const RULE = "12121212-0000-4000-8000-000000000001";
@@ -33,9 +33,6 @@ describe("pricing actions are owner-only", () => {
         }),
       ).toMatchObject({ ok: false });
       expect(await deleteRateAction(HALLS.h1, RULE)).toMatchObject({ ok: false });
-      expect(
-        await updateBillingRulesAction(HALLS.h1, { incrementMinutes: 1, minBillableMinutes: 0 }),
-      ).toMatchObject({ ok: false });
     }
     expect(rpc).not.toHaveBeenCalled();
   });
@@ -93,27 +90,5 @@ describe("setRateAction", () => {
     expect(await call({ scope: "device", deviceId: "x" })).toMatchObject({ code: "VALIDATION" });
     expect(await call({ scope: "weekend" })).toMatchObject({ code: "VALIDATION" });
     expect(rpc).not.toHaveBeenCalled();
-  });
-});
-
-describe("billing rules", () => {
-  it("accepts 1–60 and 0–240 minutes and nothing else", async () => {
-    expect(
-      await updateBillingRulesAction(HALLS.h1, { incrementMinutes: 15, minBillableMinutes: 30 }),
-    ).toMatchObject({ ok: true });
-    expect(rpc).toHaveBeenCalledWith("update_billing_rules", {
-      p_hall_id: HALLS.h1,
-      p_increment_minutes: 15,
-      p_min_minutes: 30,
-    });
-    for (const bad of [
-      { incrementMinutes: 0, minBillableMinutes: 0 },
-      { incrementMinutes: 61, minBillableMinutes: 0 },
-      { incrementMinutes: 1, minBillableMinutes: 241 },
-      { incrementMinutes: 1.5, minBillableMinutes: 0 },
-      { incrementMinutes: Number.NaN, minBillableMinutes: 0 },
-    ]) {
-      expect(await updateBillingRulesAction(HALLS.h1, bad)).toMatchObject({ code: "VALIDATION" });
-    }
   });
 });

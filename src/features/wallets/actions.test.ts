@@ -59,25 +59,25 @@ describe("topUpWalletAction", () => {
 });
 
 describe("openWalletAction", () => {
-  it("validates the email and returns the wallet id", async () => {
-    expect(await openWalletAction(HALLS.h1, "not-an-email")).toMatchObject({ code: "VALIDATION" });
+  it("validates the username and returns the wallet id", async () => {
+    expect(await openWalletAction(HALLS.h1, "a b")).toMatchObject({ code: "VALIDATION" });
     expect(rpc).not.toHaveBeenCalled();
-    expect(await openWalletAction(HALLS.h1, " customer@example.test ")).toEqual({
+    expect(await openWalletAction(HALLS.h1, " @Customer_1 ")).toEqual({
       ok: true,
       data: { walletId: WAL },
     });
-    expect(rpc).toHaveBeenCalledWith("open_wallet", {
+    expect(rpc).toHaveBeenCalledWith("open_wallet_by_username", {
       p_hall_id: HALLS.h1,
-      p_customer_email: "customer@example.test",
+      p_username: "Customer_1",
     });
   });
-  it("gives the same answer for unknown emails (no account enumeration beyond 'not found')", async () => {
+  it("gives the same answer for unknown usernames (no account enumeration beyond 'not found')", async () => {
     rpc.mockResolvedValue({ ok: false, code: "NOT_FOUND", message: "x" });
-    const r = await openWalletAction(HALLS.h1, "nobody@example.test");
+    const r = await openWalletAction(HALLS.h1, "nobody_1");
     expect(r).toMatchObject({
       ok: false,
       code: "VALIDATION",
-      fieldErrors: { email: "No customer account was found for that email." },
+      fieldErrors: { email: "No player was found with that username." },
     });
   });
 });

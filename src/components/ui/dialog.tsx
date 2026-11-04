@@ -4,6 +4,7 @@ import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { X } from "lucide-react";
 import * as React from "react";
 import { cn } from "@/lib/cn";
+import { useKeyboardInset } from "@/lib/ui/keyboard";
 import { morphRef } from "@/lib/ui/morph";
 
 export const Dialog = DialogPrimitive.Root;
@@ -21,6 +22,8 @@ export function DialogContent({
   title: string;
   description?: string;
 }) {
+  // Phones: the sheet rides above the on-screen keyboard instead of being covered by it.
+  useKeyboardInset();
   return (
     <DialogPrimitive.Portal>
       <DialogPrimitive.Overlay className="overlay fixed inset-0 z-40 bg-[var(--scrim)]" />
@@ -31,9 +34,9 @@ export function DialogContent({
         className={cn(
           "sheet fixed z-50 border border-border bg-surface-raised shadow-float",
           // phone: bottom sheet
-          "inset-x-0 bottom-0 flex max-h-[90dvh] flex-col overflow-hidden rounded-t-3xl px-5 pb-[calc(1.25rem+var(--safe-bottom))] pt-3",
+          "inset-x-0 bottom-[var(--kb-inset,0px)] flex max-h-[min(90dvh,calc(var(--vvh,100dvh)-0.5rem))] flex-col overflow-hidden rounded-t-3xl px-5 pb-[calc(1.25rem+var(--safe-bottom))] pt-3",
           // sm+: centered dialog
-          "sm:inset-x-auto sm:bottom-auto sm:left-1/2 sm:top-1/2 sm:w-full sm:max-w-md sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-2xl sm:px-6 sm:pb-6 sm:pt-6",
+          "sm:inset-x-auto sm:bottom-auto sm:max-h-[90dvh] sm:left-1/2 sm:top-1/2 sm:w-full sm:max-w-md sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-2xl sm:px-6 sm:pb-6 sm:pt-6",
           className,
         )}
         {...props}

@@ -11,7 +11,12 @@ import { InvoiceDiscounts } from "@/features/discounts/components/InvoiceDiscoun
 import { listDiscounts, listInvoiceDiscounts } from "@/features/discounts/queries";
 import { InvoiceActions } from "@/features/invoices/components/InvoiceActions";
 import { InvoiceStatusBadge } from "@/features/invoices/components/InvoiceStatusBadge";
-import { getInvoiceDetail } from "@/features/invoices/queries";
+import { AdjustTimeDialog } from "@/features/invoices/components/AdjustTimeDialog";
+import {
+  getInvoiceDetail,
+  getInvoicePayer,
+  getInvoiceTimeOptions,
+} from "@/features/invoices/queries";
 import { listWallets } from "@/features/wallets/queries";
 import { isUuid } from "@/lib/auth/authorize";
 import { requireHallPermission } from "@/lib/auth/guards";
@@ -49,6 +54,12 @@ async function InvoiceDetail({
     listInvoiceDiscounts(invoiceId),
     canApply ? listDiscounts(hallId) : null,
   ]);
+  const payer = membership.permissions.includes("payment.collect")
+    ? await getInvoicePayer(invoiceId)
+    : null;
+  const timeOptions = membership.permissions.includes("payment.adjust")
+    ? await getInvoiceTimeOptions(invoiceId)
+    : null;
   const wallets = canSeeWallets
     ? ((await listWallets(hallId, { limit: 100, offset: 0 }))?.rows ?? [])
     : [];
@@ -175,6 +186,15 @@ async function InvoiceDetail({
         limitMinor={membership.discount_limit_minor}
       />
 
+      {timeOptions?.adjustable && (
+        <AdjustTimeDialog
+          hallId={hallId}
+          invoiceId={invoiceId}
+          currency={inv.currency}
+          options={timeOptions}
+        />
+      )}
+
       {(inv.status === "open" || inv.status === "partially_paid") && (
         <WriteOffDialog hallId={hallId} invoiceId={invoiceId} currency={inv.currency} />
       )}
@@ -185,9 +205,10 @@ async function InvoiceDetail({
         payments={payments}
         methods={methods}
         partialAllowed={bundle.settings.allowPartialPayments}
+        payer={payer}
         wallets={wallets.map((w) => ({
           id: w.id,
-          label: `${w.customerName ?? w.customerEmail} · ${formatMoney(w.balanceMinor, w.currency)}`,
+          label: `${w.customerName ?? (w.username ? `@${w.username}` : w.customerEmail)} · ${formatMoney(w.balanceMinor, w.currency)}`,
           balanceMinor: w.balanceMinor,
           currency: w.currency,
           frozen: w.status === "frozen",

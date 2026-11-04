@@ -1,5 +1,6 @@
 "use server";
 
+import { resolvePlayer } from "@/features/sessions/player";
 import { revalidatePath } from "next/cache";
 import { callRpc } from "@/lib/actions/rpc";
 import { fail, type ActionResult } from "@/lib/actions/result";
@@ -96,21 +97,23 @@ export async function upsertPackageAction(
 /** Starts a session priced by a package. The price and duration come from the package, never the client. */
 export async function startPackageSessionAction(
   hallId: string,
-  input: { packageId: string; deviceId: string; guestName: string },
+  input: { packageId: string; deviceId: string; guestName: string; username?: string },
   idempotencyKey: string,
 ): Promise<ActionResult<{ sessionId: string }>> {
   return withPermission(hallId, "session.start", async () => {
     if (!isUuid(input.packageId) || !isUuid(input.deviceId) || !isUuid(idempotencyKey))
       return invalid("deviceId", "Invalid request");
     const guest = input.guestName.trim();
-    if (guest.length < 1 || guest.length > 80)
+    const player = await resolvePlayer(hallId, input.username);
+    if (!player.ok) return player;
+    if (!player.data && (guest.length < 1 || guest.length > 80))
       return invalid("guestName", "Enter a customer name of 1 to 80 characters.");
     const r = await callRpc<string>("start_package_session", {
       p_hall_id: hallId,
       p_package_id: input.packageId,
       p_device_id: input.deviceId,
-      p_customer_id: null,
-      p_guest_name: guest,
+      p_customer_id: player.data,
+      p_guest_name: player.data ? null : guest,
       p_key: idempotencyKey,
     });
     if (!r.ok) return r;

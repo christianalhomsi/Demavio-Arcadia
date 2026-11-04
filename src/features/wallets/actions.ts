@@ -12,28 +12,96 @@ import { getHallCurrency } from "@/features/invoices/queries";
 const invalid = (field: string, message: string) =>
   fail("VALIDATION", message, { [field]: message });
 
-const emailSchema = z.email("Enter the customer's account email").max(254);
+const usernameSchema = z
+  .string()
+  .regex(/^[A-Za-z0-9_]{3,20}$/, "Enter the player's username (letters, numbers, _)");
 
 export async function openWalletAction(
   hallId: string,
   email: string,
 ): Promise<ActionResult<{ walletId: string }>> {
   return withPermission(hallId, "wallet.top_up", async () => {
-    const parsed = emailSchema.safeParse(email.trim());
+    const parsed = usernameSchema.safeParse(email.trim().replace(/^@/, ""));
     if (!parsed.success)
-      return invalid("email", parsed.error.issues[0]?.message ?? "Enter a valid email");
-    const r = await callRpc<string>("open_wallet", {
+      return invalid("email", parsed.error.issues[0]?.message ?? "Enter a valid username");
+    const r = await callRpc<string>("open_wallet_by_username", {
       p_hall_id: hallId,
-      p_customer_email: parsed.data,
+      p_username: parsed.data,
     });
     if (!r.ok) {
       // Deliberately generic: do not reveal whether an account exists for this email.
       return r.code === "NOT_FOUND"
-        ? invalid("email", "No customer account was found for that email.")
+        ? invalid("email", "No player was found with that username.")
         : r;
     }
     revalidatePath(`/halls/${hallId}/wallets`);
     return { ok: true, data: { walletId: r.data } };
+  });
+}
+
+const guestSchema = z.object({
+  name: z.string().trim().min(1, "Enter the player's name").max(80),
+  phone: z
+    .string()
+    .trim()
+    .max(30)
+    .refine((v) => v === "" || v.length >= 3, "Enter a valid phone number"),
+});
+
+/** Opens a wallet for a player who has no account. Staff type the name and, optionally, a phone. */
+export async function openGuestWalletAction(
+  hallId: string,
+  name: string,
+  phone: string,
+): Promise<ActionResult<{ walletId: string }>> {
+  return withPermission(hallId, "wallet.top_up", async () => {
+    const parsed = guestSchema.safeParse({ name, phone });
+    if (!parsed.success) {
+      const i = parsed.error.issues[0];
+      return invalid(String(i?.path[0] ?? "name"), i?.message ?? "Invalid input");
+    }
+    const r = await callRpc<string>("open_guest_wallet", {
+      p_hall_id: hallId,
+      p_name: parsed.data.name,
+      p_phone: parsed.data.phone || null,
+    });
+    if (!r.ok) {
+      return r.code === "CONFLICT"
+        ? invalid(
+            "name",
+            "A wallet with this name already exists. Add a phone number to tell them apart.",
+          )
+        : r;
+    }
+    revalidatePath(`/halls/${hallId}/wallets`);
+    return { ok: true, data: { walletId: r.data } };
+  });
+}
+
+/** Attaches a guest wallet to a registered player's account, by email. Staff decide; nothing is automatic. */
+export async function linkGuestWalletAction(
+  hallId: string,
+  walletId: string,
+  email: string,
+): Promise<ActionResult<null>> {
+  return withPermission(hallId, "wallet.top_up", async () => {
+    if (!isUuid(walletId)) return invalid("email", "Invalid request");
+    const parsed = usernameSchema.safeParse(email.trim().replace(/^@/, ""));
+    if (!parsed.success)
+      return invalid("email", parsed.error.issues[0]?.message ?? "Enter a valid username");
+    const r = await callRpc<null>("link_guest_wallet_by_username", {
+      p_wallet_id: walletId,
+      p_username: parsed.data,
+    });
+    if (!r.ok) {
+      if (r.code === "NOT_FOUND")
+        return invalid("email", "No customer account was found for that email.");
+      if (r.code === "CONFLICT")
+        return invalid("email", "That customer already has a wallet in this hall.");
+      return r;
+    }
+    revalidatePath(`/halls/${hallId}/wallets`);
+    return { ok: true, data: null };
   });
 }
 

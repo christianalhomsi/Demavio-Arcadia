@@ -34,7 +34,7 @@ const hall = (id: string, over: Partial<HallMembership> = {}): HallMembership =>
   hall_name: id,
   hall_status: "active",
   role: "employee",
-  permissions: [],
+  permissions: ["device.view"],
   discount_limit_minor: null,
   ...over,
 });
@@ -141,5 +141,45 @@ describe("username gate", () => {
     expect(postLoginDestination(noName(), "https://evil.example")).toBe(
       "/choose-username?next=%2F",
     );
+  });
+});
+
+describe("role-aware landing and next", () => {
+  const profile = {
+    id: "u",
+    display_name: null,
+    email: null,
+    status: "active" as const,
+    avatar_url: null,
+  };
+  const mk = (over: Partial<MyContext>): MyContext => ({
+    profile,
+    platform_roles: [],
+    memberships: [],
+    ...over,
+  });
+  const cashier = mk({ memberships: [hall("h1", { permissions: ["invoice.view"] })] });
+
+  it("lands an employee without device.view on the first page they can open", () => {
+    expect(resolveLanding(cashier)).toBe("/halls/h1/invoices");
+    expect(resolveLanding(mk({ memberships: [hall("h1", { permissions: [] })] }))).toBe(
+      "/halls/h1/my-activity",
+    );
+  });
+  it("drops a next target the account cannot open", () => {
+    expect(postLoginDestination(cashier, "/admin")).toBe("/halls/h1/invoices");
+    expect(postLoginDestination(cashier, "/halls/other/devices")).toBe("/halls/h1/invoices");
+    expect(postLoginDestination(cashier, "/halls/h1/settings")).toBe("/halls/h1/invoices");
+    expect(postLoginDestination(cashier, "/halls/h1/invoices?x=1")).toBe("/halls/h1/invoices?x=1");
+    expect(postLoginDestination(mk({ platform_roles: ["sales_agent"] }), "/sales/agents")).toBe(
+      "/sales",
+    );
+    expect(postLoginDestination(mk({ platform_roles: ["super_admin"] }), "/halls/h1")).toBe(
+      "/admin",
+    );
+  });
+  it("keeps players on public pages", () => {
+    expect(postLoginDestination(mk({}), "/admin")).toBe("/");
+    expect(postLoginDestination(mk({}), "/book/h/d")).toBe("/book/h/d");
   });
 });

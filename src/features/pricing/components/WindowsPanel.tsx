@@ -1,5 +1,6 @@
 "use client";
 
+import { Clock, Tag } from "lucide-react";
 import { useRouter } from "next/navigation";
 import * as React from "react";
 import { Money } from "@/components/domain/Money";
@@ -45,7 +46,9 @@ export function WindowsPanel({
   const [msg, setMsg] = React.useState<{ ok: boolean; message: string } | null>(null);
 
   const dayLabel = (days: number[]) =>
-    days.map((d) => t[DAY_KEYS[d - 1] as keyof typeof t] as string).join(", ");
+    days.length === 7
+      ? t.wnEveryDay
+      : days.map((d) => t[DAY_KEYS[d - 1] as keyof typeof t] as string).join(", ");
   const targetLabel = (w: PricingWindow) =>
     w.scope === "hall"
       ? t.pcScopeHall
@@ -61,38 +64,52 @@ export function WindowsPanel({
 
   return (
     <section aria-labelledby="windows-h" className="space-y-3">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <h2 id="windows-h" className="text-lg font-medium">
-          {t.wnTitle}
-        </h2>
-        <Button size="sm" onClick={() => setEditing("new")}>
-          {t.wnAdd}
-        </Button>
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <h2 id="windows-h" className="text-lg font-medium">
+            {t.wnTitle}
+          </h2>
+          <p className="text-sm text-muted">{t.wnIntro}</p>
+        </div>
+        {windows.length > 0 && (
+          <Button size="sm" className="shrink-0" onClick={() => setEditing("new")}>
+            {t.wnAdd}
+          </Button>
+        )}
       </div>
-      <p className="text-sm text-muted">{t.wnIntro}</p>
       {msg && (
         <p role="status" className={msg.ok ? "text-sm text-success" : "text-sm text-danger"}>
           {msg.message}
         </p>
       )}
       {windows.length === 0 ? (
-        <p className="text-sm text-muted">{t.wnEmpty}</p>
+        <div className="flex flex-col items-center gap-3 rounded-2xl border border-dashed border-border bg-surface p-6 text-center">
+          <span className="grid h-12 w-12 place-items-center rounded-full bg-primary/15 text-accent">
+            <Tag className="h-6 w-6" aria-hidden />
+          </span>
+          <p className="font-medium">{t.wnEmpty}</p>
+          <Button onClick={() => setEditing("new")}>{t.wnAdd}</Button>
+        </div>
       ) : (
-        <ul className="divide-y divide-border rounded-2xl border border-border bg-surface text-sm shadow-card">
+        <ul className="space-y-2">
           {windows.map((w) => (
-            <li key={w.id} className="flex flex-wrap items-center justify-between gap-3 p-3">
-              <span className="min-w-0">
-                <span className="block font-medium">{targetLabel(w)}</span>
-                <span className="text-xs text-muted">
-                  {tpl(t.wnLine, {
-                    days: dayLabel(w.days),
-                    from: minutesToHm(w.startMinute),
-                    to: minutesToHm(w.endMinute),
-                  })}
-                </span>
-              </span>
-              <span className="flex items-center gap-2">
-                <span className="tabular-nums">
+            <li
+              key={w.id}
+              className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border bg-surface p-3 shadow-card"
+            >
+              <div className="min-w-0">
+                <div className="flex items-center gap-2 font-medium">
+                  <Clock className="h-4 w-4 shrink-0 text-accent" aria-hidden />
+                  <span dir="ltr" className="tabular-nums">
+                    {minutesToHm(w.startMinute)}–{minutesToHm(w.endMinute)}
+                  </span>
+                </div>
+                <div className="mt-0.5 text-xs text-muted">
+                  {targetLabel(w)} · {dayLabel(w.days)}
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="rounded-full bg-primary/15 px-3 py-1 text-sm font-medium tabular-nums">
                   <Money minor={w.ratePerHourMinor} currency={currency} /> {t.pcPerHour}
                 </span>
                 <Button size="sm" variant="secondary" onClick={() => setEditing(w)}>
@@ -101,12 +118,11 @@ export function WindowsPanel({
                 <Button size="sm" variant="ghost" onClick={() => remove(w.id)}>
                   {t.pcRemove}
                 </Button>
-              </span>
+              </div>
             </li>
           ))}
         </ul>
       )}
-      <p className="text-xs text-muted">{t.wnSnapshotNote}</p>
 
       {editing && (
         <WindowDialog

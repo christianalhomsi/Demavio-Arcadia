@@ -6,6 +6,7 @@ import { Pagination } from "@/components/data/Pagination";
 import { HallTime } from "@/components/domain/HallTime";
 import { permissionForPath } from "@/components/shell/nav";
 import { Skeleton } from "@/components/ui/skeleton";
+import { auditLabel } from "@/features/audit/labels";
 import { listHallAudit } from "@/features/audit/queries";
 import { getHallTimeZone } from "@/features/halls/queries";
 import { requireHallPermission } from "@/lib/auth/guards";
@@ -38,7 +39,7 @@ async function Audit({
     : undefined;
   const [from] = toRange(list);
 
-  const { t } = await getT();
+  const { t, locale } = await getT();
   const [result, timeZone] = await Promise.all([
     listHallAudit(hallId, { limit: list.pageSize, offset: from, action }),
     getHallTimeZone(hallId),
@@ -70,23 +71,13 @@ async function Audit({
           {result.entries.map((e) => (
             <li key={e.id} className="p-4 text-sm">
               <div className="flex flex-wrap items-baseline justify-between gap-2">
-                <span className="font-medium">{e.action}</span>
+                <span className="font-medium">{auditLabel(e.action, locale) ?? e.action}</span>
                 <HallTime value={e.createdAt} timeZone={timeZone} />
               </div>
               <div className="text-muted">
                 {tpl(t.auBy, { name: e.actorName ?? t.auSystem })}
                 {e.reason ? ` · ${tpl(t.auReason, { reason: e.reason })}` : ""}
               </div>
-              {(e.before != null || e.after != null) && (
-                <details className="mt-1">
-                  <summary className="flex min-h-11 cursor-pointer items-center text-xs text-muted">
-                    {t.auDetails}
-                  </summary>
-                  <pre dir="ltr" className="mt-1 overflow-x-auto rounded bg-neutral-bg p-2 text-xs">
-                    {JSON.stringify({ before: e.before, after: e.after }, null, 2)}
-                  </pre>
-                </details>
-              )}
             </li>
           ))}
         </ul>

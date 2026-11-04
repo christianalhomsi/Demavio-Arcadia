@@ -10,6 +10,8 @@ import { useI18n } from "@/lib/i18n/client";
 import { tpl } from "@/lib/i18n/messages";
 import { newIdempotencyKey } from "@/lib/idempotency";
 import { collectPaymentAction } from "../actions";
+import type { InvoicePayer } from "../queries";
+import { FixPayerDialog } from "./FixPayerDialog";
 
 export interface WalletOption {
   id: string;
@@ -28,6 +30,7 @@ export function CollectPaymentDialog({
   methods,
   partialAllowed,
   wallets,
+  payer = null,
   open,
   onOpenChange,
   onDone,
@@ -37,6 +40,8 @@ export function CollectPaymentDialog({
   methods: readonly ("cash" | "wallet")[];
   partialAllowed: boolean;
   wallets: WalletOption[];
+  /** Who the invoice is for and which wallet is theirs; null = no player check (older invoices). */
+  payer?: InvoicePayer | null;
   open: boolean;
   onOpenChange: (o: boolean) => void;
   onDone: () => void;
@@ -51,7 +56,15 @@ export function CollectPaymentDialog({
   // One key per payment intent: a retry after a network error reuses it, so it can't charge twice.
   const keyRef = React.useRef("");
 
-  const usable = wallets.filter((w) => w.currency === invoice.currency && !w.frozen);
+  const [fixing, setFixing] = React.useState(false);
+  // Only the wallet of the player on the invoice can pay it.
+  const candidates = payer
+    ? payer.walletId
+      ? wallets.filter((w) => w.id === payer.walletId)
+      : []
+    : wallets;
+  const usable = candidates.filter((w) => w.currency === invoice.currency && !w.frozen);
+  const noWallet = Boolean(payer && !payer.walletId);
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -77,96 +90,120 @@ export function CollectPaymentDialog({
   }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent
-        title={tpl(t.ivCollectTitle, { number: invoice.number })}
-        description={t.ivCollectDesc}
-      >
-        <form onSubmit={submit} className="space-y-3" noValidate>
-          <p className="text-sm">
-            {t.ivOutstandingLbl}{" "}
-            <strong>
-              <Money minor={invoice.outstandingMinor} currency={invoice.currency} />
-            </strong>
-          </p>
-          <Field id="pay-method" label={t.ivMethod}>
-            {(p) => (
-              <select
-                {...p}
-                className={selectCls}
-                value={method}
-                onChange={(e) => setMethod(e.target.value as typeof method)}
-              >
-                {methods.map((m) => (
-                  <option key={m} value={m}>
-                    {m === "cash" ? t.methodCash : t.methodWallet}
-                  </option>
-                ))}
-              </select>
-            )}
-          </Field>
-          {method === "wallet" && (
-            <Field id="pay-wallet" label={t.ivWalletLbl} hint={t.ivWalletHint}>
+    <>
+      <Dialog open={open && !fixing} onOpenChange={onOpenChange}>
+        <DialogContent
+          title={tpl(t.ivCollectTitle, { number: invoice.number })}
+          description={t.ivCollectDesc}
+        >
+          <form onSubmit={submit} className="space-y-3" noValidate>
+            <p className="text-sm">
+              {t.ivOutstandingLbl}{" "}
+              <strong>
+                <Money minor={invoice.outstandingMinor} currency={invoice.currency} />
+              </strong>
+            </p>
+            <Field id="pay-method" label={t.ivMethod}>
               {(p) => (
                 <select
                   {...p}
                   className={selectCls}
-                  value={walletId || usable[0]?.id || ""}
-                  onChange={(e) => setWalletId(e.target.value)}
+                  value={method}
+                  onChange={(e) => setMethod(e.target.value as typeof method)}
                 >
-                  {usable.length === 0 && <option value="">{t.ivNoWallet}</option>}
-                  {usable.map((w) => (
-                    <option key={w.id} value={w.id}>
-                      {w.label}
+                  {methods.map((m) => (
+                    <option key={m} value={m}>
+                      {m === "cash" ? t.methodCash : t.methodWallet}
                     </option>
                   ))}
                 </select>
               )}
             </Field>
-          )}
-          {partialAllowed && (
-            <label className="flex items-center gap-2 text-sm">
-              <input
-                type="checkbox"
-                checked={custom}
-                onChange={(e) => setCustom(e.target.checked)}
-              />
-              {t.ivPartial}
-            </label>
-          )}
-          {custom && (
-            <Field id="pay-amount" label={t.ivAmount}>
-              {(p) => (
-                <Input
-                  {...p}
-                  inputMode="decimal"
-                  value={text}
-                  onChange={(e) => setText(e.target.value)}
+            {method === "wallet" && noWallet && payer && (
+              <div
+                role="alert"
+                className="space-y-2 rounded-xl bg-warning-bg p-3 text-sm text-warning"
+              >
+                <p className="font-medium">{tpl(t.pyNoWallet, { name: payer.label })}</p>
+                <p>{t.pyNoWalletHint}</p>
+                <Button type="button" size="sm" variant="secondary" onClick={() => setFixing(true)}>
+                  {t.pyFix}
+                </Button>
+              </div>
+            )}
+            {method === "wallet" && !noWallet && (
+              <Field id="pay-wallet" label={t.ivWalletLbl} hint={t.ivWalletHint}>
+                {(p) => (
+                  <select
+                    {...p}
+                    className={selectCls}
+                    value={walletId || usable[0]?.id || ""}
+                    onChange={(e) => setWalletId(e.target.value)}
+                  >
+                    {usable.length === 0 && <option value="">{t.ivNoWallet}</option>}
+                    {usable.map((w) => (
+                      <option key={w.id} value={w.id}>
+                        {w.label}
+                      </option>
+                    ))}
+                  </select>
+                )}
+              </Field>
+            )}
+            {partialAllowed && (
+              <label className="flex items-center gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  checked={custom}
+                  onChange={(e) => setCustom(e.target.checked)}
                 />
-              )}
-            </Field>
-          )}
-          {error && (
-            <p role="alert" className="text-sm text-danger">
-              {error}
-            </p>
-          )}
-          <div className="flex justify-end gap-2 pt-2">
-            <DialogClose asChild>
-              <Button type="button" variant="secondary">
-                {t.cmCancel}
+                {t.ivPartial}
+              </label>
+            )}
+            {custom && (
+              <Field id="pay-amount" label={t.ivAmount}>
+                {(p) => (
+                  <Input
+                    {...p}
+                    inputMode="decimal"
+                    value={text}
+                    onChange={(e) => setText(e.target.value)}
+                  />
+                )}
+              </Field>
+            )}
+            {error && (
+              <p role="alert" className="text-sm text-danger">
+                {error}
+              </p>
+            )}
+            <div className="flex justify-end gap-2 pt-2">
+              <DialogClose asChild>
+                <Button type="button" variant="secondary">
+                  {t.cmCancel}
+                </Button>
+              </DialogClose>
+              <Button
+                type="submit"
+                pending={pending}
+                disabled={method === "wallet" && usable.length === 0}
+              >
+                {custom ? t.ivRecord : t.ivCollectFull}
               </Button>
-            </DialogClose>
-            <Button
-              type="submit"
-              pending={pending}
-              disabled={method === "wallet" && usable.length === 0}
-            >
-              {custom ? t.ivRecord : t.ivCollectFull}
-            </Button>
-          </div>
-        </form>
-      </DialogContent>
-    </Dialog>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
+      <FixPayerDialog
+        hallId={hallId}
+        invoiceId={invoice.id}
+        open={fixing}
+        onOpenChange={setFixing}
+        onDone={() => {
+          onOpenChange(false);
+          onDone();
+        }}
+      />
+    </>
   );
 }

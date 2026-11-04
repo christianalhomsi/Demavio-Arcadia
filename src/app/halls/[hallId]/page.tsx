@@ -17,13 +17,17 @@ import { permissionForPath } from "@/components/shell/nav";
 import { Badge, type Tone } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { Permission } from "@/contracts/permissions";
-import { listDeviceStatus, type Availability } from "@/features/devices/queries";
+import { DeviceBoard } from "@/features/devices/components/DeviceBoard";
+import { listDeviceStatus } from "@/features/devices/queries";
+import { listPackages } from "@/features/packages/queries";
 import { getHallSettingsBundle, getHallTimeZone } from "@/features/halls/queries";
 import { listInvoices } from "@/features/invoices/queries";
 import { listReservations, type ReservationRow } from "@/features/reservations/queries";
-import { listSessions } from "@/features/sessions/queries";
+import { getServerNow, listSessions } from "@/features/sessions/queries";
 import { listRegisters } from "@/features/shifts/queries";
-import { requireHallPermission } from "@/lib/auth/guards";
+import { redirect } from "next/navigation";
+import { hallLanding } from "@/lib/auth/context";
+import { requireHallMembership, requireHallPermission } from "@/lib/auth/guards";
 import { cn } from "@/lib/cn";
 import { getT } from "@/lib/i18n/server";
 import { formatLocale, tpl, type Messages } from "@/lib/i18n/messages";
@@ -44,19 +48,6 @@ const STATUS_TONE: Record<ReservationRow["status"], Tone> = {
   canceled: "neutral",
   no_show: "warning",
 };
-const AVAILABILITY_KEY: Record<Availability, keyof Messages> = {
-  available: "statusAvailable",
-  in_use: "statusInUse",
-  maintenance: "statusMaintenance",
-  disabled: "statusDisabled",
-};
-const AVAILABILITY_TONE: Record<Availability, Tone> = {
-  available: "success",
-  in_use: "info",
-  maintenance: "warning",
-  disabled: "neutral",
-};
-
 /** Shortcuts to the pages the phone tab bar does not carry; each shows only for people who may open it. */
 const QUICK: { path: string; permission: Permission; label: keyof Messages; icon: LucideIcon }[] = [
   { path: "/invoices", permission: "invoice.view", label: "navInvoices", icon: ReceiptText },
@@ -75,6 +66,9 @@ async function Overview({ params }: { params: Promise<{ hallId: string }> }) {
   // The overview shows the current time, so it is always rendered per request.
   await connection();
   const { hallId } = await params;
+  // Members without the overview permission go to the first page they can open, not to a 403.
+  const { membership: member } = await requireHallMembership(hallId);
+  if (!member.permissions.includes(permissionForPath(""))) redirect(hallLanding(member));
   const { membership } = await requireHallPermission(hallId, permissionForPath(""));
   const { t, locale } = await getT();
   const perms = membership.permissions;
@@ -83,24 +77,35 @@ async function Overview({ params }: { params: Promise<{ hallId: string }> }) {
 
   // Each block is fetched only if the person may see it; the database enforces the same rule.
   const now = new Date();
-  const [bundle, outstanding, devices, activeSessions, registers, upcoming, timeZone] =
-    await Promise.all([
-      // Only owners see the setup checklist; it reads settings the employee role cannot manage.
-      canManage ? getHallSettingsBundle(hallId) : null,
-      // A count only: money totals are never summed in the browser.
-      perms.includes("invoice.view")
-        ? listInvoices(hallId, { limit: 1, offset: 0, outstandingOnly: true })
-        : null,
-      perms.includes("device.view") ? listDeviceStatus(hallId) : null,
-      perms.includes("session.start")
-        ? listSessions(hallId, { activeOnly: true, limit: 1, offset: 0 })
-        : null,
-      perms.includes("shift.open") || perms.includes("shift.close") ? listRegisters(hallId) : null,
-      perms.includes("reservation.view")
-        ? listReservations(hallId, now, new Date(now.getTime() + 7 * 86_400_000))
-        : null,
-      getHallTimeZone(hallId),
-    ]);
+  const [
+    bundle,
+    outstanding,
+    devices,
+    activeSessions,
+    registers,
+    upcoming,
+    timeZone,
+    packages,
+    serverNow,
+  ] = await Promise.all([
+    // Only owners see the setup checklist; it reads settings the employee role cannot manage.
+    canManage ? getHallSettingsBundle(hallId) : null,
+    // A count only: money totals are never summed in the browser.
+    perms.includes("invoice.view")
+      ? listInvoices(hallId, { limit: 1, offset: 0, outstandingOnly: true })
+      : null,
+    perms.includes("device.view") ? listDeviceStatus(hallId) : null,
+    perms.includes("session.start")
+      ? listSessions(hallId, { activeOnly: true, limit: 1, offset: 0 })
+      : null,
+    perms.includes("shift.open") || perms.includes("shift.close") ? listRegisters(hallId) : null,
+    perms.includes("reservation.view")
+      ? listReservations(hallId, now, new Date(now.getTime() + 7 * 86_400_000))
+      : null,
+    getHallTimeZone(hallId),
+    perms.includes("session.start") ? listPackages(hallId) : null,
+    getServerNow(),
+  ]);
   // Counts of rows the database returned: display only.
   const count = (a: string) => devices?.filter((d) => d.effectiveAvailability === a).length ?? 0;
   const offlineAgents = devices?.filter((d) => d.agentStatus === "offline").length ?? 0;
@@ -148,6 +153,17 @@ async function Overview({ params }: { params: Promise<{ hallId: string }> }) {
         <h1 className="text-2xl font-semibold">{membership.hall_name}</h1>
         <p className="mt-0.5 text-sm text-muted">{t.ovSubtitle}</p>
       </header>
+
+      {devices && (
+        <DeviceBoard
+          hallId={hallId}
+          devices={devices}
+          packages={(packages ?? []).filter((p) => p.active)}
+          serverNow={serverNow}
+        />
+      )}
+
+      <h2 className="border-t border-border pt-4 text-lg font-semibold">{t.dbSummary}</h2>
 
       {(devices || registers || upcoming || outstanding) && (
         <section aria-labelledby="attn-h" className="space-y-2">
@@ -237,29 +253,6 @@ async function Overview({ params }: { params: Promise<{ hallId: string }> }) {
             {openShift ? t.ovShiftOpen : t.ovShiftClosed}
           </Badge>
         </Link>
-      )}
-
-      {devices && devices.length > 0 && (
-        <section aria-labelledby="dev-h">
-          <h2 id="dev-h" className="mb-2 text-sm font-semibold text-accent">
-            {t.ovDevices}
-          </h2>
-          <ul className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
-            {devices.slice(0, 12).map((d) => (
-              <li key={d.deviceId}>
-                <Link
-                  href={`${base}/devices/${d.deviceId}`}
-                  className="flex min-h-12 items-center justify-between gap-2 rounded-xl border border-border bg-surface px-3 py-2 shadow-card transition-colors hover:bg-neutral-bg active:bg-neutral-bg"
-                >
-                  <span className="truncate text-sm font-semibold">{d.name}</span>
-                  <Badge tone={AVAILABILITY_TONE[d.effectiveAvailability]}>
-                    {t[AVAILABILITY_KEY[d.effectiveAvailability]]}
-                  </Badge>
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </section>
       )}
 
       {upcoming && (
