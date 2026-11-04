@@ -331,7 +331,7 @@ export function AuthForm({ next }: { next: string }) {
         <button
           type="button"
           onClick={() => switchTab(signin ? "signup" : "signin")}
-          className="cursor-pointer font-medium text-accent underline underline-offset-2"
+          className="inline-flex min-h-11 cursor-pointer items-center px-1 font-medium text-accent underline underline-offset-2"
         >
           {signin ? t.signUp : t.signIn}
         </button>

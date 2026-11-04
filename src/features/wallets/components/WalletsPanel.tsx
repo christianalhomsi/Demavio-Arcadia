@@ -35,7 +35,7 @@ export function WalletsPanel({ hallId, wallets }: { hallId: string; wallets: Wal
       {wallets.length === 0 ? (
         <EmptyState title={t.wlEmpty} description={t.wlEmptyDesc} />
       ) : (
-        <div className="overflow-x-auto rounded-2xl border border-border bg-surface shadow-card">
+        <div className="stack-table overflow-x-auto rounded-2xl border border-border bg-surface shadow-card">
           <table className="w-full text-start text-sm">
             <caption className="sr-only">{t.wlCaption}</caption>
             <thead className="border-b border-border bg-neutral-bg text-xs uppercase text-muted">

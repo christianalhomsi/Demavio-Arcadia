@@ -36,7 +36,7 @@ async function History({
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-2xl font-semibold">{t.ssHistTitle}</h1>
         <Link className="text-sm underline" href={`/halls/${hallId}/sessions`}>
           {t.ssActive}
@@ -45,7 +45,7 @@ async function History({
       {result.rows.length === 0 ? (
         <EmptyState title={t.ssNoSessions} />
       ) : (
-        <div className="overflow-x-auto rounded-2xl border border-border bg-surface shadow-card">
+        <div className="stack-table overflow-x-auto rounded-2xl border border-border bg-surface shadow-card">
           <table className="w-full text-start text-sm">
             <caption className="sr-only">{t.ssHistCaption}</caption>
             <thead className="border-b border-border bg-neutral-bg text-xs uppercase text-muted">

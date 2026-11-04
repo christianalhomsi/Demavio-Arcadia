@@ -88,7 +88,7 @@ function UserRow({ user, canManageAll }: { user: PlatformUserRow; canManageAll: 
                 role: ROLE_KEYS[r] ? t[ROLE_KEYS[r]] : r,
                 email: user.email ?? "",
               })}
-              className="grid h-6 w-6 place-items-center rounded-full hover:bg-black/10"
+              className="relative grid h-6 w-6 place-items-center rounded-full before:absolute before:-inset-2.5 before:content-[''] hover:bg-black/10"
               onClick={() => revoke(r)}
             >
               ×

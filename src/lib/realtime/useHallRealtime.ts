@@ -37,7 +37,10 @@ export function useHallRealtime(
       timer = setTimeout(() => refreshRef.current(), DEBOUNCE_MS);
     };
 
-    const channel = supabase.channel(`hall:${hallId}:${tablesKey}`);
+    // A name of its own for every subscription: the client hands back an existing channel of the same
+    // name, and one that is still being removed (React strict mode, or moving between pages that watch
+    // the same tables) would refuse the new callbacks and crash the page.
+    const channel = supabase.channel(`hall:${hallId}:${tablesKey}:${crypto.randomUUID()}`);
     for (const table of tablesKey.split(",")) {
       channel.on(
         "postgres_changes",

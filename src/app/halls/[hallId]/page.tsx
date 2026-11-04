@@ -169,7 +169,10 @@ async function Overview({ params }: { params: Promise<{ hallId: string }> }) {
                   >
                     <AlertTriangle className="h-5 w-5 shrink-0 text-warning" aria-hidden />
                     <span className="min-w-0 flex-1">{a.text}</span>
-                    <ChevronRight className="h-4 w-4 shrink-0 text-muted rtl:rotate-180" aria-hidden />
+                    <ChevronRight
+                      className="h-4 w-4 shrink-0 text-muted rtl:rotate-180"
+                      aria-hidden
+                    />
                   </Link>
                 </li>
               ))}
@@ -347,7 +350,7 @@ function Step({
       {done ? (
         <span className="text-muted line-through">{children}</span>
       ) : (
-        <Link href={href} className="underline">
+        <Link href={href} className="flex min-h-11 flex-1 items-center underline">
           {children}
         </Link>
       )}

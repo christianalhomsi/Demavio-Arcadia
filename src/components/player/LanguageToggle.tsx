@@ -16,7 +16,8 @@ export function LanguageToggle() {
     <Button
       variant="secondary"
       size="sm"
-      className="h-10 gap-1.5 rounded-full px-3.5 text-muted hover:text-foreground sm:h-10"
+      aria-label={t.langName}
+      className="h-10 w-10 gap-1.5 rounded-full px-0 text-muted hover:text-foreground sm:w-auto sm:px-3.5"
       pending={pending}
       lang={locale === "ar" ? "en" : "ar"}
       onClick={() =>
@@ -27,7 +28,7 @@ export function LanguageToggle() {
       }
     >
       <Globe className="h-[18px] w-[18px]" aria-hidden />
-      {t.langName}
+      <span className="hidden sm:inline">{t.langName}</span>
     </Button>
   );
 }

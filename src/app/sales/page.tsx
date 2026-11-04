@@ -46,7 +46,9 @@ async function SalesHome() {
         </Link>
       )}
       <details className="group rounded-2xl border border-border bg-surface p-4 text-sm shadow-card">
-        <summary className="cursor-pointer font-medium">{t.slHowTitle}</summary>
+        <summary className="flex min-h-11 cursor-pointer items-center font-medium">
+          {t.slHowTitle}
+        </summary>
         <p className="mt-2 text-muted">{isManager ? t.slHowBodyManager : t.slHowBody}</p>
       </details>
       {isManager && (

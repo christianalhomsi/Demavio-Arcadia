@@ -34,9 +34,9 @@ export function AgentsList({ agents }: { agents: SalesAgentRow[] }) {
             key={a.userId}
             className="flex flex-wrap items-center justify-between gap-3 p-4 text-sm"
           >
-            <span className="min-w-0">
+            <span className="min-w-0 basis-full sm:basis-auto">
               <span className="block truncate font-medium">{a.displayName ?? a.email}</span>
-              <span className="text-muted">
+              <span className="block break-all text-muted sm:break-normal">
                 {tpl(t.slAgentLine, {
                   email: a.email ?? "",
                   attr: a.attributionsCount,
@@ -45,7 +45,12 @@ export function AgentsList({ agents }: { agents: SalesAgentRow[] }) {
             </span>
             <span className="flex items-center gap-2">
               {a.status !== "active" && <Badge tone="warning">{t.plInactive}</Badge>}
-              <Button variant="ghost" size="sm" onClick={() => setTarget(a)}>
+              <Button
+                variant="secondary"
+                size="sm"
+                className="min-h-11 sm:min-h-0"
+                onClick={() => setTarget(a)}
+              >
                 {t.slRemoveRole}
               </Button>
             </span>

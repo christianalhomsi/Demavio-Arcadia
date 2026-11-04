@@ -112,7 +112,7 @@ export function ExpensesPanel({
       {rows.length === 0 ? (
         <EmptyState title={t.exEmpty} description={t.exEmptyDesc} />
       ) : (
-        <div className="overflow-x-auto rounded-2xl border border-border bg-surface shadow-card">
+        <div className="stack-table overflow-x-auto rounded-2xl border border-border bg-surface shadow-card">
           <table className="w-full text-start text-sm">
             <caption className="sr-only">{t.exCaption}</caption>
             <thead className="border-b border-border bg-neutral-bg text-xs uppercase text-muted">

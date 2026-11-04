@@ -58,22 +58,27 @@ async function Reservations({
       <LiveRefresh hallId={hallId} tables={["reservations", "sessions"]} />
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-2xl font-semibold">{t.rsTitle}</h1>
-        <nav aria-label={t.rsDay} className="flex items-center gap-2 text-sm">
+        <nav
+          aria-label={t.rsDay}
+          className="grid w-full grid-cols-3 items-center gap-2 text-sm sm:flex sm:w-auto"
+        >
           <Link
-            className="inline-flex min-h-10 items-center rounded-full border border-border px-4 py-1"
+            className="inline-flex min-h-11 items-center justify-center whitespace-nowrap rounded-full border border-border px-3 py-1 sm:min-h-10 sm:px-4"
             href={`?date=${shiftDate(date, -1)}`}
           >
             {t.rsPrevDay}
           </Link>
-          <span className="font-medium tabular-nums">{date}</span>
+          <span className="order-first col-span-3 text-center font-medium tabular-nums sm:order-none sm:col-span-1">
+            {date}
+          </span>
           <Link
-            className="inline-flex min-h-10 items-center rounded-full border border-border px-4 py-1"
+            className="inline-flex min-h-11 items-center justify-center whitespace-nowrap rounded-full border border-border px-3 py-1 sm:min-h-10 sm:px-4"
             href="?"
           >
             {t.rsToday}
           </Link>
           <Link
-            className="inline-flex min-h-10 items-center rounded-full border border-border px-4 py-1"
+            className="inline-flex min-h-11 items-center justify-center whitespace-nowrap rounded-full border border-border px-3 py-1 sm:min-h-10 sm:px-4"
             href={`?date=${shiftDate(date, 1)}`}
           >
             {t.rsNextDay}

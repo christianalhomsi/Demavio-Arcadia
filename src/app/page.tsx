@@ -1,8 +1,7 @@
-import { Gamepad2 } from "lucide-react";
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { EmptyState } from "@/components/data/EmptyState";
+import { HallPicker } from "@/components/player/HallPicker";
 import { PlayerPage } from "@/components/player/PlayerPage";
 import { Skeleton } from "@/components/ui/skeleton";
 import { listPublicHalls } from "@/features/booking/queries";
@@ -19,35 +18,40 @@ async function Halls() {
   const halls = await listPublicHalls();
   if (!halls) return <EmptyState title={t.hallsUnavailable} description={t.hallsUnavailableDesc} />;
   if (halls.length === 0) return <EmptyState title={t.noHalls} description={t.noHallsDesc} />;
+  // Halls that can be booked come first; the rest follow, in the order they were added.
+  const ordered = [...halls].sort((a, b) => Number(b.deviceCount > 0) - Number(a.deviceCount > 0));
   return (
-    <>
-      <h1 className="text-2xl font-semibold">{t.homeTitle}</h1>
-      <p className="mt-1 mb-6 text-sm text-muted">{t.homeSub}</p>
-      <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {halls.map((h) => (
-          <li key={h.id}>
-            <Link
-              href={`/book/${h.id}`}
-              className="flex h-full flex-col rounded-2xl border border-border bg-surface p-5 shadow-card transition-colors hover:bg-neutral-bg"
-            >
-              <Gamepad2 className="h-6 w-6 text-accent" aria-hidden />
-              <span className="mt-3 text-base font-semibold">{h.name}</span>
-              <span className="mt-1 text-sm text-muted">
-                {h.deviceCount} {h.deviceCount === 1 ? t.deviceOne : t.deviceMany}
-              </span>
-            </Link>
-          </li>
+    <HallPicker
+      halls={ordered.map((h) => ({ id: h.id, name: h.name, deviceCount: h.deviceCount }))}
+    />
+  );
+}
+
+/** Same shape as the real page, so nothing jumps when the halls arrive. */
+function HallsSkeleton() {
+  return (
+    <div aria-hidden>
+      <Skeleton className="h-9 w-3/4 rounded-xl" />
+      <Skeleton className="mt-3 h-5 w-2/3" />
+      <div className="mt-4 flex gap-2">
+        {[0, 1, 2].map((i) => (
+          <Skeleton key={i} className="h-7 w-20 rounded-full" />
         ))}
-      </ul>
-    </>
+      </div>
+      <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        {[0, 1, 2].map((i) => (
+          <Skeleton key={i} className="h-24 rounded-3xl" />
+        ))}
+      </div>
+    </div>
   );
 }
 
 export default function Home() {
   return (
     <PlayerPage>
-      <main className="mx-auto max-w-5xl px-4 py-10">
-        <Suspense fallback={<Skeleton className="h-32 w-full" />}>
+      <main className="mx-auto max-w-5xl px-4 pb-6 pt-6 sm:py-10">
+        <Suspense fallback={<HallsSkeleton />}>
           <Halls />
         </Suspense>
       </main>

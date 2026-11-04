@@ -79,7 +79,9 @@ async function Audit({
               </div>
               {(e.before != null || e.after != null) && (
                 <details className="mt-1">
-                  <summary className="cursor-pointer text-xs text-muted">{t.auDetails}</summary>
+                  <summary className="flex min-h-11 cursor-pointer items-center text-xs text-muted">
+                    {t.auDetails}
+                  </summary>
                   <pre dir="ltr" className="mt-1 overflow-x-auto rounded bg-neutral-bg p-2 text-xs">
                     {JSON.stringify({ before: e.before, after: e.after }, null, 2)}
                   </pre>

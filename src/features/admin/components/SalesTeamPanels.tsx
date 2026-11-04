@@ -107,38 +107,42 @@ export function SalesTeamList({
       {team.map((m) => {
         const name = m.displayName ?? m.email ?? "";
         return (
-          <li key={m.userId} className="flex items-center gap-3 p-4 text-sm">
-            <span
-              aria-hidden
-              className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-primary/15 font-semibold text-accent"
-            >
-              {name.charAt(0).toUpperCase()}
-            </span>
-            <div className="min-w-0 flex-1">
-              <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-                <span className="truncate font-medium">{name}</span>
-                <Badge tone="neutral">{t[ROLE_KEYS[m.role]!]}</Badge>
-                {m.status !== "active" && <StatusBadge status={m.status} />}
+          <li key={m.userId} className="flex flex-wrap items-center gap-x-3 gap-y-2 p-4 text-sm">
+            <div className="flex min-w-0 basis-full items-start gap-3 sm:flex-1 sm:basis-0">
+              <span
+                aria-hidden
+                className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-primary/15 font-semibold text-accent"
+              >
+                {name.charAt(0).toUpperCase()}
+              </span>
+              <div className="min-w-0 flex-1">
+                <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                  <span className="break-words font-medium">{name}</span>
+                  <Badge tone="neutral">{t[ROLE_KEYS[m.role]!]}</Badge>
+                  {m.status !== "active" && <StatusBadge status={m.status} />}
+                </div>
+                <p className="mt-0.5 break-all text-xs text-muted sm:truncate">
+                  <bdi>{m.email}</bdi>
+                  {m.username && (
+                    <>
+                      {" · "}
+                      <bdi>@{m.username}</bdi>
+                    </>
+                  )}
+                </p>
+                <p className="mt-0.5 truncate text-xs text-muted sm:hidden">
+                  {m.responsibleName
+                    ? tpl(t.stResponsible, { name: m.responsibleName })
+                    : t.stNoResponsible}
+                </p>
               </div>
-              <p className="mt-0.5 truncate text-xs text-muted">
-                <bdi>{m.email}</bdi>
-                {m.username && (
-                  <>
-                    {" · "}
-                    <bdi>@{m.username}</bdi>
-                  </>
-                )}
-              </p>
-              <p className="mt-0.5 truncate text-xs text-muted sm:hidden">
-                {m.responsibleName
-                  ? tpl(t.stResponsible, { name: m.responsibleName })
-                  : t.stNoResponsible}
-              </p>
             </div>
-            {m.role === "sales_agent" && (
-              <AssignManagerButton member={m} options={managerOptions} />
-            )}
-            <DeleteUserButton userId={m.userId} name={name} email={m.email ?? ""} />
+            <div className="flex flex-wrap items-center gap-1 ms-auto">
+              {m.role === "sales_agent" && (
+                <AssignManagerButton member={m} options={managerOptions} />
+              )}
+              <DeleteUserButton userId={m.userId} name={name} email={m.email ?? ""} />
+            </div>
             <div className="hidden shrink-0 space-y-0.5 text-end text-xs text-muted sm:block">
               <p>{tpl(t.stHallsSold, { n: m.hallsSold })}</p>
               <p className="max-w-48 truncate">

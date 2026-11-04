@@ -110,57 +110,65 @@ function HallItem({ hall }: { hall: SoldHallRow }) {
   const [error, setError] = React.useState<string | undefined>();
   const active = hall.hallStatus === "active";
   return (
-    <li className="flex items-center gap-3 p-4 text-sm">
-      <span
-        aria-hidden
-        className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-primary/15 text-accent"
-      >
-        <Building2 className="h-5 w-5" />
-      </span>
-      <div className="min-w-0 flex-1">
-        <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-          <span className="truncate font-medium">{hall.hallName}</span>
-          <Badge tone="neutral">{hall.currency}</Badge>
-          {!active && <Badge tone="warning">{t.plInactive}</Badge>}
-        </div>
-        <p className="mt-0.5 truncate text-xs text-muted">
-          {hall.ownerEmail ? tpl(t.hwOwner, { email: hall.ownerEmail }) : t.hwNoOwner}
-          {hall.soldByName && ` · ${tpl(t.stSoldBy, { name: hall.soldByName })}`}
-        </p>
-        <p className="mt-0.5 text-xs text-muted">
-          {hall.planKind === "unlimited"
-            ? t.spHallUnlimited
-            : hall.planName && hall.planPriceMinor !== null && hall.planCurrency
-              ? tpl(t.spHallLine, {
-                  name: planLabel(t, hall.planPeriod, hall.planName),
-                  price: formatMoney(hall.planPriceMinor, hall.planCurrency, formatLocale(locale)),
-                })
-              : null}
-        </p>
-        <p className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted">
-          <span>{tpl(t.spStarted, { date: shortDate(hall.subscriptionStartedAt, locale) })}</span>
-          <span aria-hidden>·</span>
-          {hall.subscriptionEndsAt ? (
-            <span className={hall.subscriptionExpired ? "text-danger" : undefined}>
-              {tpl(hall.subscriptionExpired ? t.spExpiredOn : t.spEndsOn, {
-                date: shortDate(hall.subscriptionEndsAt, locale),
-              })}
-            </span>
-          ) : (
-            <span>{t.spNeverEnds}</span>
-          )}
-          {hall.subscriptionExpired && <Badge tone="danger">{t.spExpired}</Badge>}
-        </p>
-        {error && (
-          <p role="alert" className="mt-1 text-xs text-danger">
-            {error}
+    <li className="flex flex-wrap items-center gap-x-3 gap-y-2 p-4 text-sm">
+      <div className="flex min-w-0 basis-full items-start gap-3 sm:flex-1 sm:basis-0">
+        <span
+          aria-hidden
+          className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-primary/15 text-accent"
+        >
+          <Building2 className="h-5 w-5" />
+        </span>
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+            <span className="truncate font-medium">{hall.hallName}</span>
+            <Badge tone="neutral">{hall.currency}</Badge>
+            {!active && <Badge tone="warning">{t.plInactive}</Badge>}
+          </div>
+          <p className="mt-0.5 break-words text-xs text-muted sm:truncate">
+            {hall.ownerEmail ? tpl(t.hwOwner, { email: hall.ownerEmail }) : t.hwNoOwner}
+            {hall.soldByName && ` · ${tpl(t.stSoldBy, { name: hall.soldByName })}`}
           </p>
-        )}
+          <p className="mt-0.5 text-xs text-muted">
+            {hall.planKind === "unlimited"
+              ? t.spHallUnlimited
+              : hall.planName && hall.planPriceMinor !== null && hall.planCurrency
+                ? tpl(t.spHallLine, {
+                    name: planLabel(t, hall.planPeriod, hall.planName),
+                    price: formatMoney(
+                      hall.planPriceMinor,
+                      hall.planCurrency,
+                      formatLocale(locale),
+                    ),
+                  })
+                : null}
+          </p>
+          <p className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted">
+            <span>{tpl(t.spStarted, { date: shortDate(hall.subscriptionStartedAt, locale) })}</span>
+            <span aria-hidden>·</span>
+            {hall.subscriptionEndsAt ? (
+              <span className={hall.subscriptionExpired ? "text-danger" : undefined}>
+                {tpl(hall.subscriptionExpired ? t.spExpiredOn : t.spEndsOn, {
+                  date: shortDate(hall.subscriptionEndsAt, locale),
+                })}
+              </span>
+            ) : (
+              <span>{t.spNeverEnds}</span>
+            )}
+            {hall.subscriptionExpired && <Badge tone="danger">{t.spExpired}</Badge>}
+          </p>
+          {error && (
+            <p role="alert" className="mt-1 text-xs text-danger">
+              {error}
+            </p>
+          )}
+        </div>
       </div>
-      <Button variant="ghost" size="sm" onClick={() => setOpen(true)}>
-        {active ? t.emDeactivate : t.emReactivate}
-      </Button>
-      <DeleteHallButton hallId={hall.hallId} name={hall.hallName} />
+      <div className="flex flex-wrap items-center gap-1 ms-auto">
+        <Button variant="ghost" size="sm" onClick={() => setOpen(true)}>
+          {active ? t.emDeactivate : t.emReactivate}
+        </Button>
+        <DeleteHallButton hallId={hall.hallId} name={hall.hallName} />
+      </div>
       <ConfirmDialog
         open={open}
         onOpenChange={setOpen}

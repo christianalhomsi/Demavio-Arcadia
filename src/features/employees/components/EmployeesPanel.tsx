@@ -60,7 +60,7 @@ export function EmployeesPanel({
 
   return (
     <div className="space-y-8">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-2xl font-semibold">{t.emTitle}</h1>
         <InviteDialog hallId={hallId} onDone={() => router.refresh()} />
       </div>
@@ -70,7 +70,7 @@ export function EmployeesPanel({
         <h2 id="members-h" className="sr-only">
           {t.emMembers}
         </h2>
-        <div className="overflow-x-auto rounded-2xl border border-border bg-surface shadow-card">
+        <div className="stack-table overflow-x-auto rounded-2xl border border-border bg-surface shadow-card">
           <table className="w-full text-start text-sm">
             <caption className="sr-only">{t.emCaption}</caption>
             <thead className="border-b border-border bg-neutral-bg text-xs uppercase text-muted">

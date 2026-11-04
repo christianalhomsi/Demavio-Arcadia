@@ -4,6 +4,7 @@ import { Ellipsis, LogOut, Menu } from "lucide-react";
 import { usePathname } from "next/navigation";
 import * as React from "react";
 import { Logo } from "@/components/brand/Brand";
+import { StackTableLabels } from "@/components/data/StackTableLabels";
 import { LanguageToggle } from "@/components/player/LanguageToggle";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
@@ -79,6 +80,7 @@ export function AppShell({
         <aside className="hidden border-e border-border bg-surface lg:sticky lg:top-14 lg:block lg:h-[calc(100dvh-3.5rem)] lg:overflow-y-auto">
           <Sidebar groups={groups} hallId={hallId} />
         </aside>
+        <StackTableLabels />
         <main
           id="main"
           className="mx-auto w-full min-w-0 max-w-6xl px-4 pb-[calc(6rem+var(--safe-bottom))] pt-5 sm:px-6 sm:pt-6 lg:pb-8"

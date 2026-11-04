@@ -18,8 +18,9 @@ const channel = {
   }),
 };
 const removeChannel = vi.fn();
+const channelName = vi.fn((_n: string) => channel);
 vi.mock("@/lib/supabase/client", () => ({
-  createClient: () => ({ channel: () => channel, removeChannel }),
+  createClient: () => ({ channel: (n: string) => channelName(n), removeChannel }),
 }));
 
 import { useHallRealtime } from "./useHallRealtime";
@@ -37,6 +38,20 @@ beforeEach(() => {
 afterEach(() => vi.useRealTimers());
 
 describe("useHallRealtime", () => {
+  it("names every subscription uniquely so a channel still being removed is never reused", () => {
+    const names: string[] = [];
+    channelName.mockImplementation((n: string) => {
+      names.push(n);
+      return channel;
+    });
+    const first = render(<Probe />);
+    first.unmount();
+    render(<Probe />);
+    expect(names).toHaveLength(2);
+    expect(names[0]).not.toBe(names[1]);
+    expect(names.every((n) => n.startsWith("hall:hall-1:devices,agents:"))).toBe(true);
+  });
+
   it("subscribes to each table scoped to the hall", () => {
     render(<Probe />);
     expect(channel.on).toHaveBeenCalledWith(

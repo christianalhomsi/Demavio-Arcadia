@@ -181,7 +181,7 @@ export function CloseShiftStepper({
           )}
           {carried.length > 0 && (
             <details className="text-sm">
-              <summary className="cursor-pointer text-muted">
+              <summary className="flex min-h-11 cursor-pointer items-center text-muted">
                 {tpl(t.stCarried, { n: carried.length })}
               </summary>
               <UnpaidTable hallId={hallId} timeZone={timeZone} rows={carried} />

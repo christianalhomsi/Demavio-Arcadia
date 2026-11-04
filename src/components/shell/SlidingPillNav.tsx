@@ -59,7 +59,7 @@ export function SlidingPillNav({
         />
         {items.map((item) => {
           const cls = cn(
-            "relative z-10 flex h-14 w-full cursor-pointer flex-col items-center justify-center gap-0.5 rounded-full text-[11px] font-medium transition-colors duration-200 active:opacity-70",
+            "relative z-10 flex h-14 w-full cursor-pointer flex-col items-center justify-center gap-0.5 rounded-full font-medium transition-colors duration-200 active:opacity-70",
             item.active ? "text-foreground" : "text-muted",
           );
           const inner = (
@@ -73,7 +73,14 @@ export function SlidingPillNav({
               >
                 {item.icon}
               </span>
-              <span className="max-w-full truncate px-1">{item.label}</span>
+              <span
+                className={cn(
+                  "line-clamp-2 max-w-full break-words px-0.5 text-center leading-[1.15]",
+                  items.length > 4 ? "text-[10px]" : "text-[11px]",
+                )}
+              >
+                {item.label}
+              </span>
             </>
           );
           return (

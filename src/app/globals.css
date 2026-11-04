@@ -295,3 +295,92 @@ option {
 .overlay[data-state="closed"] {
   animation: overlay-out 200ms ease-in both;
 }
+
+/* Phones: taps respond at once (no double-tap-zoom delay) on everything that can be pressed. */
+a,
+button,
+summary,
+[role="button"],
+[role="tab"],
+input,
+select,
+textarea {
+  touch-action: manipulation;
+}
+
+/* Phones: a wide table opted in with .stack-table becomes one card per row, each value labelled with its
+   column (labels come from components/data/StackTableLabels.tsx). From 768px it is the ordinary table. */
+@media (max-width: 767px) {
+  .stack-table {
+    overflow: visible !important;
+    border: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+  }
+  .stack-table table,
+  .stack-table tbody,
+  .stack-table tr,
+  .stack-table td {
+    display: block;
+    width: 100%;
+  }
+  .stack-table caption {
+    display: none;
+  }
+  /* Header row: out of sight but still there for screen readers. */
+  .stack-table thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
+  .stack-table tr {
+    margin-bottom: 0.75rem;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    border-radius: 1rem;
+    background: var(--surface);
+    box-shadow: var(--shadow-card);
+    padding-block: 0.25rem;
+  }
+  .stack-table td {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    min-height: 2.75rem;
+    border: 0;
+    padding: 0.5rem 1rem;
+    text-align: end;
+  }
+  .stack-table td::before {
+    content: attr(data-label);
+    flex-shrink: 0;
+    max-width: 45%;
+    color: var(--muted);
+    font-size: 0.75rem;
+    text-align: start;
+  }
+  /* Cells without a column name (row actions) sit on their own line. */
+  .stack-table td:not([data-label]) {
+    justify-content: flex-end;
+    flex-wrap: wrap;
+  }
+  .stack-table td:empty {
+    display: none;
+  }
+}
+
+/* Checkboxes: large enough to tap, and the whole line they sit on is the tap target. */
+input[type="checkbox"] {
+  width: 1.25rem;
+  height: 1.25rem;
+  flex-shrink: 0;
+  accent-color: var(--primary);
+}
+label:has(> input[type="checkbox"]) {
+  min-height: 2.75rem;
+  cursor: pointer;
+}
+

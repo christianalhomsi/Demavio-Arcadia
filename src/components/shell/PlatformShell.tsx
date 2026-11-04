@@ -18,6 +18,7 @@ import {
   Users,
 } from "lucide-react";
 import { Logo } from "@/components/brand/Brand";
+import { StackTableLabels } from "@/components/data/StackTableLabels";
 import { LanguageToggle } from "@/components/player/LanguageToggle";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
@@ -124,6 +125,7 @@ export function PlatformShell({
             })}
           </nav>
         </aside>
+        <StackTableLabels />
         <main
           id="main"
           className="mx-auto w-full min-w-0 max-w-6xl px-4 pb-[calc(6rem+var(--safe-bottom))] pt-5 sm:px-6 sm:pt-6 lg:pb-8"
