@@ -1,26 +1,297 @@
 @import "tailwindcss";
 
+/* Design tokens (Arcadia identity). Dark-only; status colors always pair with text/icons,
+   never color alone. Text pairs meet WCAG AA on their surfaces. */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  color-scheme: dark;
+  --background: #01022a;
+  --surface: #01063b;
+  --surface-raised: #010c50;
+  --foreground: #f7f6f8;
+  --muted: #07b1fc;
+  --border: #010c50;
+  --primary: #004eeb;
+  --primary-foreground: #f7f6f8;
+  --accent: #07b1fc;
+  --glow: #004eeb40;
+  --success: #4ade80;
+  --success-bg: #07301f;
+  --warning: #fbbf24;
+  --warning-bg: #3a2a06;
+  --danger: #f87171;
+  --danger-bg: #3d0f1a;
+  --info: #7cc4ff;
+  --info-bg: #0a2557;
+  --neutral-bg: #010c50;
+  --ring: #004eeb;
+  --scrim: rgb(0 0 0 / 0.65);
+  --radius: 0.625rem;
+  --shadow-card: 0 1px 2px rgb(0 0 0 / 0.4), 0 6px 18px -8px rgb(0 0 0 / 0.5);
+  --shadow-float: 0 -8px 30px -8px rgb(0 0 0 / 0.6);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
 }
 
 @theme inline {
   --color-background: var(--background);
+  --color-surface: var(--surface);
+  --color-surface-raised: var(--surface-raised);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-muted: var(--muted);
+  --color-border: var(--border);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-success: var(--success);
+  --color-success-bg: var(--success-bg);
+  --color-warning: var(--warning);
+  --color-warning-bg: var(--warning-bg);
+  --color-danger: var(--danger);
+  --color-danger-bg: var(--danger-bg);
+  --color-info: var(--info);
+  --color-info-bg: var(--info-bg);
+  --color-neutral-bg: var(--neutral-bg);
+  --color-ring: var(--ring);
+  --color-accent: var(--accent);
+  --color-glow: var(--glow);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --shadow-card: var(--shadow-card);
+  --shadow-float: var(--shadow-float);
+  --font-sans: var(--font-geist-sans), "Inter", system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), "JetBrains Mono", ui-monospace, monospace;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+:root {
+  /* Self-hosted (see layout.tsx); the system font is only a last resort. */
+  --font-cairo: "Cairo Variable", system-ui, sans-serif;
+  --font-geist-sans: "Geist Variable";
+  --font-geist-mono: "Geist Mono Variable";
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans);
+  line-height: 1.55;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+html[lang="ar"] body {
+  font-family: var(--font-cairo), system-ui, sans-serif;
+  direction: rtl;
+}
+
+/* Faster taps and no accidental double-tap zoom on controls. */
+a,
+button,
+summary,
+select,
+label,
+input[type="checkbox"] {
+  touch-action: manipulation;
+}
+
+:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+/* Overlay motion: a bottom sheet on phones, a centered dialog from sm up. */
+@keyframes overlay-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes sheet-in {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+@keyframes dialog-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -48%) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+}
+.overlay[data-state="open"] {
+  animation: overlay-in 180ms ease-out;
+}
+.sheet[data-state="open"] {
+  animation: sheet-in 240ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+@media (min-width: 640px) {
+  .sheet[data-state="open"] {
+    animation: dialog-in 180ms ease-out;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Public player pages: Arabic font in the scoped RTL wrapper, and a quiet starfield backdrop. */
+[data-locale="ar"] {
+  font-family: var(--font-cairo), system-ui, sans-serif;
+}
+.stars {
+  background-image:
+    radial-gradient(1.5px 1.5px at 12% 18%, #07b1fc99 50%, transparent 51%),
+    radial-gradient(1px 1px at 78% 12%, #f7f6f8aa 50%, transparent 51%),
+    radial-gradient(1.5px 1.5px at 38% 62%, #8b8cf899 50%, transparent 51%),
+    radial-gradient(1px 1px at 88% 70%, #07b1fc88 50%, transparent 51%),
+    radial-gradient(1px 1px at 22% 88%, #f7f6f899 50%, transparent 51%),
+    radial-gradient(1.5px 1.5px at 62% 40%, #004eebcc 50%, transparent 51%),
+    radial-gradient(ellipse 80% 50% at 50% -10%, #004eeb26, transparent 70%);
+  background-size:
+    340px 340px,
+    420px 420px,
+    380px 380px,
+    460px 460px,
+    300px 300px,
+    520px 520px,
+    100% 100%;
+}
+
+/* Scrollbars follow the site's dark/blue identity: a slim rounded thumb on the page background. */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--primary) 70%, var(--background)) transparent;
+}
+html {
+  scrollbar-color: var(--primary) var(--background);
+}
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: var(--background);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--surface-raised);
+  border: 2px solid var(--background);
+  border-radius: 999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--primary);
+}
+::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+/* Dialog body: a thin, quiet scrollbar that sits inside the rounded container. */
+.dialog-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+.dialog-scroll::-webkit-scrollbar {
+  width: 6px;
+}
+.dialog-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+.dialog-scroll::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border: 0;
+  border-radius: 999px;
+}
+
+/* Form controls don't inherit the page font by default; make them (and dialogs) follow it, and use
+   Cairo for every Arabic element, including ones that ask for the mono or sans utility. */
+button,
+input,
+select,
+textarea,
+optgroup {
+  font-family: inherit;
+}
+html[lang="ar"] *,
+html[lang="ar"] input,
+html[lang="ar"] button,
+html[lang="ar"] select,
+html[lang="ar"] textarea {
+  font-family: var(--font-cairo), system-ui, sans-serif;
+}
+
+/* Dropdown lists (<select>): matching colours for every browser. The full custom list (Chromium 135+)
+   lives in select-styles.ts, because the CSS build drops the ::picker() rules. */
+option {
+  background: var(--surface);
+  color: var(--foreground);
+}
+
+/* Button to panel: a panel grows out of the button that opened it and shrinks back into it. The
+   variables --mx, --my (button centre relative to the panel) and --ms (start scale) come from
+   lib/ui/morph.ts. Transform and opacity only; it replaces the plain entrance when a button exists. */
+@keyframes morph-in {
+  0% {
+    transform: translate(var(--mx), var(--my)) scale(var(--ms));
+    opacity: 0;
+  }
+  30% {
+    opacity: 1;
+  }
+  100% {
+    transform: translate(0, 0) scale(1);
+    opacity: 1;
+  }
+}
+@keyframes morph-out {
+  0% {
+    transform: translate(0, 0) scale(1);
+    opacity: 1;
+  }
+  65% {
+    opacity: 1;
+  }
+  100% {
+    transform: translate(var(--mx), var(--my)) scale(var(--ms));
+    opacity: 0;
+  }
+}
+@keyframes overlay-out {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+/* Measured at rest before it may move, so nothing flashes. */
+[data-morph="pending"] {
+  animation: none !important;
+}
+.sheet[data-morph="on"][data-state="open"],
+.morph-pop[data-morph="on"]:not([data-state]),
+.morph-pop[data-morph="on"]:popover-open {
+  animation: morph-in 360ms cubic-bezier(0.2, 0.9, 0.25, 1) both;
+}
+.sheet[data-morph="on"][data-state="closed"] {
+  animation: morph-out 240ms cubic-bezier(0.4, 0, 1, 1) both;
+}
+.overlay[data-state="closed"] {
+  animation: overlay-out 200ms ease-in both;
 }

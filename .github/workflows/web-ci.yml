@@ -1,0 +1,34 @@
+name: web-ci
+on:
+  pull_request:
+    paths: ["web/**"]
+  push:
+    branches: [main]
+    paths: ["web/**"]
+defaults:
+  run:
+    working-directory: web
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          {
+            node-version-file: web/.nvmrc,
+            cache: npm,
+            cache-dependency-path: web/package-lock.json,
+          }
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm run lint
+      - run: npm run format:check
+      - run: npm test
+      - name: Forbid service-role key in web source
+        run: "! grep -rIn 'SERVICE_ROLE' src next.config.ts"
+      - run: npm run build
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: http://127.0.0.1:54321
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ci
+          NEXT_PUBLIC_APP_URL: http://localhost:3000
