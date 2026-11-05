@@ -1,6 +1,6 @@
 import { Suspense } from "react";
 import { ErrorState } from "@/components/data/ErrorState";
-import { Skeleton } from "@/components/ui/skeleton";
+import { ListPageSkeleton } from "@/components/ui/skeleton";
 import { HallRequestsList } from "@/features/sales/components/SalesPanels";
 import { listHallRequests } from "@/features/sales/queries";
 import { requirePlatformRole } from "@/lib/auth/guards";
@@ -26,7 +26,7 @@ async function Requests() {
 
 export default function AdminRequestsPage() {
   return (
-    <Suspense fallback={<Skeleton className="h-40" />}>
+    <Suspense fallback={<ListPageSkeleton subtitle rows={5} />}>
       <Requests />
     </Suspense>
   );

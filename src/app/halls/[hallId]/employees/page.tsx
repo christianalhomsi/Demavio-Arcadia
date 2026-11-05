@@ -1,7 +1,7 @@
 import { Suspense } from "react";
 import { permissionForPath } from "@/components/shell/nav";
 import { ErrorState } from "@/components/data/ErrorState";
-import { Skeleton } from "@/components/ui/skeleton";
+import { TablePageSkeleton } from "@/components/ui/skeleton";
 import { EmployeesPanel } from "@/features/employees/components/EmployeesPanel";
 import { listHallMembers, listPendingInvitations } from "@/features/employees/queries";
 import { requireHallPermission } from "@/lib/auth/guards";
@@ -30,7 +30,7 @@ async function Employees({ params }: { params: Promise<{ hallId: string }> }) {
 
 export default function EmployeesPage({ params }: PageProps<"/halls/[hallId]/employees">) {
   return (
-    <Suspense fallback={<Skeleton className="h-64" />}>
+    <Suspense fallback={<TablePageSkeleton cols={4} />}>
       <Employees params={params} />
     </Suspense>
   );

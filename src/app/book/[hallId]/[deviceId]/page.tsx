@@ -2,7 +2,7 @@ import { ChevronRight } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
-import { Skeleton } from "@/components/ui/skeleton";
+import { FormSkeleton } from "@/components/ui/skeleton";
 import { PlayerPage } from "@/components/player/PlayerPage";
 import { getT } from "@/lib/i18n/server";
 import { isUuid } from "@/lib/auth/authorize";
@@ -87,7 +87,7 @@ export default function DeviceBookingPage({
   return (
     <PlayerPage>
       <main className="mx-auto max-w-5xl px-4 pb-8 pt-4 sm:py-8">
-        <Suspense fallback={<Skeleton className="h-64 w-full" />}>
+        <Suspense fallback={<FormSkeleton fields={3} />}>
           <Booking params={params} searchParams={searchParams} />
         </Suspense>
       </main>

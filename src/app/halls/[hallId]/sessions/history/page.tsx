@@ -6,7 +6,7 @@ import { Pagination } from "@/components/data/Pagination";
 import { HallTime } from "@/components/domain/HallTime";
 import { permissionForPath } from "@/components/shell/nav";
 import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
+import { TablePageSkeleton } from "@/components/ui/skeleton";
 import { getHallTimeZone } from "@/features/halls/queries";
 import { listSessions } from "@/features/sessions/queries";
 import { requireHallPermission } from "@/lib/auth/guards";
@@ -113,7 +113,7 @@ export default function SessionHistoryPage({
   searchParams,
 }: PageProps<"/halls/[hallId]/sessions/history">) {
   return (
-    <Suspense fallback={<Skeleton className="h-64" />}>
+    <Suspense fallback={<TablePageSkeleton action={false} pagination cols={6} />}>
       <History params={params} searchParams={searchParams} />
     </Suspense>
   );

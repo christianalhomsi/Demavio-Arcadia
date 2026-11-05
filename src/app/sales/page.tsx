@@ -2,7 +2,7 @@ import Link from "next/link";
 import { Suspense } from "react";
 import { ErrorState } from "@/components/data/ErrorState";
 import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
+import { DashboardPageSkeleton } from "@/components/ui/skeleton";
 import { AddHallButton } from "@/features/admin/components/HallsPanels";
 import { RequestHallButton } from "@/features/sales/components/SalesPanels";
 import { listSubscriptionPlans } from "@/features/admin/queries";
@@ -95,7 +95,11 @@ async function SalesHome() {
 
 export default function SalesPage() {
   return (
-    <Suspense fallback={<Skeleton className="h-40" />}>
+    <Suspense
+      fallback={
+        <DashboardPageSkeleton kpis={3} kpiClassName="grid-cols-2 lg:grid-cols-3" rows={4} />
+      }
+    >
       <SalesHome />
     </Suspense>
   );

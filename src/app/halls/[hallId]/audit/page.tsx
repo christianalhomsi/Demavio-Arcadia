@@ -5,7 +5,7 @@ import { ErrorState } from "@/components/data/ErrorState";
 import { Pagination } from "@/components/data/Pagination";
 import { HallTime } from "@/components/domain/HallTime";
 import { permissionForPath } from "@/components/shell/nav";
-import { Skeleton } from "@/components/ui/skeleton";
+import { ListPageSkeleton } from "@/components/ui/skeleton";
 import { auditLabel } from "@/features/audit/labels";
 import { listHallAudit } from "@/features/audit/queries";
 import { getHallTimeZone } from "@/features/halls/queries";
@@ -91,7 +91,7 @@ async function Audit({
 
 export default function AuditPage({ params, searchParams }: PageProps<"/halls/[hallId]/audit">) {
   return (
-    <Suspense fallback={<Skeleton className="h-64" />}>
+    <Suspense fallback={<ListPageSkeleton filters={3} pagination />}>
       <Audit params={params} searchParams={searchParams} />
     </Suspense>
   );

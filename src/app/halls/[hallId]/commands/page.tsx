@@ -6,7 +6,7 @@ import { Pagination } from "@/components/data/Pagination";
 import { HallTime } from "@/components/domain/HallTime";
 import { StatusBadge } from "@/components/domain/StatusBadge";
 import { permissionForPath } from "@/components/shell/nav";
-import { Skeleton } from "@/components/ui/skeleton";
+import { ListPageSkeleton } from "@/components/ui/skeleton";
 import { listCommandEvents, listCommands } from "@/features/devices/queries";
 import { getHallTimeZone } from "@/features/halls/queries";
 import { requireHallPermission } from "@/lib/auth/guards";
@@ -121,7 +121,7 @@ export default function CommandsPage({
   searchParams,
 }: PageProps<"/halls/[hallId]/commands">) {
   return (
-    <Suspense fallback={<Skeleton className="h-64" />}>
+    <Suspense fallback={<ListPageSkeleton filters={5} pagination />}>
       <Commands params={params} searchParams={searchParams} />
     </Suspense>
   );

@@ -2,7 +2,7 @@ import { Suspense } from "react";
 import { EmptyState } from "@/components/data/EmptyState";
 import { ErrorState } from "@/components/data/ErrorState";
 import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
+import { ListPageSkeleton } from "@/components/ui/skeleton";
 import { listHallHealth } from "@/features/admin/queries";
 import { requirePlatformRole } from "@/lib/auth/guards";
 import { getT } from "@/lib/i18n/server";
@@ -59,7 +59,7 @@ async function Monitoring() {
 
 export default function MonitoringPage() {
   return (
-    <Suspense fallback={<Skeleton className="h-40" />}>
+    <Suspense fallback={<ListPageSkeleton rows={6} />}>
       <Monitoring />
     </Suspense>
   );

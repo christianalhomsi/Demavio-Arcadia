@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { HallTime } from "@/components/domain/HallTime";
 import { permissionForPath } from "@/components/shell/nav";
-import { Skeleton } from "@/components/ui/skeleton";
+import { DetailPageSkeleton } from "@/components/ui/skeleton";
 import { getHallTimeZone } from "@/features/halls/queries";
 import { InvoiceStatusBadge } from "@/features/invoices/components/InvoiceStatusBadge";
 import { getInvoiceForSession } from "@/features/invoices/queries";
@@ -147,7 +147,7 @@ export default function SessionDetailPage({
   params,
 }: PageProps<"/halls/[hallId]/sessions/[sessionId]">) {
   return (
-    <Suspense fallback={<Skeleton className="h-64" />}>
+    <Suspense fallback={<DetailPageSkeleton section="list" />}>
       <SessionDetail params={params} />
     </Suspense>
   );

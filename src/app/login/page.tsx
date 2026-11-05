@@ -3,7 +3,7 @@ import { Suspense } from "react";
 import { LanguageToggle } from "@/components/player/LanguageToggle";
 import { Logo, Wordmark } from "@/components/player/PlayerHeader";
 import { PlayerPage } from "@/components/player/PlayerPage";
-import { Skeleton } from "@/components/ui/skeleton";
+import { FormSkeleton } from "@/components/ui/skeleton";
 import { postLoginDestination } from "@/lib/auth/context";
 import { safeNext } from "@/lib/auth/redirect";
 import { getMyContext } from "@/lib/auth/session";
@@ -88,7 +88,7 @@ export default function LoginPage({ searchParams }: { searchParams: Search }) {
             </div>
             <LanguageToggle />
           </header>
-          <Suspense fallback={<Skeleton className="h-64 w-full" />}>
+          <Suspense fallback={<FormSkeleton fields={2} />}>
             <LoginForm searchParams={searchParams} />
           </Suspense>
         </div>

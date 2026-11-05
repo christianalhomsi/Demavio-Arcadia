@@ -1,7 +1,7 @@
 import { Suspense } from "react";
 import { ErrorState } from "@/components/data/ErrorState";
 import { Pagination } from "@/components/data/Pagination";
-import { Skeleton } from "@/components/ui/skeleton";
+import { TablePageSkeleton } from "@/components/ui/skeleton";
 import { AddHallButton, HallsList } from "@/features/admin/components/HallsPanels";
 import { listHallsSold, listSubscriptionPlans } from "@/features/admin/queries";
 import { requirePlatformRole } from "@/lib/auth/guards";
@@ -55,7 +55,7 @@ async function Halls({
 
 export default function HallsPage({ searchParams }: PageProps<"/admin/halls">) {
   return (
-    <Suspense fallback={<Skeleton className="h-40" />}>
+    <Suspense fallback={<TablePageSkeleton search pagination cols={5} />}>
       <Halls searchParams={searchParams} />
     </Suspense>
   );

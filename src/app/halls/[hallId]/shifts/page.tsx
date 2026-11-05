@@ -2,7 +2,7 @@ import { Suspense } from "react";
 import { ErrorState } from "@/components/data/ErrorState";
 import { Pagination } from "@/components/data/Pagination";
 import { permissionForPath } from "@/components/shell/nav";
-import { Skeleton } from "@/components/ui/skeleton";
+import { TablePageSkeleton } from "@/components/ui/skeleton";
 import { getHallTimeZone } from "@/features/halls/queries";
 import { ShiftsPanel } from "@/features/shifts/components/ShiftsPanel";
 import { listShifts } from "@/features/shifts/queries";
@@ -43,7 +43,7 @@ async function Shifts({
 
 export default function ShiftsPage({ params, searchParams }: PageProps<"/halls/[hallId]/shifts">) {
   return (
-    <Suspense fallback={<Skeleton className="h-64" />}>
+    <Suspense fallback={<TablePageSkeleton pagination cols={5} />}>
       <Shifts params={params} searchParams={searchParams} />
     </Suspense>
   );

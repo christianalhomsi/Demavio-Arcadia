@@ -1,7 +1,7 @@
 import { Suspense } from "react";
 import { notFound } from "next/navigation";
 import { permissionForPath } from "@/components/shell/nav";
-import { Skeleton } from "@/components/ui/skeleton";
+import { SectionsPageSkeleton } from "@/components/ui/skeleton";
 import {
   HallProfileForm,
   PoliciesForm,
@@ -72,7 +72,7 @@ async function Settings({ params }: { params: Promise<{ hallId: string }> }) {
 
 export default function SettingsPage({ params }: PageProps<"/halls/[hallId]/settings">) {
   return (
-    <Suspense fallback={<Skeleton className="h-64" />}>
+    <Suspense fallback={<SectionsPageSkeleton sections={3} />}>
       <Settings params={params} />
     </Suspense>
   );

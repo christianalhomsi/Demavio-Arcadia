@@ -1,7 +1,7 @@
 import { Suspense } from "react";
 import { ErrorState } from "@/components/data/ErrorState";
 import { permissionForPath } from "@/components/shell/nav";
-import { Skeleton } from "@/components/ui/skeleton";
+import { CardsPageSkeleton } from "@/components/ui/skeleton";
 import { DeviceGrid } from "@/features/devices/components/DeviceGrid";
 import { listDeviceStatus } from "@/features/devices/queries";
 import { listPackages } from "@/features/packages/queries";
@@ -26,7 +26,7 @@ async function Devices({ params }: { params: Promise<{ hallId: string }> }) {
 
 export default function DevicesPage({ params }: PageProps<"/halls/[hallId]/devices">) {
   return (
-    <Suspense fallback={<Skeleton className="h-64" />}>
+    <Suspense fallback={<CardsPageSkeleton />}>
       <Devices params={params} />
     </Suspense>
   );

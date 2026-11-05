@@ -7,7 +7,7 @@ import { HallTime } from "@/components/domain/HallTime";
 import { Money } from "@/components/domain/Money";
 import { permissionForPath } from "@/components/shell/nav";
 import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
+import { DetailPageSkeleton } from "@/components/ui/skeleton";
 import { getHallTimeZone } from "@/features/halls/queries";
 import { WalletControls } from "@/features/wallets/components/WalletControls";
 import { LinkWalletDialog, TopUpDialog } from "@/features/wallets/components/WalletsPanel";
@@ -173,7 +173,7 @@ export default function WalletDetailPage({
   searchParams,
 }: PageProps<"/halls/[hallId]/wallets/[walletId]">) {
   return (
-    <Suspense fallback={<Skeleton className="h-64" />}>
+    <Suspense fallback={<DetailPageSkeleton section="table" />}>
       <WalletDetail params={params} searchParams={searchParams} />
     </Suspense>
   );

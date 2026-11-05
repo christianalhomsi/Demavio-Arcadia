@@ -6,7 +6,7 @@ import { Pagination } from "@/components/data/Pagination";
 import { HallTime } from "@/components/domain/HallTime";
 import { Money } from "@/components/domain/Money";
 import { permissionForPath } from "@/components/shell/nav";
-import { Skeleton } from "@/components/ui/skeleton";
+import { TablePageSkeleton } from "@/components/ui/skeleton";
 import { getHallTimeZone } from "@/features/halls/queries";
 import { InvoiceStatusBadge } from "@/features/invoices/components/InvoiceStatusBadge";
 import { listInvoices } from "@/features/invoices/queries";
@@ -185,7 +185,7 @@ export default function InvoicesPage({
   searchParams,
 }: PageProps<"/halls/[hallId]/invoices">) {
   return (
-    <Suspense fallback={<Skeleton className="h-64" />}>
+    <Suspense fallback={<TablePageSkeleton action={false} filters={4} pagination cols={6} />}>
       <Invoices params={params} searchParams={searchParams} />
     </Suspense>
   );

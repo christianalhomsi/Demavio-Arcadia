@@ -3,7 +3,7 @@ import { Suspense } from "react";
 import { EmptyState } from "@/components/data/EmptyState";
 import { PlayerPage } from "@/components/player/PlayerPage";
 import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
+import { ListSkeleton } from "@/components/ui/skeleton";
 import { MyBookings } from "@/features/booking/components/MyBookings";
 import { listMyReservations } from "@/features/booking/queries";
 import { requireUser } from "@/lib/auth/session";
@@ -42,7 +42,7 @@ export default function ReservationsPage() {
   return (
     <PlayerPage next="/reservations">
       <main className="mx-auto max-w-3xl px-4 py-10">
-        <Suspense fallback={<Skeleton className="h-40 w-full" />}>
+        <Suspense fallback={<ListSkeleton rows={3} />}>
           <Bookings />
         </Suspense>
       </main>

@@ -4,7 +4,7 @@ import { EmptyState } from "@/components/data/EmptyState";
 import { ErrorState } from "@/components/data/ErrorState";
 import { Pagination } from "@/components/data/Pagination";
 import { HallTime } from "@/components/domain/HallTime";
-import { Skeleton } from "@/components/ui/skeleton";
+import { ListPageSkeleton } from "@/components/ui/skeleton";
 import { listPlatformAudit } from "@/features/admin/queries";
 import { AUDIT_FILTER_KEYS, PLATFORM_AUDIT_FILTERS } from "@/features/admin/schemas";
 import { requirePlatformRole } from "@/lib/auth/guards";
@@ -83,7 +83,7 @@ async function Audit({
 
 export default function PlatformAuditPage({ searchParams }: PageProps<"/admin/audit">) {
   return (
-    <Suspense fallback={<Skeleton className="h-40" />}>
+    <Suspense fallback={<ListPageSkeleton filters={3} pagination />}>
       <Audit searchParams={searchParams} />
     </Suspense>
   );

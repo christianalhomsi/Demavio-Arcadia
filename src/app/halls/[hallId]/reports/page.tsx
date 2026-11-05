@@ -1,7 +1,7 @@
 import { Suspense } from "react";
 import { ErrorState } from "@/components/data/ErrorState";
 import { permissionForPath } from "@/components/shell/nav";
-import { Skeleton } from "@/components/ui/skeleton";
+import { DashboardPageSkeleton } from "@/components/ui/skeleton";
 import { getHallTimeZone } from "@/features/halls/queries";
 import { BreakdownView } from "@/features/reports/components/BreakdownView";
 import { ReportView } from "@/features/reports/components/ReportView";
@@ -44,7 +44,7 @@ export default function ReportsPage({
   searchParams,
 }: PageProps<"/halls/[hallId]/reports">) {
   return (
-    <Suspense fallback={<Skeleton className="h-64" />}>
+    <Suspense fallback={<DashboardPageSkeleton kpis={4} rows={5} />}>
       <Reports params={params} searchParams={searchParams} />
     </Suspense>
   );

@@ -1,7 +1,7 @@
 import { Suspense } from "react";
 import { ErrorState } from "@/components/data/ErrorState";
 import { permissionForPath } from "@/components/shell/nav";
-import { Skeleton } from "@/components/ui/skeleton";
+import { TablePageSkeleton } from "@/components/ui/skeleton";
 import { getHallCurrency } from "@/features/invoices/queries";
 import { ProductsPanel } from "@/features/products/components/ProductsPanel";
 import { listProducts } from "@/features/products/queries";
@@ -20,7 +20,7 @@ async function Products({ params }: { params: Promise<{ hallId: string }> }) {
 
 export default function ProductsPage({ params }: PageProps<"/halls/[hallId]/products">) {
   return (
-    <Suspense fallback={<Skeleton className="h-64" />}>
+    <Suspense fallback={<TablePageSkeleton cols={4} />}>
       <Products params={params} />
     </Suspense>
   );

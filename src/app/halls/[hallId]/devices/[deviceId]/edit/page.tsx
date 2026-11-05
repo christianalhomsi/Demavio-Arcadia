@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
-import { Skeleton } from "@/components/ui/skeleton";
+import { FormPageSkeleton } from "@/components/ui/skeleton";
 import { DeviceForm } from "@/features/devices/components/DeviceForm";
 import { getDeviceStatus } from "@/features/devices/queries";
 import { CAPABILITIES } from "@/features/devices/schemas";
@@ -43,7 +43,7 @@ export default function EditDevicePage({
   params,
 }: PageProps<"/halls/[hallId]/devices/[deviceId]/edit">) {
   return (
-    <Suspense fallback={<Skeleton className="h-64" />}>
+    <Suspense fallback={<FormPageSkeleton fields={6} />}>
       <EditDevice params={params} />
     </Suspense>
   );

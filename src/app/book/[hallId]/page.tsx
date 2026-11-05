@@ -124,12 +124,28 @@ async function Devices({ params }: { params: Promise<{ hallId: string }> }) {
 function DevicesSkeleton() {
   return (
     <div aria-hidden>
-      <Skeleton className="mt-1 h-10 w-28" />
-      <Skeleton className="aspect-[16/7] w-full rounded-3xl sm:aspect-[16/5]" />
-      <Skeleton className="mt-6 h-5 w-40" />
-      <div className="mt-3 grid gap-2.5 sm:grid-cols-2 lg:grid-cols-3">
-        {[0, 1, 2].map((i) => (
-          <Skeleton key={i} className="h-16 rounded-2xl" />
+      <Skeleton className="h-11 w-28" />
+      <Skeleton className="mt-1 aspect-[16/7] w-full rounded-3xl sm:aspect-[16/5]" />
+      <Skeleton className="mt-6 h-6 w-48" />
+      <div className="mt-3 space-y-7">
+        {[0, 1].map((g) => (
+          <section key={g}>
+            <Skeleton className="mb-2.5 h-4 w-24" />
+            <div className="grid gap-2.5 sm:grid-cols-2 lg:grid-cols-3">
+              {[0, 1, 2].map((i) => (
+                <div
+                  key={i}
+                  className="flex min-h-16 items-center gap-3.5 rounded-2xl border border-border bg-surface px-4 py-3 shadow-card"
+                >
+                  <Skeleton className="h-11 w-11 shrink-0 rounded-xl" />
+                  <div className="min-w-0 flex-1 space-y-2">
+                    <Skeleton className="h-5 w-2/3" />
+                    <Skeleton className="h-4 w-1/3" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
         ))}
       </div>
     </div>

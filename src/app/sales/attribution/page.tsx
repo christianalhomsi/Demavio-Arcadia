@@ -1,7 +1,7 @@
 import { Suspense } from "react";
 import { ErrorState } from "@/components/data/ErrorState";
 import { Pagination } from "@/components/data/Pagination";
-import { Skeleton } from "@/components/ui/skeleton";
+import { ListPageSkeleton } from "@/components/ui/skeleton";
 import { CreditsList } from "@/features/sales/components/SalesPanels";
 import { listSalesCredits } from "@/features/sales/queries";
 import { requirePlatformRole } from "@/lib/auth/guards";
@@ -36,7 +36,7 @@ async function Credits({
 
 export default function AttributionPage({ searchParams }: PageProps<"/sales/attribution">) {
   return (
-    <Suspense fallback={<Skeleton className="h-40" />}>
+    <Suspense fallback={<ListPageSkeleton subtitle pagination />}>
       <Credits searchParams={searchParams} />
     </Suspense>
   );

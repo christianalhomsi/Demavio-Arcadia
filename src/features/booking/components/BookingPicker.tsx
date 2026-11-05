@@ -262,8 +262,8 @@ export function BookingPicker(props: BookingPickerProps) {
     "grid h-6 w-6 place-items-center rounded-full bg-primary/15 text-xs font-bold text-accent";
 
   return (
-    <div className="mt-5 grid gap-5 md:grid-cols-[1fr_20rem] md:items-start">
-      <div className="min-w-0 space-y-6 pb-4 md:pb-0">
+    <div className="mt-5 space-y-6">
+      <div className="min-w-0 space-y-6 pb-0">
         {playerOptions.length > 0 && (
           <section aria-label={t.players}>
             <h2 className={stepTitle}>
@@ -491,8 +491,8 @@ export function BookingPicker(props: BookingPickerProps) {
       <aside
         aria-label={t.reserve}
         className={cn(
-          "sticky z-30 rounded-3xl border border-border bg-surface/95 p-4 shadow-float backdrop-blur",
-          "bottom-[calc(5.75rem+var(--safe-bottom))] md:bottom-auto md:top-24",
+          "z-30 rounded-3xl border border-border bg-surface/95 p-4 shadow-float backdrop-blur",
+          "mx-auto w-full max-w-xl",
         )}
       >
         {selected && startIso && endIso ? (

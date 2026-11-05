@@ -2,7 +2,7 @@ import Link from "next/link";
 import { ChevronRight, Plus, UserPlus } from "lucide-react";
 import { Suspense } from "react";
 import { ErrorState } from "@/components/data/ErrorState";
-import { Skeleton } from "@/components/ui/skeleton";
+import { DashboardPageSkeleton } from "@/components/ui/skeleton";
 import { getPlatformMetrics } from "@/features/admin/queries";
 import { requirePlatformRole } from "@/lib/auth/guards";
 import { getT } from "@/lib/i18n/server";
@@ -90,7 +90,9 @@ async function AdminHome() {
 
 export default function AdminPage() {
   return (
-    <Suspense fallback={<Skeleton className="h-40" />}>
+    <Suspense
+      fallback={<DashboardPageSkeleton kpis={6} kpiClassName="grid-cols-2 lg:grid-cols-3" />}
+    >
       <AdminHome />
     </Suspense>
   );

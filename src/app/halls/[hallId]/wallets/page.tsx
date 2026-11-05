@@ -2,7 +2,7 @@ import { Suspense } from "react";
 import { ErrorState } from "@/components/data/ErrorState";
 import { Pagination } from "@/components/data/Pagination";
 import { permissionForPath } from "@/components/shell/nav";
-import { Skeleton } from "@/components/ui/skeleton";
+import { TablePageSkeleton } from "@/components/ui/skeleton";
 import { WalletsPanel } from "@/features/wallets/components/WalletsPanel";
 import { listWallets } from "@/features/wallets/queries";
 import { requireHallPermission } from "@/lib/auth/guards";
@@ -42,7 +42,7 @@ export default function WalletsPage({
   searchParams,
 }: PageProps<"/halls/[hallId]/wallets">) {
   return (
-    <Suspense fallback={<Skeleton className="h-64" />}>
+    <Suspense fallback={<TablePageSkeleton pagination cols={4} />}>
       <Wallets params={params} searchParams={searchParams} />
     </Suspense>
   );

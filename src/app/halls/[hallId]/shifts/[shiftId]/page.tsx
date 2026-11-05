@@ -6,7 +6,7 @@ import { Money } from "@/components/domain/Money";
 import { PermissionGate } from "@/components/domain/PermissionGate";
 import { permissionForPath } from "@/components/shell/nav";
 import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
+import { DetailPageSkeleton } from "@/components/ui/skeleton";
 import { getHallTimeZone } from "@/features/halls/queries";
 import { CloseShiftStepper } from "@/features/shifts/components/CloseShiftStepper";
 import { MovementsList } from "@/features/shifts/components/MovementsList";
@@ -159,7 +159,7 @@ async function ShiftDetail({ params }: { params: Promise<{ hallId: string; shift
 
 export default function ShiftDetailPage({ params }: PageProps<"/halls/[hallId]/shifts/[shiftId]">) {
   return (
-    <Suspense fallback={<Skeleton className="h-64" />}>
+    <Suspense fallback={<DetailPageSkeleton section="table" />}>
       <ShiftDetail params={params} />
     </Suspense>
   );

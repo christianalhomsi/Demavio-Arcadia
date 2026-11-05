@@ -15,7 +15,7 @@ import Link from "next/link";
 import { Suspense } from "react";
 import { permissionForPath } from "@/components/shell/nav";
 import { Badge, type Tone } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
+import { DashboardPageSkeleton } from "@/components/ui/skeleton";
 import type { Permission } from "@/contracts/permissions";
 import { DeviceBoard } from "@/features/devices/components/DeviceBoard";
 import { listDeviceStatus } from "@/features/devices/queries";
@@ -353,7 +353,7 @@ function Step({
 
 export default function HallOverviewPage({ params }: PageProps<"/halls/[hallId]">) {
   return (
-    <Suspense fallback={<Skeleton className="h-24" />}>
+    <Suspense fallback={<DashboardPageSkeleton kpis={4} rows={3} />}>
       <Overview params={params} />
     </Suspense>
   );

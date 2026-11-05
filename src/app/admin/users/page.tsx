@@ -11,7 +11,7 @@ import Link from "next/link";
 import { Suspense } from "react";
 import { ErrorState } from "@/components/data/ErrorState";
 import { Pagination } from "@/components/data/Pagination";
-import { Skeleton } from "@/components/ui/skeleton";
+import { TablePageSkeleton } from "@/components/ui/skeleton";
 import { AssignRoleButton, UsersList } from "@/features/admin/components/AdminPanels";
 import { getUserRoleCounts, listPlatformUsers } from "@/features/admin/queries";
 import { requirePlatformRole } from "@/lib/auth/guards";
@@ -141,7 +141,7 @@ async function Users({
 
 export default function UsersPage({ searchParams }: PageProps<"/admin/users">) {
   return (
-    <Suspense fallback={<Skeleton className="h-40" />}>
+    <Suspense fallback={<TablePageSkeleton search action={false} pagination cols={4} />}>
       <Users searchParams={searchParams} />
     </Suspense>
   );

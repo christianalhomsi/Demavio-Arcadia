@@ -3,7 +3,7 @@ import { EmptyState } from "@/components/data/EmptyState";
 import { ErrorState } from "@/components/data/ErrorState";
 import { Pagination } from "@/components/data/Pagination";
 import { HallTime } from "@/components/domain/HallTime";
-import { Skeleton } from "@/components/ui/skeleton";
+import { ListPageSkeleton } from "@/components/ui/skeleton";
 import { listMyActivity } from "@/features/audit/myActivity";
 import { getHallTimeZone } from "@/features/halls/queries";
 import { requireHallMembership } from "@/lib/auth/guards";
@@ -64,7 +64,7 @@ export default function MyActivityPage({
   searchParams,
 }: PageProps<"/halls/[hallId]/my-activity">) {
   return (
-    <Suspense fallback={<Skeleton className="h-40" />}>
+    <Suspense fallback={<ListPageSkeleton pagination />}>
       <MyActivity params={params} searchParams={searchParams} />
     </Suspense>
   );

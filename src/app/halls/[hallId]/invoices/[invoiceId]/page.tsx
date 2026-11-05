@@ -4,7 +4,7 @@ import { Suspense } from "react";
 import { HallTime } from "@/components/domain/HallTime";
 import { Money } from "@/components/domain/Money";
 import { permissionForPath } from "@/components/shell/nav";
-import { Skeleton } from "@/components/ui/skeleton";
+import { DetailPageSkeleton } from "@/components/ui/skeleton";
 import { getHallSettingsBundle, getHallTimeZone } from "@/features/halls/queries";
 import { WriteOffDialog } from "@/features/adjustments/components/WriteOffDialog";
 import { InvoiceDiscounts } from "@/features/discounts/components/InvoiceDiscounts";
@@ -222,7 +222,7 @@ export default function InvoiceDetailPage({
   params,
 }: PageProps<"/halls/[hallId]/invoices/[invoiceId]">) {
   return (
-    <Suspense fallback={<Skeleton className="h-64" />}>
+    <Suspense fallback={<DetailPageSkeleton section="table" />}>
       <InvoiceDetail params={params} />
     </Suspense>
   );

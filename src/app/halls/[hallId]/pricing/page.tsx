@@ -1,7 +1,7 @@
 import { Suspense } from "react";
 import { notFound } from "next/navigation";
 import { permissionForPath } from "@/components/shell/nav";
-import { Skeleton } from "@/components/ui/skeleton";
+import { SectionsPageSkeleton } from "@/components/ui/skeleton";
 import { listDeviceStatus } from "@/features/devices/queries";
 import { getHallCurrency } from "@/features/invoices/queries";
 import { PricingEditor } from "@/features/pricing/components/PricingEditor";
@@ -47,7 +47,7 @@ async function Pricing({ params }: { params: Promise<{ hallId: string }> }) {
 
 export default function PricingPage({ params }: PageProps<"/halls/[hallId]/pricing">) {
   return (
-    <Suspense fallback={<Skeleton className="h-64" />}>
+    <Suspense fallback={<SectionsPageSkeleton sections={2} />}>
       <Pricing params={params} />
     </Suspense>
   );

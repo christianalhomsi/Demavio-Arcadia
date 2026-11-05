@@ -5,7 +5,7 @@ import { HallTime } from "@/components/domain/HallTime";
 import { Money } from "@/components/domain/Money";
 import { permissionForPath } from "@/components/shell/nav";
 import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
+import { DetailPageSkeleton } from "@/components/ui/skeleton";
 import { getPaymentDetail, listPaymentRefunds } from "@/features/adjustments/queries";
 import { getHallTimeZone } from "@/features/halls/queries";
 import { isUuid } from "@/lib/auth/authorize";
@@ -137,7 +137,7 @@ export default function PaymentDetailPage({
   params,
 }: PageProps<"/halls/[hallId]/payments/[paymentId]">) {
   return (
-    <Suspense fallback={<Skeleton className="h-64" />}>
+    <Suspense fallback={<DetailPageSkeleton section="list" />}>
       <PaymentDetail params={params} />
     </Suspense>
   );

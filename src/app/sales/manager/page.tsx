@@ -1,7 +1,7 @@
 import { Suspense } from "react";
 import { EmptyState } from "@/components/data/EmptyState";
 import { ErrorState } from "@/components/data/ErrorState";
-import { Skeleton } from "@/components/ui/skeleton";
+import { ListPageSkeleton } from "@/components/ui/skeleton";
 import { getMyManager } from "@/features/sales/queries";
 import { requirePlatformRole } from "@/lib/auth/guards";
 import { getT } from "@/lib/i18n/server";
@@ -51,7 +51,7 @@ async function Manager() {
 
 export default function SalesManagerPage() {
   return (
-    <Suspense fallback={<Skeleton className="h-40" />}>
+    <Suspense fallback={<ListPageSkeleton subtitle rows={1} />}>
       <Manager />
     </Suspense>
   );

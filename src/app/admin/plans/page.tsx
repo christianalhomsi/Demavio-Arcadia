@@ -1,6 +1,6 @@
 import { Suspense } from "react";
 import { ErrorState } from "@/components/data/ErrorState";
-import { Skeleton } from "@/components/ui/skeleton";
+import { ListPageSkeleton } from "@/components/ui/skeleton";
 import { AddPlanButton, PlansList } from "@/features/admin/components/SubscriptionPlansPanels";
 import { listSubscriptionPlans } from "@/features/admin/queries";
 import { requirePlatformRole } from "@/lib/auth/guards";
@@ -29,7 +29,7 @@ async function Plans() {
 
 export default function PlansPage() {
   return (
-    <Suspense fallback={<Skeleton className="h-40" />}>
+    <Suspense fallback={<ListPageSkeleton action subtitle rows={4} />}>
       <Plans />
     </Suspense>
   );

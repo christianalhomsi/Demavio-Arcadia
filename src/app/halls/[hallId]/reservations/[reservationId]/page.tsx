@@ -4,7 +4,7 @@ import { Suspense } from "react";
 import { HallTime } from "@/components/domain/HallTime";
 import { permissionForPath } from "@/components/shell/nav";
 import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
+import { DetailPageSkeleton } from "@/components/ui/skeleton";
 import { getHallTimeZone } from "@/features/halls/queries";
 import { getReservation } from "@/features/reservations/queries";
 import { STATUS_KEYS } from "@/features/reservations/schemas";
@@ -114,7 +114,7 @@ export default function ReservationDetailPage({
   params,
 }: PageProps<"/halls/[hallId]/reservations/[reservationId]">) {
   return (
-    <Suspense fallback={<Skeleton className="h-64" />}>
+    <Suspense fallback={<DetailPageSkeleton section="none" />}>
       <ReservationDetail params={params} />
     </Suspense>
   );

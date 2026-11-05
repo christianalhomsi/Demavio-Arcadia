@@ -39,18 +39,35 @@ async function Halls() {
 function HallsSkeleton() {
   return (
     <div aria-hidden>
-      <Skeleton className="h-9 w-3/4 rounded-xl" />
-      <Skeleton className="mt-3 h-5 w-2/3" />
-      <div className="mt-4 flex gap-2">
+      <Skeleton className="h-9 w-3/4 rounded-xl sm:h-10" />
+      <Skeleton className="mt-2 h-6 w-2/3" />
+      <div className="mt-4 flex w-full items-center gap-1.5 sm:gap-2">
         {[0, 1, 2].map((i) => (
-          <Skeleton key={i} className="h-7 w-20 rounded-full" />
+          <Skeleton
+            key={i}
+            className="h-[30px] flex-1 rounded-full min-[420px]:w-28 min-[420px]:flex-none"
+          />
         ))}
       </div>
-      <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+      <ul className="mt-6 grid gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3">
         {[0, 1, 2].map((i) => (
-          <Skeleton key={i} className="h-24 rounded-3xl" />
+          <li
+            key={i}
+            className="flex min-h-24 flex-col overflow-hidden rounded-3xl border border-border bg-surface shadow-card"
+          >
+            <Skeleton className="aspect-[16/7] w-full rounded-none" />
+            <div className="space-y-2 p-4">
+              <Skeleton className="h-7 w-2/3" />
+              <Skeleton className="h-5 w-1/2" />
+              <div className="flex gap-1.5 pt-0.5">
+                <Skeleton className="h-6 w-14 rounded-full" />
+                <Skeleton className="h-6 w-14 rounded-full" />
+                <Skeleton className="h-4 w-16 self-center" />
+              </div>
+            </div>
+          </li>
         ))}
-      </div>
+      </ul>
     </div>
   );
 }

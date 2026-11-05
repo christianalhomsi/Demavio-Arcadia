@@ -1,7 +1,7 @@
 import { Suspense } from "react";
 import { ErrorState } from "@/components/data/ErrorState";
 import { Pagination } from "@/components/data/Pagination";
-import { Skeleton } from "@/components/ui/skeleton";
+import { TablePageSkeleton } from "@/components/ui/skeleton";
 import {
   AddSalesAccountButton,
   SalesTeamList,
@@ -105,7 +105,7 @@ async function SalesPage({
 
 export default function AdminSalesPage({ searchParams }: PageProps<"/admin/sales">) {
   return (
-    <Suspense fallback={<Skeleton className="h-40" />}>
+    <Suspense fallback={<TablePageSkeleton search action={false} pagination cols={4} />}>
       <SalesPage searchParams={searchParams} />
     </Suspense>
   );

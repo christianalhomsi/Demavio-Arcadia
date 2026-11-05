@@ -1,7 +1,7 @@
 import { Suspense } from "react";
 import { ErrorState } from "@/components/data/ErrorState";
 import { permissionForPath } from "@/components/shell/nav";
-import { Skeleton } from "@/components/ui/skeleton";
+import { TablePageSkeleton } from "@/components/ui/skeleton";
 import { DiscountsPanel } from "@/features/discounts/components/DiscountsPanel";
 import { listDiscounts } from "@/features/discounts/queries";
 import { getHallCurrency } from "@/features/invoices/queries";
@@ -20,7 +20,7 @@ async function Discounts({ params }: { params: Promise<{ hallId: string }> }) {
 
 export default function DiscountsPage({ params }: PageProps<"/halls/[hallId]/discounts">) {
   return (
-    <Suspense fallback={<Skeleton className="h-64" />}>
+    <Suspense fallback={<TablePageSkeleton cols={5} />}>
       <Discounts params={params} />
     </Suspense>
   );

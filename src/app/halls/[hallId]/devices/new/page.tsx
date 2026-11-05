@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import { Skeleton } from "@/components/ui/skeleton";
+import { FormPageSkeleton } from "@/components/ui/skeleton";
 import { DeviceForm } from "@/features/devices/components/DeviceForm";
 import { requireHallPermission } from "@/lib/auth/guards";
 import { getT } from "@/lib/i18n/server";
@@ -20,7 +20,7 @@ async function NewDevice({ params }: { params: Promise<{ hallId: string }> }) {
 
 export default function NewDevicePage({ params }: PageProps<"/halls/[hallId]/devices/new">) {
   return (
-    <Suspense fallback={<Skeleton className="h-64" />}>
+    <Suspense fallback={<FormPageSkeleton fields={6} />}>
       <NewDevice params={params} />
     </Suspense>
   );

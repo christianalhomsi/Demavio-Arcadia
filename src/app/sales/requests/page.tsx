@@ -1,6 +1,6 @@
 import { Suspense } from "react";
 import { ErrorState } from "@/components/data/ErrorState";
-import { Skeleton } from "@/components/ui/skeleton";
+import { ListPageSkeleton } from "@/components/ui/skeleton";
 import { HallRequestsList, RequestHallButton } from "@/features/sales/components/SalesPanels";
 import { listSubscriptionPlans } from "@/features/admin/queries";
 import { listHallRequests } from "@/features/sales/queries";
@@ -33,7 +33,7 @@ async function Requests() {
 
 export default function SalesRequestsPage() {
   return (
-    <Suspense fallback={<Skeleton className="h-40" />}>
+    <Suspense fallback={<ListPageSkeleton action subtitle rows={5} />}>
       <Requests />
     </Suspense>
   );

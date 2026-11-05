@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
-import { Skeleton } from "@/components/ui/skeleton";
+import { ListSkeleton } from "@/components/ui/skeleton";
 import { PlayerPage } from "@/components/player/PlayerPage";
 import { requireUser } from "@/lib/auth/session";
 import { getT } from "@/lib/i18n/server";
@@ -49,7 +49,7 @@ export default function SelectHallPage() {
   return (
     <PlayerPage header={false}>
       <main className="mx-auto max-w-md px-4 py-16">
-        <Suspense fallback={<Skeleton className="mt-4 h-16 w-full" />}>
+        <Suspense fallback={<ListSkeleton rows={3} />}>
           <Heading />
           <HallList />
         </Suspense>

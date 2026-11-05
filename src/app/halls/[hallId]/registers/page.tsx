@@ -7,7 +7,7 @@ import { Money } from "@/components/domain/Money";
 import { PermissionGate } from "@/components/domain/PermissionGate";
 import { permissionForPath } from "@/components/shell/nav";
 import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
+import { ListPageSkeleton } from "@/components/ui/skeleton";
 import { getHallTimeZone } from "@/features/halls/queries";
 import { MovementsList } from "@/features/shifts/components/MovementsList";
 import { RecordMovementButton } from "@/features/shifts/components/RecordMovementDialog";
@@ -92,7 +92,7 @@ export default function RegistersPage({
   searchParams,
 }: PageProps<"/halls/[hallId]/registers">) {
   return (
-    <Suspense fallback={<Skeleton className="h-64" />}>
+    <Suspense fallback={<ListPageSkeleton subtitle rows={3} pagination />}>
       <Registers params={params} searchParams={searchParams} />
     </Suspense>
   );

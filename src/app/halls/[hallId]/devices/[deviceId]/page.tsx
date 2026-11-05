@@ -5,7 +5,7 @@ import { HallTime } from "@/components/domain/HallTime";
 import { PermissionGate } from "@/components/domain/PermissionGate";
 import { permissionForPath } from "@/components/shell/nav";
 import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
+import { DetailPageSkeleton } from "@/components/ui/skeleton";
 import { DeviceActions } from "@/features/devices/components/DeviceActions";
 import { AgentBadge, AvailabilityBadge } from "@/features/devices/components/StatusBadges";
 import { getDeviceStatus, listMaintenanceHistory } from "@/features/devices/queries";
@@ -152,7 +152,7 @@ async function Device({ params }: { params: Promise<{ hallId: string; deviceId: 
 
 export default function DevicePage({ params }: PageProps<"/halls/[hallId]/devices/[deviceId]">) {
   return (
-    <Suspense fallback={<Skeleton className="h-64" />}>
+    <Suspense fallback={<DetailPageSkeleton section="list" />}>
       <Device params={params} />
     </Suspense>
   );

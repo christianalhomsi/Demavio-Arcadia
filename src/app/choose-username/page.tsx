@@ -3,7 +3,7 @@ import { Suspense } from "react";
 import { LanguageToggle } from "@/components/player/LanguageToggle";
 import { Logo, Wordmark } from "@/components/player/PlayerHeader";
 import { PlayerPage } from "@/components/player/PlayerPage";
-import { Skeleton } from "@/components/ui/skeleton";
+import { FormSkeleton } from "@/components/ui/skeleton";
 import { destinationAfterChoosing, needsUsername } from "@/lib/auth/context";
 import { getMyContext } from "@/lib/auth/session";
 import { safeNext } from "@/lib/auth/redirect";
@@ -48,7 +48,7 @@ export default function ChooseUsernamePage({
             <Wordmark />
           </h1>
         </div>
-        <Suspense fallback={<Skeleton className="h-48 w-full" />}>
+        <Suspense fallback={<FormSkeleton fields={1} />}>
           <Choose searchParams={searchParams} />
         </Suspense>
       </main>

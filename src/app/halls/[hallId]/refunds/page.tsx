@@ -2,7 +2,7 @@ import { Suspense } from "react";
 import { ErrorState } from "@/components/data/ErrorState";
 import { Pagination } from "@/components/data/Pagination";
 import { permissionForPath } from "@/components/shell/nav";
-import { Skeleton } from "@/components/ui/skeleton";
+import { ListPageSkeleton } from "@/components/ui/skeleton";
 import { getHallTimeZone } from "@/features/halls/queries";
 import { RefundsPanel } from "@/features/refunds/components/RefundsPanel";
 import { listRefunds } from "@/features/refunds/queries";
@@ -51,7 +51,7 @@ export default function RefundsPage({
   searchParams,
 }: PageProps<"/halls/[hallId]/refunds">) {
   return (
-    <Suspense fallback={<Skeleton className="h-64" />}>
+    <Suspense fallback={<ListPageSkeleton action={false} pagination />}>
       <Refunds params={params} searchParams={searchParams} />
     </Suspense>
   );

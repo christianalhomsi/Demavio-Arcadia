@@ -2,7 +2,7 @@ import { Suspense } from "react";
 import { ErrorState } from "@/components/data/ErrorState";
 import { Pagination } from "@/components/data/Pagination";
 import { permissionForPath } from "@/components/shell/nav";
-import { Skeleton } from "@/components/ui/skeleton";
+import { TablePageSkeleton } from "@/components/ui/skeleton";
 import { ExpensesPanel } from "@/features/expenses/components/ExpensesPanel";
 import { listExpenses } from "@/features/expenses/queries";
 import { getHallCurrency } from "@/features/invoices/queries";
@@ -48,7 +48,7 @@ export default function ExpensesPage({
   searchParams,
 }: PageProps<"/halls/[hallId]/expenses">) {
   return (
-    <Suspense fallback={<Skeleton className="h-64" />}>
+    <Suspense fallback={<TablePageSkeleton pagination cols={5} />}>
       <Expenses params={params} searchParams={searchParams} />
     </Suspense>
   );

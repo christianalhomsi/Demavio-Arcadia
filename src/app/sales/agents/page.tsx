@@ -1,6 +1,6 @@
 import { Suspense } from "react";
 import { ErrorState } from "@/components/data/ErrorState";
-import { Skeleton } from "@/components/ui/skeleton";
+import { ListPageSkeleton } from "@/components/ui/skeleton";
 import { AssignRoleButton } from "@/features/admin/components/AdminPanels";
 import { AgentsList } from "@/features/sales/components/AgentsList";
 import { listSalesAgents } from "@/features/sales/queries";
@@ -27,7 +27,7 @@ async function Agents() {
 
 export default function AgentsPage() {
   return (
-    <Suspense fallback={<Skeleton className="h-40" />}>
+    <Suspense fallback={<ListPageSkeleton action rows={4} />}>
       <Agents />
     </Suspense>
   );

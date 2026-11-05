@@ -4,7 +4,7 @@ import { EmptyState } from "@/components/data/EmptyState";
 import { ErrorState } from "@/components/data/ErrorState";
 import { HallTime } from "@/components/domain/HallTime";
 import { permissionForPath } from "@/components/shell/nav";
-import { Skeleton } from "@/components/ui/skeleton";
+import { TablePageSkeleton } from "@/components/ui/skeleton";
 import { AgentBadge } from "@/features/devices/components/StatusBadges";
 import { listDeviceStatus } from "@/features/devices/queries";
 import { getHallTimeZone } from "@/features/halls/queries";
@@ -93,7 +93,7 @@ async function Agents({ params }: { params: Promise<{ hallId: string }> }) {
 
 export default function AgentsPage({ params }: PageProps<"/halls/[hallId]/agents">) {
   return (
-    <Suspense fallback={<Skeleton className="h-64" />}>
+    <Suspense fallback={<TablePageSkeleton cols={4} />}>
       <Agents params={params} />
     </Suspense>
   );

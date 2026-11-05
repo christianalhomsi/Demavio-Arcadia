@@ -7,7 +7,7 @@ import { HallTime } from "@/components/domain/HallTime";
 import { Money } from "@/components/domain/Money";
 import { permissionForPath } from "@/components/shell/nav";
 import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
+import { TablePageSkeleton } from "@/components/ui/skeleton";
 import { listAdjustments } from "@/features/adjustments/queries";
 import { getHallTimeZone } from "@/features/halls/queries";
 import { requireHallPermission } from "@/lib/auth/guards";
@@ -113,7 +113,7 @@ export default function AdjustmentsPage({
   searchParams,
 }: PageProps<"/halls/[hallId]/adjustments">) {
   return (
-    <Suspense fallback={<Skeleton className="h-64" />}>
+    <Suspense fallback={<TablePageSkeleton pagination cols={5} />}>
       <Adjustments params={params} searchParams={searchParams} />
     </Suspense>
   );

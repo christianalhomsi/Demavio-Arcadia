@@ -2,7 +2,7 @@ import Link from "next/link";
 import { Suspense } from "react";
 import { ErrorState } from "@/components/data/ErrorState";
 import { permissionForPath } from "@/components/shell/nav";
-import { Skeleton } from "@/components/ui/skeleton";
+import { ListPageSkeleton } from "@/components/ui/skeleton";
 import { listDeviceStatus } from "@/features/devices/queries";
 import { getHallSettingsBundle } from "@/features/halls/queries";
 import { DayCalendar } from "@/features/reservations/components/DayCalendar";
@@ -112,7 +112,7 @@ export default function ReservationsPage({
   searchParams,
 }: PageProps<"/halls/[hallId]/reservations">) {
   return (
-    <Suspense fallback={<Skeleton className="h-96" />}>
+    <Suspense fallback={<ListPageSkeleton rows={6} />}>
       <Reservations params={params} searchParams={searchParams} />
     </Suspense>
   );

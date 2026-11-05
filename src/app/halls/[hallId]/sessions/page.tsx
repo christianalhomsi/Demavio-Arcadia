@@ -1,7 +1,7 @@
 import { Suspense } from "react";
 import { ErrorState } from "@/components/data/ErrorState";
 import { permissionForPath } from "@/components/shell/nav";
-import { Skeleton } from "@/components/ui/skeleton";
+import { CardsPageSkeleton } from "@/components/ui/skeleton";
 import { listDeviceStatus } from "@/features/devices/queries";
 import { SessionsBoard } from "@/features/sessions/components/SessionsBoard";
 import { getServerNow, listSessions } from "@/features/sessions/queries";
@@ -43,7 +43,7 @@ async function Sessions({ params }: { params: Promise<{ hallId: string }> }) {
 
 export default function SessionsPage({ params }: PageProps<"/halls/[hallId]/sessions">) {
   return (
-    <Suspense fallback={<Skeleton className="h-64" />}>
+    <Suspense fallback={<CardsPageSkeleton />}>
       <Sessions params={params} />
     </Suspense>
   );
