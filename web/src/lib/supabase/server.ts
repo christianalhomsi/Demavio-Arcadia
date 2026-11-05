@@ -13,7 +13,9 @@ export async function createClient() {
       getAll: () => cookieStore.getAll(),
       setAll(cookiesToSet) {
         try {
-          cookiesToSet.forEach(({ name, value, options }) => cookieStore.set(name, value, asSessionCookie(options)));
+          cookiesToSet.forEach(({ name, value, options }) =>
+            cookieStore.set(name, value, asSessionCookie(options)),
+          );
         } catch {
           // Called from a Server Component, where cookies are read-only.
           // The proxy refreshes the session, so this is safe to ignore.
