@@ -1,6 +1,7 @@
 import { staffAr, staffEn } from "./staff";
 import { commonAr, commonEn } from "./staffCommon";
 import { devicesAr, devicesEn } from "./staffDevices";
+import { pairingAr, pairingEn } from "./staffPairing";
 import { reservationsAr, reservationsEn } from "./staffReservations";
 import { invoicesAr, invoicesEn } from "./staffInvoices";
 import { manageAr, manageEn } from "./staffManage";
@@ -168,6 +169,7 @@ const en = {
   ...staffEn,
   ...commonEn,
   ...devicesEn,
+  ...pairingEn,
   ...reservationsEn,
   ...sessionsEn,
   ...invoicesEn,
@@ -326,6 +328,7 @@ const ar: Messages = {
   ...staffAr,
   ...commonAr,
   ...devicesAr,
+  ...pairingAr,
   ...reservationsAr,
   ...sessionsAr,
   ...invoicesAr,

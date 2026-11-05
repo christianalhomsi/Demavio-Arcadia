@@ -30,7 +30,7 @@
 | DEC-09 | Online payment provider | Online method hidden until decided | P2 |
 | DEC-10 | Tax & accounting rules | Invoice tax lines, report categories | FIN-002, ACC-007 |
 | DEC-11 | Shift closure gate & overrides | Close stepper behavior | ACC-004 |
-| DEC-12 | Agent offline behavior | Command dialog warnings | AGT-002 |
+| DEC-12 | Agent offline behavior — **Resolved** (planning): see [windows-agent/WINDOWS_AGENT_OFFLINE_AND_RECOVERY.md](windows-agent/WINDOWS_AGENT_OFFLINE_AND_RECOVERY.md) and decisions WA-D11–D14 | Command dialog warnings; offline banner; conflict queue | AGT-002, AGT-107, AGT-112 |
 | DEC-13 | Waiting-list claim window | — (mobile/backend) | — |
 | DEC-14 | Email OTP fallback | Login page variant | none (Google only for now) |
 | DEC-15 | Accounting depth (operational vs double-entry); expenses approval | Expenses/reports scope | ACC-006/008 |

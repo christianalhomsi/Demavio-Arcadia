@@ -84,6 +84,27 @@ Paths are relative to `web/`.
 | AGT-003 | Command history page | P0 | AGT-001 | 1 | `halls/[hallId]/commands/page.tsx` | filters, pagination | — | C, I | AGT-03 |
 | AGT-004 | Command status timeline (live) | P0 | AGT-003, API-004 | 1 | `features/agents/CommandTimeline.tsx` | "Outcome unknown" for timeout; no retry for non-idempotent | E2E-09 | C, E | AGT-03/04 |
 
+### Windows Agent + Hall Server (planned, not started)
+Design: [`windows-agent/`](windows-agent/WINDOWS_AGENT_ARCHITECTURE_COMPARISON.md). **Nothing below starts until the go/no-go criteria G1–G9 pass.**
+
+| ID | Title | Pri | Deps | Doc | Acceptance |
+|---|---|---|---|---|---|
+| AGT-100 | .NET 10 technical spike | P0 | — | Spike | Every spike row green or amber with a fallback (G9) |
+| AGT-101 | Command, session and sync contract + `session_revision` | P0 | AGT-100 | Contract §1–6, §10 | U-01, U-02, U-08 |
+| AGT-102 | Session/lock state machines + 1 s reconciler | P0 | AGT-101 | Contract §7 | U-03, C-01, C-02 |
+| AGT-103 | Agent reboot recovery | P0 | AGT-101, AGT-102 | Offline §6 | C-04..C-07 (G6) |
+| AGT-104 | Time anchors, clock-change detection, safe fallback | P0 | AGT-103 | Offline §5 | U-04, C-08, C-09 |
+| AGT-105 | Reservation cache freshness + manager override | P0 | AGT-110 | Offline §3 | U-05, C-16 |
+| AGT-106 | Lock-timing harness | P0 | AGT-102 | Test plan §4 | G1 p95 ≤ 2 s |
+| AGT-107 | Cloud RPC design + later migration (pairing, credentials, payload, `device_seq`, status enum, `offline_ops`) | P0 | AGT-101 | Contract §9; Security §2 | I-01, I-05, I-11. **Pairing, credentials, payload and statuses written as migration `…0049` (PGlite-tested, applied to staging 2026-11-05). `offline_ops` and `device_seq` in the cloud are still open (device_seq lives in the Hall Server).** |
+| AGT-108 | `agent-bridge` Edge Function | P0 | AGT-107 | Security §1 | No service role off the cloud; I-11. **Deployed to staging (`backend/supabase/functions/agent-bridge`); smoke-tested with invalid input only, no successful pairing/pull yet** |
+| AGT-109 | Hall Server: mTLS, local CA, pairing, durable pull and relay | P0 | AGT-108 | Security §3; Contract §8–9 | I-02..I-04. **Implemented against `DevCloudBridge` in `windows-agent/` (19 e2e tests); real cloud bridge pending AGT-107/108** |
+| AGT-110 | Hall Server offline mode: outbox, pricing snapshots, sync, local page | P0 | AGT-109, AGT-101 | Offline §2, §7 | I-06..I-10 (G4) |
+| AGT-111 | Hall Server durability: WAL, backups, restore runbook | P1 | AGT-109 | Offline §8 | C-13, C-14 |
+| AGT-112 | Web: pairing codes, server status, unpair, offline banner, conflict queue | P0 | AGT-107 | Comparison §6 | E2E with an agent stub |
+| AGT-113 | GPO baseline doc + pen-test + game compatibility | P0 | AGT-102 | Security §5; Test plan §5–6 | G7, G8 |
+| AGT-114 | MSI installers (WiX) | P1 | AGT-109 | Spike | Clean install and uninstall on Win10 and Win11 |
+
 ## RES / SES — reservations & sessions (Phase W7)
 
 | ID | Title | Pri | Deps | Est | Files | Steps | Acceptance | Tests | REQ |

@@ -7,6 +7,8 @@ import { permissionForPath } from "@/components/shell/nav";
 import { TablePageSkeleton } from "@/components/ui/skeleton";
 import { AgentBadge } from "@/features/devices/components/StatusBadges";
 import { listDeviceStatus } from "@/features/devices/queries";
+import { PairingPanel } from "@/features/pairing/components/PairingPanel";
+import { listHallServers } from "@/features/pairing/queries";
 import { getHallTimeZone } from "@/features/halls/queries";
 import { requireHallPermission } from "@/lib/auth/guards";
 import { LiveRefresh } from "@/lib/realtime/LiveRefresh";
@@ -16,9 +18,14 @@ export const metadata = { title: "Agents" };
 
 async function Agents({ params }: { params: Promise<{ hallId: string }> }) {
   const { hallId } = await params;
-  await requireHallPermission(hallId, permissionForPath("/agents"));
+  const { membership } = await requireHallPermission(hallId, permissionForPath("/agents"));
+  const canPair = membership.permissions.includes("hall.settings.manage");
   const { t } = await getT();
-  const [devices, tz] = await Promise.all([listDeviceStatus(hallId), getHallTimeZone(hallId)]);
+  const [devices, tz, servers] = await Promise.all([
+    listDeviceStatus(hallId),
+    getHallTimeZone(hallId),
+    canPair ? listHallServers(hallId) : Promise.resolve([]),
+  ]);
   if (!devices) return <ErrorState message={t.agLoadFail} />;
 
   // Offline first: these need attention.
@@ -87,6 +94,20 @@ async function Agents({ params }: { params: Promise<{ hallId: string }> }) {
           </table>
         </div>
       )}
+      {canPair ? (
+        servers ? (
+          <PairingPanel
+            hallId={hallId}
+            timeZone={tz}
+            pcs={devices
+              .filter((d) => d.deviceType === "pc" && d.operationalStatus === "active")
+              .map((d) => ({ id: d.deviceId, name: d.name }))}
+            servers={servers}
+          />
+        ) : (
+          <ErrorState message={t.prLoadFail} />
+        )
+      ) : null}
     </div>
   );
 }

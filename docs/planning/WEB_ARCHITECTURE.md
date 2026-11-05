@@ -9,7 +9,8 @@
 |---|---|
 | `web/` | Empty. No Next.js project, no `package.json`, no source. |
 | `backend/` | Empty. No Supabase project, migrations, RLS, RPCs or Edge Functions exist. |
-| `mobile/`, `windows-agent/` | Empty; out of scope. |
+| `mobile/` | Empty; out of scope. |
+| `windows-agent/` | Empty. Now **planned**: Windows Agent + Hall Local Server (.NET 10). See [windows-agent/WINDOWS_AGENT_ARCHITECTURE_COMPARISON.md](windows-agent/WINDOWS_AGENT_ARCHITECTURE_COMPARISON.md). The cloud is reached only through the `agent-bridge` Edge Function; no service-role key on any PC. |
 | Repository | Not a git repository. |
 
 Consequence: every backend capability the web needs is a **prerequisite** (see `WEB_API_AND_DATA_CONTRACTS.md` §6, `BE-PREREQ-*`). The web is built against explicit contracts and a local Supabase instance.
