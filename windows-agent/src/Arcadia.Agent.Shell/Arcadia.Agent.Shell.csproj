@@ -1,0 +1,10 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <UseWindowsForms>true</UseWindowsForms>
+    <RootNamespace>Arcadia.Agent.Shell</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup><ProjectReference Include="..\Arcadia.Contracts\Arcadia.Contracts.csproj" /></ItemGroup>
+</Project>

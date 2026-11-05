@@ -1,0 +1,17 @@
+<Window x:Class="Arcadia.Agent.Shell.LockWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        WindowStyle="None" ResizeMode="NoResize" Topmost="True" ShowInTaskbar="False"
+        Background="#FF050A24" WindowStartupLocation="Manual" AllowsTransparency="False">
+    <Grid>
+        <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+            <TextBlock x:Name="Hall" Foreground="White" FontSize="56" FontWeight="Bold" HorizontalAlignment="Center"/>
+            <TextBlock x:Name="Device" Foreground="#FF7DB2FF" FontSize="32" Margin="0,8,0,0" HorizontalAlignment="Center"/>
+            <TextBlock x:Name="Status" Foreground="#FFB8C2E0" FontSize="24" Margin="0,32,0,0" HorizontalAlignment="Center"/>
+        </StackPanel>
+        <StackPanel x:Name="TechPanel" Visibility="Collapsed" HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="0,0,0,48" Orientation="Horizontal">
+            <PasswordBox x:Name="Pin" Width="160" FontSize="20" MaxLength="12"/>
+            <Button Content="Unlock" Margin="8,0,0,0" Padding="16,4" Click="OnUnlock"/>
+        </StackPanel>
+    </Grid>
+</Window>

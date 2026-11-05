@@ -1,0 +1,13 @@
+<Project Sdk="WixToolset.Sdk/5.0.2">
+  <PropertyGroup>
+    <OutputName>ArcadiaAgent</OutputName>
+    <InstallerPlatform>x64</InstallerPlatform>
+    <!-- ICE60: harvested publish output contains versioned native DLLs without a language; harmless. -->
+    <SuppressIces>ICE60</SuppressIces>
+    <ProductVersion Condition="'$(ProductVersion)' == ''">0.1.0</ProductVersion>
+    <DefineConstants>PublishDir=$(PublishDir);ProductVersion=$(ProductVersion)</DefineConstants>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="WixToolset.Util.wixext" Version="5.0.2" />
+  </ItemGroup>
+</Project>

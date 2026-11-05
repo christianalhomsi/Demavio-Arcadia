@@ -1,0 +1,56 @@
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs"
+     xmlns:util="http://wixtoolset.org/schemas/v4/wxs/util"
+     xmlns:fw="http://wixtoolset.org/schemas/v4/wxs/firewall">
+  <Package Name="Arcadia Hall Server" Manufacturer="Arcadia" Version="$(ProductVersion)"
+           UpgradeCode="6B1F6C52-3A3E-4B8D-9C0B-5D0E7A6F1A01" Scope="perMachine">
+    <MajorUpgrade DowngradeErrorMessage="A newer version of Arcadia Hall Server is already installed." />
+    <MediaTemplate EmbedCab="yes" />
+
+    <StandardDirectory Id="ProgramFiles64Folder">
+      <Directory Id="ArcadiaDir" Name="Arcadia">
+        <Directory Id="INSTALLFOLDER" Name="HallServer" />
+      </Directory>
+    </StandardDirectory>
+    <StandardDirectory Id="ProgramMenuFolder">
+      <Directory Id="StartMenuDir" Name="Arcadia" />
+    </StandardDirectory>
+
+    <!-- Everything from the self-contained publish except the service exe, which has its own component. -->
+    <ComponentGroup Id="AppFiles" Directory="INSTALLFOLDER">
+      <Files Include="$(PublishDir)\**">
+        <Exclude Files="$(PublishDir)\Arcadia.HallServer.exe" />
+      </Files>
+    </ComponentGroup>
+
+    <!-- The service is installed but NOT started: it cannot run until it is paired (Setup-HallServer.ps1). -->
+    <Component Id="HallServerService" Directory="INSTALLFOLDER" Bitness="always64">
+      <File Id="HallServerExe" Source="$(PublishDir)\Arcadia.HallServer.exe" KeyPath="yes" />
+      <ServiceInstall Id="HallServerSvc" Name="ArcadiaHallServer" DisplayName="Arcadia Hall Server"
+                      Description="Relays commands between the Arcadia cloud and the gaming PCs of this hall."
+                      Type="ownProcess" Start="auto" ErrorControl="normal" Account="LocalSystem">
+        <util:ServiceConfig FirstFailureActionType="restart" SecondFailureActionType="restart"
+                            ThirdFailureActionType="restart" RestartServiceDelayInSeconds="5" ResetPeriodInDays="1" />
+      </ServiceInstall>
+      <ServiceControl Id="HallServerCtl" Name="ArcadiaHallServer" Stop="both" Remove="uninstall" Wait="yes" />
+      <!-- Agents connect to this port from the local network only. -->
+      <fw:FirewallException Id="HallServerFw" Name="Arcadia Hall Server (TCP 7421)" Port="7421" Protocol="tcp"
+                            Scope="localSubnet" Profile="all" />
+    </Component>
+
+    <Component Id="SetupShortcut" Directory="StartMenuDir" Guid="*">
+      <Shortcut Id="SetupLink" Name="Arcadia Hall Server setup"
+                Description="Pair this PC with the cloud (run once, as administrator)"
+                Target="[System64Folder]WindowsPowerShell\v1.0\powershell.exe"
+                Arguments="-NoExit -ExecutionPolicy Bypass -File &quot;[INSTALLFOLDER]Setup-HallServer.ps1&quot;"
+                WorkingDirectory="INSTALLFOLDER" />
+      <RemoveFolder Id="RemoveStartMenuDir" On="uninstall" />
+      <RegistryValue Root="HKCU" Key="Software\Arcadia\HallServer" Name="Shortcut" Type="integer" Value="1" KeyPath="yes" />
+    </Component>
+
+    <Feature Id="Main" Title="Arcadia Hall Server">
+      <ComponentGroupRef Id="AppFiles" />
+      <ComponentRef Id="HallServerService" />
+      <ComponentRef Id="SetupShortcut" />
+    </Feature>
+  </Package>
+</Wix>

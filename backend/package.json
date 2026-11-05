@@ -1,0 +1,20 @@
+{
+  "name": "gaming-hall-backend",
+  "version": "1.0.0",
+  "scripts": {
+    "test": "vitest run",
+    "test:concurrency": "node tests/concurrency/run.mjs"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "devDependencies": {
+    "@electric-sql/pglite": "^0.5.11",
+    "@types/node": "^22.20.5",
+    "pg": "^8.23.1",
+    "typescript": "^7.0.2",
+    "vitest": "^5.0.5"
+  },
+  "private": true
+}
