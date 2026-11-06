@@ -67,14 +67,22 @@ function destinationAfterUsername(ctx: MyContext, next: string | null | undefine
   if (!isStaff(ctx)) {
     // Players only have the public pages; anything else would be a 404.
     const dest = safeNext(next, "/");
-    const ok = dest === "/" || dest === "/reservations" || dest.startsWith("/book");
+    const ok =
+      dest === "/" || dest === "/reservations" || dest.startsWith("/book") || isInvitePath(dest);
     return ok ? dest : "/";
   }
   const landing = resolveLanding(ctx);
   const dest = safeNext(next, landing);
+  // An invitation link must survive sign-in: a new employee has no hall yet to land on instead.
+  if (isInvitePath(dest)) return dest;
   if (dest === "/" || dest === "/book" || dest.startsWith("/book/")) return landing;
   // A target this account cannot open (another role's page, a hall it is not in) falls back to home.
   return canOpenPath(ctx, dest) ? dest : landing;
+}
+
+/** `/invite/<token>`: the page itself checks the token against the signed-in account. */
+function isInvitePath(path: string): boolean {
+  return /^\/invite\/[^/?#]+$/.test(path);
 }
 
 /** True for an active account that has not chosen a username yet. */

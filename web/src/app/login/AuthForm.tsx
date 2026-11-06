@@ -124,10 +124,20 @@ export function AuthForm({ next }: { next: string }) {
       setIssue(bad);
       if (bad) return;
       setPending(true);
-      const { error } = await createClient().auth.signInWithPassword({ email, password });
+      const supabase = createClient();
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) {
         // One message for unknown email and wrong password: never reveal which accounts exist.
         setMessage({ tone: "error", text: t.errInvalidCreds });
+        setPending(false);
+        return;
+      }
+      // A deactivated account must not keep a live session (the Google callback does the same).
+      const { data: ctx } = await supabase.rpc("get_my_context");
+      const status = (ctx as { profile?: { status?: string } } | null)?.profile?.status;
+      if (status !== undefined && status !== "active") {
+        await supabase.auth.signOut();
+        setMessage({ tone: "error", text: t.loginInactive });
         setPending(false);
         return;
       }
@@ -169,8 +179,8 @@ export function AuthForm({ next }: { next: string }) {
   async function verifyOtp(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     if (!pendingSignup) return;
-    const code = String(new FormData(e.currentTarget).get("otp") ?? "").replace(/s/g, "");
-    if (!/^d{6}$/.test(code)) {
+    const code = String(new FormData(e.currentTarget).get("otp") ?? "").replace(/\s/g, "");
+    if (!/^\d{6}$/.test(code)) {
       setMessage({ tone: "error", text: t.errOtp });
       return;
     }
@@ -178,6 +188,13 @@ export function AuthForm({ next }: { next: string }) {
     setMessage(null);
     const { email, password } = pendingSignup;
     const status = await signupOtp({ action: "verify", email, code, password });
+    if (status === "username_taken") {
+      // Taken since the code was sent: back to the form so another username can be chosen.
+      setPendingSignup(null);
+      setIssue({ field: "username", message: "errUsernameTaken" });
+      setPending(false);
+      return;
+    }
     if (status !== "ok") {
       setMessage({ tone: "error", text: status === "invalid_code" ? t.errOtp : t.errSignUp });
       setPending(false);

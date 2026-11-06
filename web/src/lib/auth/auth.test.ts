@@ -110,6 +110,11 @@ describe("postLoginDestination", () => {
     expect(postLoginDestination(admin, "/")).toBe("/admin");
     expect(postLoginDestination(owner, "/halls/h1/devices")).toBe("/halls/h1/devices");
   });
+  it("keeps an invitation link through sign-in for players and staff", () => {
+    expect(postLoginDestination(player, "/invite/abc123")).toBe("/invite/abc123");
+    expect(postLoginDestination(owner, "/invite/abc123")).toBe("/invite/abc123");
+    expect(postLoginDestination(player, "/invite/a/b")).toBe("/");
+  });
   it("keeps the public booking flow reachable without a session", () => {
     expect(isPublicPath("/book/abc/def")).toBe(true);
     expect(isPublicPath("/halls/abc")).toBe(false);

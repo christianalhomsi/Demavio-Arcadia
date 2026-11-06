@@ -7,8 +7,8 @@ import "./globals.css";
 import { SELECT_CSS } from "./select-styles";
 
 export const metadata: Metadata = {
-  title: { default: "Gaming Hall Dashboard", template: "%s · Gaming Hall Dashboard" },
-  description: "Management dashboard for gaming hall operators",
+  title: { default: "Arcadia", template: "%s · Arcadia" },
+  description: "Arcadia: book gaming devices and run your gaming hall",
 };
 
 export const viewport: Viewport = {
