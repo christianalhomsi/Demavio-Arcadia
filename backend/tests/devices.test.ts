@@ -225,7 +225,7 @@ describe("request_device_command", () => {
     });
     const ev = await q(IDS.employeeH1, "select status from public.agent_command_events where command_id = $1", [id]);
     expect(ev.map((e) => e.status)).toEqual(["Queued"]);
-    expect((await audit("device.command.request")).length).toBeGreaterThan(0);
+    expect((await audit("device.command.request")).length).toBe(0); // no longer audited (…000045); the command log has it
   });
   it("is idempotent: the same key returns the same command; a different payload is a conflict", async () => {
     const k = key();

@@ -66,6 +66,9 @@ async function invoiceFor(device = D.pc1, minutes = 30, over: { customer?: strin
   await db.exec(`update public.sessions set started_at = now() - interval '${minutes} minutes' where id = '${id}'`);
   if (over.customer) await db.exec(`update public.sessions set customer_id = '${over.customer}' where id = '${id}'`);
   await q(IDS.employeeH1, "select public.end_session($1,'normal',null)", [id]);
+  // Since …000048 a wallet must belong to the invoice's player. A walk-in invoice with no player name
+  // stays payable from any wallet in the hall, which is what these money tests rely on.
+  await db.exec(`update public.invoices set guest_name = null where session_id = '${id}' and customer_id is null`);
   const inv = (await db.query<any>("select * from public.invoices where session_id = $1", [id])).rows[0];
   return { sessionId: id as string, invoiceId: inv.id as string, total: n(inv.total_minor), number: inv.number as string };
 }

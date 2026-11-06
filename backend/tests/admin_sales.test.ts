@@ -103,7 +103,7 @@ describe("halls", () => {
     expect((await err(createHall("X", "Mars/Base"))).detail).toBe("time_zone");
     expect((await err(createHall("X", "UTC", "us"))).detail).toBe("currency");
     expect((await err(createHall(" ", "UTC", "USD"))).detail).toBe("name");
-    expect((await audit("admin.hall.create")).filter((a) => a.target_id === h).length).toBe(1);
+    expect((await audit("admin.hall.create")).filter((a) => a.target_id === h).length).toBe(0); // no longer audited (…000045)
   });
   it("invites an owner who can accept and then reaches the hall; the token is shown once", async () => {
     const h = await createHall();

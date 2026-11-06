@@ -88,7 +88,8 @@ Deno.serve(async (req) => {
       if (free.data === false) return reply("username_taken");
 
       // An already-registered email gets the same answer, without a mail: never reveal accounts.
-      const taken = await admin.from("profiles").select("id").ilike("email", email).limit(1);
+      // eq, not ilike: "_" and "%" in an address are wildcards for ilike and would match other people.
+      const taken = await admin.from("profiles").select("id").eq("email", email).limit(1);
       if (taken.error) throw taken.error;
       if (taken.data.length > 0) return reply("ok");
 
@@ -123,6 +124,12 @@ Deno.serve(async (req) => {
         user_metadata: { full_name: claimed.data, username: claimed.data },
       });
       if (created.error) {
+        // Someone may have taken the username since the code was sent: say so instead of "failed".
+        const free = await admin.rpc("username_available", { p_username: claimed.data });
+        if (!free.error && free.data === false) {
+          await admin.from("pending_signups").delete().eq("email", email);
+          return reply("username_taken");
+        }
         // The code stays usable, so a passing failure does not cost the user their code.
         await admin.from("pending_signups").update({ claimed_until: null }).eq("email", email);
         console.error("createUser failed", created.error.code);

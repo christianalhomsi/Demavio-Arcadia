@@ -318,6 +318,10 @@ describe("function exposure", () => {
         // public player booking (migration 15): the first five are also callable by anon
         "list_public_halls", "get_public_hall", "list_public_devices", "list_public_device_busy", "quote_public_price", "username_available", "set_my_username",
         "create_player_reservation", "list_my_reservations", "cancel_my_reservation", "confirm_reservation", "reject_reservation",
+        // guest wallets, payer matching, invoice time, agent bridge (migrations 44-49); each checks a hall permission
+        "adjust_invoice_time", "invoice_time_options", "invoice_payer", "set_invoice_payer", "resolve_player",
+        "open_guest_wallet", "link_guest_wallet", "link_guest_wallet_by_username", "open_wallet_by_username",
+        "create_pairing_code", "revoke_hall_server",
         // products (migration 16)
         "upsert_product", "list_products", "add_session_item", "remove_session_item", "list_session_items",
         // advanced pricing (migration 17)

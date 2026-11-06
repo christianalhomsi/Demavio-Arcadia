@@ -114,7 +114,7 @@ describe("session items", () => {
     expect(rows[0]).toMatchObject({ name: "Cola", quantity: 2, currency: "USD" });
     expect(Number(rows[0].unit_price_minor)).toBe(150);
     expect(Number(rows[0].line_minor)).toBe(300);
-    expect((await audit("session.item.add")).length).toBe(1);
+    expect((await audit("session.item.add")).length).toBe(0); // no longer audited (…000045)
   });
 
   it("rejects bad quantities, inactive and foreign products, outsiders and ended sessions", async () => {
@@ -159,7 +159,7 @@ describe("session items", () => {
     expect(row.removed_by).toBe(IDS.employeeH1);
     const events = (await db.query<any>("select event_type from public.session_events where session_id = $1 order by created_at", [s])).rows.map((e) => e.event_type);
     expect(events).toEqual(expect.arrayContaining(["item_added", "item_removed"]));
-    expect((await audit("session.item.remove")).length).toBe(1);
+    expect((await audit("session.item.remove")).length).toBe(0); // no longer audited (…000045)
 
     const other = await addItem(IDS.employeeH1, s, cola, 1);
     await q(IDS.employeeH1, "select public.end_session($1,'normal',null)", [s]);
