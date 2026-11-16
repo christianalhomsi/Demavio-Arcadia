@@ -200,12 +200,18 @@ describe("DayCalendar", () => {
         now={new Date("2026-10-24T09:00:00Z")}
       />,
     );
-    const link = screen.getByRole("link", { name: /Reservation Confirmed, Sam, 10:00 to 12:00/ });
-    expect(link).toHaveAttribute("href", "/halls/h/reservations/r1");
+    // The phone agenda and the wide timeline are both in the DOM (CSS shows one), so links repeat.
+    const links = screen.getAllByRole("link", {
+      name: /Reservation Confirmed, Sam, 10:00 to 12:00/,
+    });
+    expect(links.length).toBeGreaterThan(0);
+    for (const link of links) expect(link).toHaveAttribute("href", "/halls/h/reservations/r1");
     expect(screen.queryByText(/Gone/)).not.toBeInTheDocument();
     expect(
-      screen.getByRole("link", { name: /Session fixed, started 10:05, running/ }),
-    ).toBeInTheDocument();
+      screen.getAllByRole("link", { name: /Session fixed, started 10:05, running/ }).length,
+    ).toBeGreaterThan(0);
+    // A device with nothing booked says so on phones.
+    expect(screen.getByText("Nothing booked on this day")).toBeInTheDocument();
     expect(screen.getByRole("list", { name: "PC-02 timeline" })).toBeInTheDocument();
   });
 });
