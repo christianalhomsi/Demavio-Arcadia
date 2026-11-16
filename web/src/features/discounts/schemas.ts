@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { normalizeNumberInput } from "@/lib/money";
 
 /** UX validation only; upsert_discount validates again inside the database. */
 export const discountSchema = z.object({
@@ -22,9 +23,10 @@ export const applyDiscountSchema = z.object({
 export type ApplyDiscountInput = z.infer<typeof applyDiscountSchema>;
 
 /** "12.5" -> 1250 (basis points). Null unless 0.01..100 with at most two decimals. */
-export function percentToBasisPoints(text: string): number | null {
-  if (!/^\d{1,3}(\.\d{1,2})?$/.test(text.trim())) return null;
-  const [whole, frac = ""] = text.trim().split(".");
+export function percentToBasisPoints(input: string): number | null {
+  const text = normalizeNumberInput(input);
+  if (!/^\d{1,3}(\.\d{1,2})?$/.test(text)) return null;
+  const [whole, frac = ""] = text.split(".");
   const bp = Number(whole) * 100 + Number(frac.padEnd(2, "0"));
   return bp >= 1 && bp <= 10000 ? bp : null;
 }

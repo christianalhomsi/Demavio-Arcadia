@@ -7,6 +7,7 @@ vi.mock("@/lib/auth/session", () => ({ getMyContext: () => getCtx() }));
 vi.mock("@/lib/actions/rpc", () => ({ callRpc: (...a: unknown[]) => rpc(...a) }));
 vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
 vi.mock("@/features/invoices/queries", () => ({ getHallCurrency: async () => "USD" }));
+vi.mock("@/features/halls/queries", () => ({ getHallTimeZone: async () => "UTC" }));
 vi.mock("@/features/packages/queries", () => ({ listPackageUses: async () => [] }));
 
 import { upsertPackageAction, startPackageSessionAction } from "@/features/packages/actions";

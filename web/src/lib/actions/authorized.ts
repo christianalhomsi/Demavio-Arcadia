@@ -26,5 +26,6 @@ export async function runAuthorized<T>(
     return localizeResult(fail("NOT_FOUND", ERROR_MESSAGES.NOT_FOUND));
   if (access.status === "forbidden")
     return localizeResult(fail("FORBIDDEN", ERROR_MESSAGES.FORBIDDEN));
-  return handler(access.membership);
+  // The handler's own form checks are written in English; translate them like backend errors.
+  return localizeResult(await handler(access.membership));
 }

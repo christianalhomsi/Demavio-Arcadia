@@ -13,6 +13,7 @@ import { MovementsList } from "@/features/shifts/components/MovementsList";
 import { RecordMovementButton } from "@/features/shifts/components/RecordMovementDialog";
 import { DifferenceBadge } from "@/features/shifts/components/ShiftsPanel";
 import { getShift, getShiftUnpaidSummary, listCashMovements } from "@/features/shifts/queries";
+import { registerLabel } from "@/features/shifts/schemas";
 import { isUuid } from "@/lib/auth/authorize";
 import { requireHallPermission } from "@/lib/auth/guards";
 import { LiveRefresh } from "@/lib/realtime/LiveRefresh";
@@ -52,7 +53,7 @@ async function ShiftDetail({ params }: { params: Promise<{ hallId: string; shift
       <LiveRefresh hallId={hallId} tables={["shifts"]} />
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h1 className="text-2xl font-semibold">
-          {tpl(t.shDetailTitle, { name: shift.registerName })}
+          {tpl(t.shDetailTitle, { name: registerLabel(shift.registerName, t.shMainRegister) })}
         </h1>
         <span className="flex items-center gap-2">
           <Badge tone={shift.status === "open" ? "info" : "neutral"}>

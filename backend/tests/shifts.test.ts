@@ -175,6 +175,17 @@ describe("cash is linked to the open shift", () => {
     expect(m.map((x) => [x.kind, n(x.amount_minor), x.refund_id])).toEqual([["cash_refund", -100, r]]);
     expect((await shiftRow(s)).expected_cash_minor).toBe(200); // 300 - 100
   });
+  it("a cash refund cannot take more than the open drawer holds", async () => {
+    const a = await openShift(IDS.employeeH1, 0);
+    const inv = await invoiceFor();
+    const pid = await payCash(IDS.employeeH1, inv.invoiceId, inv.total); // 300, in shift A
+    await closeShift(IDS.employeeH1, a, 300);
+    const b = await openShift(IDS.employeeH1, 50); // the new drawer starts with 50
+    const [{ id: r }] = await q(IDS.employeeH1, "select public.request_refund($1,100,'overcharge',null,$2) as id", [pid, key()]);
+    expect((await err(q(IDS.ownerH1H2, "select public.decide_refund($1,true,'ok')", [r]))).detail).toBe("exceeds_drawer");
+    expect((await db.query<any>("select status from public.refunds where id = $1", [r])).rows[0].status).toBe("pending");
+    expect((await shiftRow(b)).expected_cash_minor).toBe(50);
+  });
   it("approving a cash refund with no open shift is blocked and changes nothing", async () => {
     const s = await openShift(IDS.employeeH1, 0);
     const inv = await invoiceFor();

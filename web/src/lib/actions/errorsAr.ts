@@ -96,6 +96,8 @@ export const DETAIL_MESSAGES_AR: Record<keyof typeof DETAIL_DEFS, string> = {
   discount_not_valid: "هذا الخصم غير صالح في هذا الوقت.",
   discount_exhausted: "وصل هذا الخصم إلى حد الاستخدام.",
   exceeds_discount_limit: "هذا الخصم أكبر من المسموح لك. اطلب من المالك.",
+  discount_already_applied: "هذا الخصم مطبّق على هذه الفاتورة بالفعل.",
+  no_rate: "لا يوجد سعر لهذا الجهاز بعد. حدّد سعراً لفئته أو للصالة كلها من صفحة التسعير أولاً.",
   validity: "يجب أن تكون نهاية فترة الصلاحية بعد بدايتها.",
   max_uses: "أدخل حد استخدام 1 أو أكثر، أو اتركه فارغاً.",
   value: "أدخل قيمة خصم صحيحة.",

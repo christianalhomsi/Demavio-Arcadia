@@ -107,7 +107,14 @@ async function InvoiceDetail({
             {items.map((i) => (
               <tr key={i.id} className="border-b border-border">
                 <td className="py-2">
-                  {i.description}
+                  {/* Lines the system writes carry English names in the database; show them translated. */}
+                  {i.detail?.kind === "session"
+                    ? i.detail?.overtime
+                      ? t.pkExtraLine
+                      : t.ivSessionLine
+                    : i.detail?.kind === "write_off"
+                      ? t.woLine
+                      : i.description}
                   <div className="text-xs text-muted">
                     {i.detail?.kind === "write_off"
                       ? t.woLine

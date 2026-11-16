@@ -93,6 +93,8 @@ async function Reservations({
         devices={active.map((d) => ({ id: d.deviceId, name: d.name }))}
         reservations={reservations}
         sessions={daySessions}
+        // Pick "now" once on the server so the browser hydrates the same red time line.
+        now={new Date()}
       />
 
       <ReservationsPanel

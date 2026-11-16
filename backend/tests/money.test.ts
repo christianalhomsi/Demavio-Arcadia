@@ -103,6 +103,38 @@ describe("charge calculation (integer minor units, provisional DEC-05 rules)", (
   });
 });
 
+describe("fixed sessions that run past their booked end", () => {
+  async function overdueFixed(bookedMin: number, lateMin: number) {
+    const [{ id }] = await q(IDS.employeeH1, "select public.start_walk_in($1,$2,'fixed',$3,null,'Walk-in',$4) as id", [IDS.h1, D.pc1, bookedMin, key()]);
+    await db.exec(`update public.sessions set started_at = now() - interval '${bookedMin + lateMin} minutes',
+                   scheduled_end_at = now() - interval '${lateMin} minutes' where id = '${id}'`);
+    return id as string;
+  }
+  it("still occupy the device until someone ends them", async () => {
+    await overdueFixed(60, 20);
+    // Internal helper (not callable by clients), so it is checked as the database owner.
+    const [{ r }] = (await db.query<any>("select public.device_blocking_reason($1, now(), now() + interval '30 minutes') as r", [D.pc1])).rows;
+    expect(r).toBe("device_in_use");
+    // A check-in or walk-in now gets that clear reason instead of a raw unique-index error.
+    expect((await err(q(IDS.employeeH1, "select public.start_walk_in($1,$2,'open',null,null,'Next',$3)", [IDS.h1, D.pc1, key()]))).detail)
+      .toBe("device_in_use");
+    const busy = (await db.query<any>("select * from public.list_public_device_busy($1, now() - interval '1 day', now() + interval '1 day')", [D.pc1])).rows;
+    expect(busy.some((b) => new Date(b.end_at).getTime() >= Date.now() - 5_000)).toBe(true);
+  });
+  it("are billed for the time actually played, like package overtime", async () => {
+    const id = await overdueFixed(60, 20);
+    await q(IDS.employeeH1, "select public.end_session($1,'normal',null)", [id]);
+    const inv = (await db.query<any>("select * from public.invoices where session_id = $1", [id])).rows[0];
+    expect(n(inv.total_minor)).toBe(800); // 80 min at 600/h
+  });
+  it("ending early still bills only what was played", async () => {
+    const [{ id }] = await q(IDS.employeeH1, "select public.start_walk_in($1,$2,'fixed',60,null,'Walk-in',$3) as id", [IDS.h1, D.pc1, key()]);
+    await db.exec(`update public.sessions set started_at = now() - interval '30 minutes', scheduled_end_at = now() + interval '30 minutes' where id = '${id}'`);
+    await q(IDS.employeeH1, "select public.end_session($1,'normal',null)", [id]);
+    expect(n((await db.query<any>("select total_minor from public.invoices where session_id = $1", [id])).rows[0].total_minor)).toBe(300);
+  });
+});
+
 describe("pricing rules and snapshots", () => {
   it("picks device > category > hall > none, and records the source", async () => {
     const a = await invoiceFor(D.pc1, 60); // hall rate
@@ -115,7 +147,15 @@ describe("pricing rules and snapshots", () => {
     const sources = (await db.query<any>("select rate_source from public.session_pricing_snapshots order by captured_at")).rows.map((r) => r.rate_source);
     expect(sources).toEqual(["hall", "category", "device"]);
   });
-  it("no rule at all means rate 0 and an invoice that owes nothing", async () => {
+  it("no rule at all refuses to start a session (no silent rate 0)", async () => {
+    await expect(db.query(
+      `insert into public.sessions (hall_id, device_id, guest_name, session_type, started_by) values ($1,$2,'Free','open',$3)`,
+      [IDS.h3, D.h3pc, IDS.ownerH3])).rejects.toThrow(/PRECONDITION_FAILED/);
+    expect((await err(q(IDS.ownerH3, "select public.start_walk_in($1,$2,'open',null,null,'Walk-in',$3)", [IDS.h3, D.h3pc, key()]))).detail)
+      .toBe("no_rate");
+  });
+  it("an explicit rate of 0 means free play and an invoice that owes nothing", async () => {
+    await db.exec(`insert into public.pricing_rules (hall_id, scope, rate_per_hour_minor) values ('${IDS.h3}','hall',0)`);
     const [{ id }] = (await db.query<any>(
       `insert into public.sessions (hall_id, device_id, guest_name, session_type, started_by) values ($1,$2,'Free','open',$3) returning id`,
       [IDS.h3, D.h3pc, IDS.ownerH3])).rows.map((r) => ({ id: r.id }));
@@ -475,9 +515,22 @@ describe("refunds", () => {
     const { pid } = await paidByWallet();
     const r = await request(IDS.employeeH1, pid, 50);
     expect((await err(decide(IDS.employeeH1, r, true))).message).toBe("PERMISSION_DENIED");
+    // A second approver exists: approving your own request is refused.
+    const m = await db.query<any>("select id from public.hall_memberships where hall_id = $1 and user_id = $2", [IDS.h1, IDS.employeeH1]);
+    await db.query("insert into public.hall_membership_grants values ($1, 'refund.approve')", [m.rows[0].id]);
     const own = await request(IDS.ownerH1H2, pid, 50);
     expect((await err(decide(IDS.ownerH1H2, own, true))).detail).toBe("self_approval");
+    await db.query("delete from public.hall_membership_grants where membership_id = $1", [m.rows[0].id]);
     await decide(IDS.ownerH1H2, r, true); // someone else's request is fine
+  });
+  it("the only approver may approve their own request, and anyone may withdraw their own", async () => {
+    const { pid } = await paidByWallet();
+    const own = await request(IDS.ownerH1H2, pid, 50);
+    await decide(IDS.ownerH1H2, own, true); // nobody else in the hall can approve
+    expect((await db.query<any>("select status from public.refunds where id = $1", [own])).rows[0].status).toBe("approved");
+    const again = await request(IDS.ownerH1H2, pid, 50);
+    await decide(IDS.ownerH1H2, again, false); // withdrawing is always allowed
+    expect((await db.query<any>("select status from public.refunds where id = $1", [again])).rows[0].status).toBe("rejected");
   });
   it("cannot refund more than was paid, across pending and approved refunds together", async () => {
     const { pid } = await paidByWallet(); // payment of 300

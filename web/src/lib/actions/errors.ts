@@ -98,6 +98,9 @@ export const DETAIL_DEFS = {
   discount_not_valid: "This discount is not valid at this time.",
   discount_exhausted: "This discount has reached its usage limit.",
   exceeds_discount_limit: "That discount is more than you are allowed to give. Ask an owner.",
+  discount_already_applied: "This discount is already applied to this invoice.",
+  no_rate:
+    "This device has no price yet. Set a rate for its category or for the whole hall in Pricing first.",
   validity: "The end of the validity period must be after its start.",
   max_uses: "Enter a usage limit of 1 or more, or leave it empty.",
   value: "Enter a valid discount value.",

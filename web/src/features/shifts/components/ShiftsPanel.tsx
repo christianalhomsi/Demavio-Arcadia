@@ -17,6 +17,7 @@ import { tpl } from "@/lib/i18n/messages";
 import { newIdempotencyKey } from "@/lib/idempotency";
 import { openShiftAction } from "../actions";
 import type { ShiftRow } from "../queries";
+import { registerLabel } from "../schemas";
 
 export function DifferenceBadge({ shift }: { shift: ShiftRow }) {
   const { t } = useI18n();
@@ -60,7 +61,7 @@ export function ShiftsPanel({
         >
           <div className="flex flex-wrap items-center justify-between gap-2">
             <h2 id="open-shift-h" className="text-lg font-medium">
-              {tpl(t.shOpenTitleN, { name: open.registerName })}
+              {tpl(t.shOpenTitleN, { name: registerLabel(open.registerName, t.shMainRegister) })}
             </h2>
             <Badge tone="info">{t.sbOpen}</Badge>
           </div>

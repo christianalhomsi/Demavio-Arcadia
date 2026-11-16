@@ -138,7 +138,7 @@ describe("RefundsPanel", () => {
     );
     expect(screen.queryByRole("button", { name: "Approve" })).not.toBeInTheDocument();
   });
-  it("blocks approving your own request in the UI (the database enforces it too)", () => {
+  it("explains your own request and leaves the approver rule to the database", () => {
     render(
       <PermissionProvider permissions={["refund.approve"]}>
         <RefundsPanel
@@ -149,8 +149,9 @@ describe("RefundsPanel", () => {
         />
       </PermissionProvider>,
     );
-    expect(screen.getByRole("button", { name: "Approve" })).toBeDisabled();
-    expect(screen.getByText(/another approver must approve/)).toBeInTheDocument();
+    // The hall's only approver may approve their own request; the database refuses when another exists.
+    expect(screen.getByRole("button", { name: "Approve" })).toBeEnabled();
+    expect(screen.getByText(/You can withdraw it with Reject/)).toBeInTheDocument();
   });
   it("lets an approver approve someone else's request", () => {
     render(

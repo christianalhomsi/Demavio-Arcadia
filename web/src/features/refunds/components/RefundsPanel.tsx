@@ -87,11 +87,9 @@ export function RefundsPanel({
                 )}
                 {r.status === "pending" && canApprove && (
                   <div className="flex flex-wrap items-center gap-2 pt-1">
-                    <Button
-                      size="sm"
-                      disabled={mine}
-                      onClick={() => setDeciding({ refund: r, approve: true })}
-                    >
+                    {/* Not disabled for your own request: the hall's only approver may approve it, and the
+                        database refuses (with a clear message) when someone else should. */}
+                    <Button size="sm" onClick={() => setDeciding({ refund: r, approve: true })}>
                       {t.rfApprove}
                     </Button>
                     <Button

@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import * as React from "react";
-import { Controller, useForm } from "react-hook-form";
+import { Controller, useForm, useWatch } from "react-hook-form";
 import { Field, FormStatus } from "@/components/form/Field";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -43,7 +43,6 @@ export function DeviceForm({
   const {
     register,
     control,
-    watch,
     setValue,
     handleSubmit,
     setError,
@@ -59,7 +58,8 @@ export function DeviceForm({
     },
   });
 
-  const currentCategory = watch("category");
+  // useWatch (unlike watch) is safe for the React Compiler.
+  const currentCategory = useWatch({ control, name: "category" }) ?? "";
   const isCustomCategory =
     currentCategory !== "" && !(DEVICE_CATEGORIES as readonly string[]).includes(currentCategory);
 

@@ -25,11 +25,14 @@ const selectCls =
 export function PackagesPanel({
   hallId,
   currency,
+  timeZone,
   packages,
   categories,
 }: {
   hallId: string;
   currency: string;
+  /** The hall's time zone: validity dates are days there. */
+  timeZone: string;
   packages: PackageRow[];
   categories: string[];
 }) {
@@ -48,8 +51,8 @@ export function PackagesPanel({
       target: targetOf(p),
       from: p.fromMinute == null ? "" : minutesToHm(p.fromMinute),
       to: p.toMinute == null ? "" : minutesToHm(p.toMinute),
-      validFrom: isoToDate(p.validFrom),
-      validUntil: isoToDate(p.validUntil, true),
+      validFrom: isoToDate(p.validFrom, false, timeZone),
+      validUntil: isoToDate(p.validUntil, true, timeZone),
       maxUses: p.maxUses == null ? "" : String(p.maxUses),
       active: !p.active,
     });
@@ -158,6 +161,7 @@ export function PackagesPanel({
           key={editing === "new" ? "new" : editing.id}
           hallId={hallId}
           currency={currency}
+          timeZone={timeZone}
           pkg={editing === "new" ? null : editing}
           categories={categories}
           onClose={() => setEditing(null)}
@@ -179,6 +183,7 @@ function targetOf(p: PackageRow): string {
 function PackageDialog({
   hallId,
   currency,
+  timeZone,
   pkg,
   categories,
   onClose,
@@ -186,6 +191,7 @@ function PackageDialog({
 }: {
   hallId: string;
   currency: string;
+  timeZone: string;
   pkg: PackageRow | null;
   categories: string[];
   onClose: () => void;
@@ -200,8 +206,12 @@ function PackageDialog({
     pkg?.fromMinute == null ? "" : minutesToHm(pkg.fromMinute),
   );
   const [to, setTo] = React.useState(pkg?.toMinute == null ? "" : minutesToHm(pkg.toMinute));
-  const [validFrom, setValidFrom] = React.useState(isoToDate(pkg?.validFrom ?? null));
-  const [validUntil, setValidUntil] = React.useState(isoToDate(pkg?.validUntil ?? null, true));
+  const [validFrom, setValidFrom] = React.useState(
+    isoToDate(pkg?.validFrom ?? null, false, timeZone),
+  );
+  const [validUntil, setValidUntil] = React.useState(
+    isoToDate(pkg?.validUntil ?? null, true, timeZone),
+  );
   const [maxUses, setMaxUses] = React.useState(pkg?.maxUses == null ? "" : String(pkg.maxUses));
   const [active, setActive] = React.useState(pkg?.active ?? true);
   const [pending, setPending] = React.useState(false);

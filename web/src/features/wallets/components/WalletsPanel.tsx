@@ -179,7 +179,11 @@ function OpenWalletDialog({
               {(p) => (
                 <Input
                   {...p}
-                  type="email"
+                  type="text"
+                  dir="ltr"
+                  autoCapitalize="none"
+                  autoCorrect="off"
+                  spellCheck={false}
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                 />
@@ -306,7 +310,16 @@ export function LinkWalletDialog({ hallId, walletId }: { hallId: string; walletI
         <form onSubmit={submit} className="space-y-3" noValidate>
           <Field id="lw-email" label={t.wlEmail} error={error}>
             {(p) => (
-              <Input {...p} type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
+              <Input
+                {...p}
+                type="text"
+                dir="ltr"
+                autoCapitalize="none"
+                autoCorrect="off"
+                spellCheck={false}
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+              />
             )}
           </Field>
           <div className="flex justify-end gap-2 pt-2">

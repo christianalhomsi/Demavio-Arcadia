@@ -9,9 +9,23 @@ export function formatMoney(minor: number, currency: string, locale = "en"): str
   );
 }
 
+/**
+ * Arabic-Indic (٠-٩) and Persian (۰-۹) digits become ASCII and the Arabic decimal separator (٫) becomes
+ * ".". Thousands separators ("," or "٬") are dropped only in proper groups of three ("5,000", "٥٬٠٠٠");
+ * anything else, such as "1,5", is left alone and rejected rather than misread as 15.
+ */
+export function normalizeNumberInput(input: string): string {
+  const ascii = input
+    .trim()
+    .replace(/[٠-٩]/g, (d) => String(d.charCodeAt(0) - 0x0660))
+    .replace(/[۰-۹]/g, (d) => String(d.charCodeAt(0) - 0x06f0))
+    .replace(/٫/g, ".");
+  return /^\d{1,3}([,٬]\d{3})+(\.\d+)?$/.test(ascii) ? ascii.replace(/[,٬]/g, "") : ascii;
+}
+
 /** Parses a user-typed decimal ("12.50") into integer minor units. Returns null if invalid. */
 export function parseMoneyInput(input: string, fractionDigits = 2): number | null {
-  const trimmed = input.trim();
+  const trimmed = normalizeNumberInput(input);
   // Zero-decimal currencies (JPY) take whole numbers only; `{1,0}` would be an invalid pattern.
   const re =
     fractionDigits === 0 ? /^\d+$/ : new RegExp(String.raw`^\d+(\.\d{1,${fractionDigits}})?$`);

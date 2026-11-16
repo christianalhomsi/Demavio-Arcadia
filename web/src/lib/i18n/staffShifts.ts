@@ -78,6 +78,7 @@ export const shiftsEn = {
   stPartly: "Partly paid",
   // shift detail
   shDetailTitle: "Shift · {name}",
+  shMainRegister: "Main register",
   shClosedByAt: "closed by {name} at",
   shAllShifts: "All shifts",
   shCashSummary: "Cash summary",
@@ -180,6 +181,7 @@ export const shiftsAr: typeof shiftsEn = {
   colOwed: "المستحق",
   stPartly: "مدفوعة جزئياً",
   shDetailTitle: "وردية · {name}",
+  shMainRegister: "الصندوق الرئيسي",
   shClosedByAt: "وأغلقها {name} بتاريخ",
   shAllShifts: "كل الورديات",
   shCashSummary: "ملخص النقد",

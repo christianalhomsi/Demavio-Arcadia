@@ -12,6 +12,7 @@ import { getHallTimeZone } from "@/features/halls/queries";
 import { MovementsList } from "@/features/shifts/components/MovementsList";
 import { RecordMovementButton } from "@/features/shifts/components/RecordMovementDialog";
 import { listCashMovements, listRegisters } from "@/features/shifts/queries";
+import { registerLabel } from "@/features/shifts/schemas";
 import { requireHallPermission } from "@/lib/auth/guards";
 import { parseListParams, toRange } from "@/lib/query/searchParams";
 import { LiveRefresh } from "@/lib/realtime/LiveRefresh";
@@ -50,7 +51,7 @@ async function Registers({
             className="rounded-2xl border border-border bg-surface shadow-card p-4 text-sm"
           >
             <div className="flex flex-wrap items-center justify-between gap-2">
-              <span className="font-medium">{r.name}</span>
+              <span className="font-medium">{registerLabel(r.name, t.shMainRegister)}</span>
               <Badge tone={r.openShiftId ? "info" : "neutral"}>
                 {r.openShiftId ? t.rgShiftOpen : t.rgNoShift}
               </Badge>

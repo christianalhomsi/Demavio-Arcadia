@@ -15,7 +15,7 @@ export async function runPlatformAuthorized<T>(
   if (!ctx) return localizeResult(fail("UNAUTHENTICATED", ERROR_MESSAGES.UNAUTHENTICATED));
   if (authorizePlatform(ctx, roles).status !== "ok")
     return localizeResult(fail("FORBIDDEN", ERROR_MESSAGES.FORBIDDEN));
-  return handler();
+  return localizeResult(await handler());
 }
 
 export async function withPlatformRole<T>(

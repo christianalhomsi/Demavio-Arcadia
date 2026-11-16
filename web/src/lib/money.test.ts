@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { formatMoney, parseMoneyInput } from "./money";
+import { formatMoney, normalizeNumberInput, parseMoneyInput } from "./money";
 
 describe("parseMoneyInput", () => {
   it("parses decimals to minor units", () => {
@@ -31,5 +31,23 @@ describe("currency-aware parsing", () => {
     expect(parseMoneyForCurrency("1.2345", "KWD")).toBeNull();
     expect(minorToInput(1250, "USD")).toBe("12.50");
     expect(minorToInput(500, "JPY")).toBe("500");
+  });
+});
+
+describe("Arabic and formatted input", () => {
+  it("reads Arabic-Indic and Persian digits", () => {
+    expect(parseMoneyInput("٥٠٠", 0)).toBe(500);
+    expect(parseMoneyInput("۵۰۰", 0)).toBe(500);
+    expect(parseMoneyInput("١٢٫٥٠")).toBe(1250);
+  });
+  it("ignores thousands separators", () => {
+    expect(parseMoneyInput("5,000", 0)).toBe(5000);
+    expect(parseMoneyInput("٥٬٠٠٠", 0)).toBe(5000);
+    expect(normalizeNumberInput(" 12,500.5 ")).toBe("12500.5");
+    expect(parseMoneyInput("1,5")).toBeNull(); // never misread as 15
+  });
+  it("still rejects junk", () => {
+    expect(parseMoneyInput("abc")).toBeNull();
+    expect(parseMoneyInput("-5")).toBeNull();
   });
 });

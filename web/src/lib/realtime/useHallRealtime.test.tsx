@@ -18,7 +18,7 @@ const channel = {
   }),
 };
 const removeChannel = vi.fn();
-const channelName = vi.fn((_n: string) => channel);
+const channelName = vi.fn<(name: string) => typeof channel>(() => channel);
 vi.mock("@/lib/supabase/client", () => ({
   createClient: () => ({ channel: (n: string) => channelName(n), removeChannel }),
 }));

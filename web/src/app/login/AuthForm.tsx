@@ -110,6 +110,8 @@ export function AuthForm({ next }: { next: string }) {
   }
 
   // The login page redirects signed-in users to the right place (players back, staff to dashboards).
+  // A full page load (not router.push) on purpose: the server must read the new auth cookies from scratch.
+  // eslint-disable-next-line @next/next/no-location-assign-relative-destination
   const finish = () => window.location.assign(`/login?next=${encodeURIComponent(next)}`);
 
   async function submit(e: React.FormEvent<HTMLFormElement>) {

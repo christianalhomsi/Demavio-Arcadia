@@ -1,6 +1,7 @@
 import "server-only";
 import { getLocale } from "@/lib/i18n/server";
 import { DETAIL_MESSAGES, ERROR_MESSAGES } from "./errors";
+import { ACTION_MESSAGES_AR } from "./actionMessagesAr";
 import { DETAIL_MESSAGES_AR, ERROR_MESSAGES_AR } from "./errorsAr";
 import type { ActionResult } from "./result";
 
@@ -12,6 +13,8 @@ function table(): Map<string, string> {
       byEnglish.set(en, ERROR_MESSAGES_AR[code as keyof typeof ERROR_MESSAGES_AR]);
     for (const [detail, en] of Object.entries(DETAIL_MESSAGES))
       byEnglish.set(en, DETAIL_MESSAGES_AR[detail as keyof typeof DETAIL_MESSAGES_AR]);
+    for (const [en, ar] of Object.entries(ACTION_MESSAGES_AR))
+      if (!byEnglish.has(en)) byEnglish.set(en, ar);
   }
   return byEnglish;
 }

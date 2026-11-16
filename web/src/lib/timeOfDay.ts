@@ -1,3 +1,5 @@
+import { formatInTimeZone, fromZonedTime } from "date-fns-tz";
+
 /** Time-of-day helpers for pricing windows and packages. Minutes since midnight in the hall's time zone. */
 
 /** "18:30" -> 1110. "24:00" is allowed as an end time. Returns null when it is not a valid time. */
@@ -16,19 +18,22 @@ export function minutesToHm(minutes: number): string {
   return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
 }
 
-/** "2026-03-01" -> ISO instant at the start (or end) of that UTC day. Null when not a real date. */
-export function dateToIso(text: string, endOfDay = false): string | null {
+/**
+ * "2026-03-01" -> ISO instant at the start (or, with endOfDay, the end) of that day in `timeZone` (the
+ * hall's). Null when not a real date.
+ */
+export function dateToIso(text: string, endOfDay = false, timeZone = "UTC"): string | null {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(text)) return null;
   const d = new Date(`${text}T00:00:00Z`);
   if (Number.isNaN(d.getTime()) || d.toISOString().slice(0, 10) !== text) return null;
   if (endOfDay) d.setUTCDate(d.getUTCDate() + 1);
-  return d.toISOString();
+  return fromZonedTime(`${d.toISOString().slice(0, 10)}T00:00:00`, timeZone).toISOString();
 }
 
 /** Inverse of dateToIso for prefilling a date input. */
-export function isoToDate(iso: string | null, endOfDay = false): string {
+export function isoToDate(iso: string | null, endOfDay = false, timeZone = "UTC"): string {
   if (!iso) return "";
-  const d = new Date(iso);
-  if (endOfDay) d.setUTCDate(d.getUTCDate() - 1);
-  return d.toISOString().slice(0, 10);
+  // The end of a day is stored as the next midnight: step back a moment to land on the chosen day.
+  const at = new Date(iso).getTime() - (endOfDay ? 1 : 0);
+  return formatInTimeZone(at, timeZone, "yyyy-MM-dd");
 }

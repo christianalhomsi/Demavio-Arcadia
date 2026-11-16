@@ -18,6 +18,8 @@ export function DataTable<T>({
   caption: string;
   empty?: { title: string; description?: string; action?: React.ReactNode };
 }) {
+  // TanStack Table returns mutable functions, so the React Compiler skips this component on purpose.
+  // eslint-disable-next-line react-hooks/incompatible-library
   const table = useReactTable({ data: rows, columns, getCoreRowModel: getCoreRowModel() });
 
   if (rows.length === 0) {

@@ -35,7 +35,7 @@ const parseDate = (v: string): Date | null => {
 
 const controlCls =
   "h-11 w-full rounded-xl border border-border bg-surface px-3.5 text-base sm:h-10 sm:text-sm " +
-  "transition-colors focus-visible:border-primary disabled:opacity-50 aria-[invalid=true]:border-danger";
+  "transition-colors focus-visible:border-primary disabled:opacity-50 aria-[invalid=true]:border-danger data-[invalid=true]:border-danger";
 
 interface A11y {
   id?: string;
@@ -188,7 +188,9 @@ export function DateField({
         type="button"
         id={a11y.id}
         aria-label={a11y["aria-label"]}
-        aria-invalid={a11y["aria-invalid"]}
+        // aria-invalid is not valid on a button; the error is announced through aria-describedby and the
+        // red border comes from data-invalid.
+        data-invalid={a11y["aria-invalid"] ? "true" : undefined}
         aria-describedby={a11y["aria-describedby"]}
         aria-haspopup="dialog"
         aria-expanded={open}

@@ -5,8 +5,9 @@ import { callRpc } from "@/lib/actions/rpc";
 import { fail, type ActionResult } from "@/lib/actions/result";
 import { withPermission } from "@/lib/actions/withPermission";
 import { isUuid } from "@/lib/auth/authorize";
-import { parseMoneyForCurrency } from "@/lib/money";
+import { normalizeNumberInput, parseMoneyForCurrency } from "@/lib/money";
 import { dateToIso } from "@/lib/timeOfDay";
+import { getHallTimeZone } from "@/features/halls/queries";
 import { getHallCurrency } from "@/features/invoices/queries";
 import {
   applyDiscountSchema,
@@ -45,8 +46,10 @@ export async function upsertDiscountAction(
       if (value === null || value < 1) return invalid("valueText", "Enter a valid amount.");
     }
 
-    const validFrom = d.validFrom === "" ? null : dateToIso(d.validFrom);
-    const validUntil = d.validUntil === "" ? null : dateToIso(d.validUntil, true);
+    // Validity dates are days in the hall's time zone, not UTC.
+    const tz = await getHallTimeZone(hallId);
+    const validFrom = d.validFrom === "" ? null : dateToIso(d.validFrom, false, tz);
+    const validUntil = d.validUntil === "" ? null : dateToIso(d.validUntil, true, tz);
     if (d.validFrom !== "" && validFrom === null)
       return invalid("validFrom", "Enter a valid date.");
     if (d.validUntil !== "" && validUntil === null)
@@ -54,9 +57,10 @@ export async function upsertDiscountAction(
 
     let maxUses: number | null = null;
     if (d.maxUses !== "") {
-      if (!/^\d{1,6}$/.test(d.maxUses) || Number(d.maxUses) < 1)
+      const uses = normalizeNumberInput(d.maxUses);
+      if (!/^\d{1,6}$/.test(uses) || Number(uses) < 1)
         return invalid("maxUses", "Enter a whole number of 1 or more.");
-      maxUses = Number(d.maxUses);
+      maxUses = Number(uses);
     }
 
     const r = await callRpc<string>("upsert_discount", {

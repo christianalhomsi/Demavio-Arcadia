@@ -3,6 +3,7 @@ import { ErrorState } from "@/components/data/ErrorState";
 import { permissionForPath } from "@/components/shell/nav";
 import { TablePageSkeleton } from "@/components/ui/skeleton";
 import { listDeviceStatus } from "@/features/devices/queries";
+import { getHallTimeZone } from "@/features/halls/queries";
 import { getHallCurrency } from "@/features/invoices/queries";
 import { PackagesPanel } from "@/features/packages/components/PackagesPanel";
 import { listPackages } from "@/features/packages/queries";
@@ -14,10 +15,11 @@ export const metadata = { title: "Packages" };
 async function Packages({ params }: { params: Promise<{ hallId: string }> }) {
   const { hallId } = await params;
   await requireHallPermission(hallId, permissionForPath("/packages"));
-  const [packages, devices, currency] = await Promise.all([
+  const [packages, devices, currency, timeZone] = await Promise.all([
     listPackages(hallId),
     listDeviceStatus(hallId),
     getHallCurrency(hallId),
+    getHallTimeZone(hallId),
   ]);
   if (!packages || !devices || !currency)
     return <ErrorState message={(await getT()).t.pkLoadFail} />;
@@ -26,6 +28,7 @@ async function Packages({ params }: { params: Promise<{ hallId: string }> }) {
     <PackagesPanel
       hallId={hallId}
       currency={currency}
+      timeZone={timeZone}
       packages={packages}
       categories={categories}
     />

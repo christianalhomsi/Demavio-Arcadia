@@ -8,6 +8,7 @@ import { withPermission } from "@/lib/actions/withPermission";
 import { isUuid } from "@/lib/auth/authorize";
 import { parseMoneyForCurrency } from "@/lib/money";
 import { dateToIso, hmToMinutes } from "@/lib/timeOfDay";
+import { getHallTimeZone } from "@/features/halls/queries";
 import { getHallCurrency } from "@/features/invoices/queries";
 import { packageSchema, type PackageInput } from "./schemas";
 import { listPackageUses, type PackageUseRow } from "./queries";
@@ -59,8 +60,10 @@ export async function upsertPackageAction(
         return invalid("from", "Enter a valid time range.");
     }
 
-    const validFrom = d.validFrom === "" ? null : dateToIso(d.validFrom);
-    const validUntil = d.validUntil === "" ? null : dateToIso(d.validUntil, true);
+    // Validity dates are days in the hall's time zone, not UTC.
+    const tz = await getHallTimeZone(hallId);
+    const validFrom = d.validFrom === "" ? null : dateToIso(d.validFrom, false, tz);
+    const validUntil = d.validUntil === "" ? null : dateToIso(d.validUntil, true, tz);
     if (d.validFrom !== "" && validFrom === null)
       return invalid("validFrom", "Enter a valid date.");
     if (d.validUntil !== "" && validUntil === null)

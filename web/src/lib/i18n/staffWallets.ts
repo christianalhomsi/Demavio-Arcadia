@@ -3,7 +3,7 @@ export const walletsEn = {
   wlIntro:
     "Wallet balances are stored value belonging to the customer. They are not revenue until spent on invoices.",
   wlEmpty: "No wallets yet",
-  wlEmptyDesc: "Open a wallet using the customer's account email.",
+  wlEmptyDesc: "Open a wallet with the player's username, or for a guest by name.",
   wlCaption: "Customer wallets in this hall",
   colBalance: "Balance",
   wlActive: "Active",
@@ -47,7 +47,7 @@ export const walletsAr: typeof walletsEn = {
   wlTitle: "المحافظ",
   wlIntro: "أرصدة المحافظ قيمة مخزّنة تخص العميل. لا تُعدّ إيراداً إلا عند إنفاقها على الفواتير.",
   wlEmpty: "لا توجد محافظ بعد",
-  wlEmptyDesc: "افتح محفظة باستخدام البريد الإلكتروني لحساب العميل.",
+  wlEmptyDesc: "افتح محفظة باسم مستخدم اللاعب، أو باسم الزبون إن لم يكن لديه حساب.",
   wlCaption: "محافظ العملاء في هذه الصالة",
   colBalance: "الرصيد",
   wlActive: "نشطة",

@@ -327,7 +327,25 @@ describe("discounts", () => {
     expect((await err(apply(IDS.employeeH1, inv.id, five))).detail).toBe("exceeds_discount_limit"); // 500 > 100
     expect(n((await invoice(inv.id)).total_minor)).toBe(540);
     await setLimit(IDS.employeeH1, 0);
-    expect((await err(apply(IDS.employeeH1, inv.id, ten))).detail).toBe("exceeds_discount_limit");
+    const two = await disc({ name: "Fixed 20", kind: "amount", value: 20 });
+    expect((await err(apply(IDS.employeeH1, inv.id, two))).detail).toBe("exceeds_discount_limit");
+  });
+  it("applies the same discount to an invoice only once", async () => {
+    const inv = await endedInvoice(D.pc1, 60); // 600
+    const ten = await disc();
+    await apply(OWNER, inv.id, ten);
+    expect((await err(apply(OWNER, inv.id, ten, "again"))).detail).toBe("discount_already_applied");
+    expect(n((await invoice(inv.id)).total_minor)).toBe(540);
+  });
+  it("an employee's limit covers everything they discounted on one invoice", async () => {
+    const inv = await endedInvoice(D.pc1, 60); // 600
+    const a = await disc({ name: "Fixed 60 A", kind: "amount", value: 60 });
+    const b = await disc({ name: "Fixed 60 B", kind: "amount", value: 60 });
+    await setLimit(IDS.employeeH1, 100);
+    await apply(IDS.employeeH1, inv.id, a); // 60 <= 100
+    expect((await err(apply(IDS.employeeH1, inv.id, b))).detail).toBe("exceeds_discount_limit"); // 60 + 60 > 100
+    await apply(OWNER, inv.id, b); // the owner stays unlimited
+    expect(n((await invoice(inv.id)).total_minor)).toBe(480);
   });
   it("never exceeds what is still owed, and closes a fully discounted invoice", async () => {
     const inv = await endedInvoice(D.pc1, 60); // 600
@@ -367,7 +385,8 @@ describe("discounts", () => {
     expect((await err(apply(OWNER, inv.id, expired))).detail).toBe("discount_not_valid");
     const once = await disc({ name: "Once", kind: "amount", value: 10, max: 1 });
     await apply(OWNER, inv.id, once);
-    expect((await err(apply(OWNER, inv.id, once))).detail).toBe("discount_exhausted");
+    const second = await endedInvoice(D.pc1, 60);
+    expect((await err(apply(OWNER, second.id, once))).detail).toBe("discount_exhausted");
 
     const other = await endedInvoice(D.pc1, 60);
     await q(OWNER, "select public.void_invoice($1,'mistake')", [other.id]);

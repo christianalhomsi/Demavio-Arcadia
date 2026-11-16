@@ -32,3 +32,8 @@ export const MOVEMENT_LABELS: Record<string, string> = {
   adjustment_in: "Adjustment (in)",
   adjustment_out: "Adjustment (out)",
 };
+
+/** The register every hall gets is stored as "Main register"; show it in the visitor's language. */
+export function registerLabel(name: string, mainLabel: string): string {
+  return name === "Main register" ? mainLabel : name;
+}

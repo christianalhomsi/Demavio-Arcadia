@@ -33,10 +33,13 @@ export function useDiscountValue() {
 export function DiscountsPanel({
   hallId,
   currency,
+  timeZone,
   discounts,
 }: {
   hallId: string;
   currency: string;
+  /** The hall's time zone: validity dates are days there. */
+  timeZone: string;
   discounts: DiscountRow[];
 }) {
   const { t } = useI18n();
@@ -52,8 +55,8 @@ export function DiscountsPanel({
       kind: d.kind,
       valueText:
         d.kind === "percent" ? basisPointsToPercent(d.value) : minorToInput(d.value, currency),
-      validFrom: isoToDate(d.validFrom),
-      validUntil: isoToDate(d.validUntil, true),
+      validFrom: isoToDate(d.validFrom, false, timeZone),
+      validUntil: isoToDate(d.validUntil, true, timeZone),
       maxUses: d.maxUses == null ? "" : String(d.maxUses),
       active: !d.active,
     });
@@ -138,6 +141,7 @@ export function DiscountsPanel({
           key={editing === "new" ? "new" : editing.id}
           hallId={hallId}
           currency={currency}
+          timeZone={timeZone}
           discount={editing === "new" ? null : editing}
           onClose={() => setEditing(null)}
           onDone={() => {
@@ -153,12 +157,14 @@ export function DiscountsPanel({
 function DiscountDialog({
   hallId,
   currency,
+  timeZone,
   discount,
   onClose,
   onDone,
 }: {
   hallId: string;
   currency: string;
+  timeZone: string;
   discount: DiscountRow | null;
   onClose: () => void;
   onDone: () => void;
@@ -173,8 +179,12 @@ function DiscountDialog({
         : minorToInput(discount.value, currency)
       : "",
   );
-  const [validFrom, setValidFrom] = React.useState(isoToDate(discount?.validFrom ?? null));
-  const [validUntil, setValidUntil] = React.useState(isoToDate(discount?.validUntil ?? null, true));
+  const [validFrom, setValidFrom] = React.useState(
+    isoToDate(discount?.validFrom ?? null, false, timeZone),
+  );
+  const [validUntil, setValidUntil] = React.useState(
+    isoToDate(discount?.validUntil ?? null, true, timeZone),
+  );
   const [maxUses, setMaxUses] = React.useState(
     discount?.maxUses == null ? "" : String(discount.maxUses),
   );
