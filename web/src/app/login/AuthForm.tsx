@@ -130,7 +130,9 @@ export function AuthForm({ next }: { next: string }) {
       const { error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) {
         // One message for unknown email and wrong password: never reveal which accounts exist.
-        setMessage({ tone: "error", text: t.errInvalidCreds });
+        // Auth answers user_banned only after the password matched, so naming it reveals nothing.
+        const banned = error.code === "user_banned";
+        setMessage({ tone: "error", text: banned ? t.loginInactive : t.errInvalidCreds });
         setPending(false);
         return;
       }

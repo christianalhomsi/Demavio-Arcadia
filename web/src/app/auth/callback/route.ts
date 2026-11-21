@@ -8,6 +8,10 @@ export async function GET(request: NextRequest) {
   const code = searchParams.get("code");
   const providerError = searchParams.get("error");
 
+  // A deactivated account is banned in Auth (migration 0052): say so instead of "cancelled".
+  if (searchParams.get("error_code") === "user_banned") {
+    return NextResponse.redirect(`${origin}/login?error=inactive`);
+  }
   if (providerError) {
     const reason = providerError === "access_denied" ? "cancelled" : "failed";
     return NextResponse.redirect(`${origin}/login?error=${reason}`);
@@ -16,7 +20,10 @@ export async function GET(request: NextRequest) {
 
   const supabase = await createClient();
   const { error } = await supabase.auth.exchangeCodeForSession(code);
-  if (error) return NextResponse.redirect(`${origin}/login?error=failed`);
+  if (error) {
+    const reason = error.code === "user_banned" ? "inactive" : "failed";
+    return NextResponse.redirect(`${origin}/login?error=${reason}`);
+  }
 
   const ctx = await getMyContext();
   if (!ctx) return NextResponse.redirect(`${origin}/no-access`);
