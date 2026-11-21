@@ -22,7 +22,8 @@ create table auth.users (
   recovery_token      text,
   email_change        text,
   email_change_token_new text,
-  email_change_token_current text
+  email_change_token_current text,
+  banned_until        timestamptz  -- real Supabase column; set on deactivation (migration 0052)
 );
 
 create table auth.identities (

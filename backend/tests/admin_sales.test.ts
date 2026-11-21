@@ -456,6 +456,32 @@ describe("managers and their employees", () => {
     await q(SA, "select public.admin_set_sales_manager($1,null)", [AGENT]);
     expect((await db.query<any>("select manager_id from public.hall_requests where id = $1", [id])).rows).toEqual([{ manager_id: null }]);
   });
+  it("a manager who loses the sales_admin role can no longer act, and their waiting requests are released", async () => {
+    await q(SA, "select public.admin_set_sales_manager($1,$2)", [AGENT, SALES_ADMIN]);
+    const id = (await q(AGENT, "select public.submit_hall_request('Demoted','USD','demoted@example.test','demoted_owner','secret123') as id"))[0].id;
+    // Role taken away directly (as if by an older path): the manager check alone no longer lets them act.
+    await db.exec(`delete from public.user_role_assignments where user_id = '${SALES_ADMIN}' and role_key = 'sales_admin'`);
+    try {
+      expect((await err(q(SALES_ADMIN, "select public.approve_hall_request($1,$2)", [id, key()]))).message).toBe("PERMISSION_DENIED");
+      expect((await err(q(SALES_ADMIN, "select public.reject_hall_request($1,'not mine')", [id]))).message).toBe("PERMISSION_DENIED");
+      // New requests from their agents go to the shared queue instead of to them.
+      const next = (await q(AGENT, "select public.submit_hall_request('Next','USD','next_req@example.test','next_owner','secret123') as id"))[0].id;
+      expect((await db.query<any>("select manager_id from public.hall_requests where id = $1", [next])).rows[0].manager_id).toBeNull();
+    } finally {
+      await db.exec(`insert into public.user_role_assignments (user_id, role_key) values ('${SALES_ADMIN}', 'sales_admin')`);
+    }
+    // Revoking the role through the RPC releases their waiting requests.
+    await q(SA, "select public.admin_revoke_platform_role($1,'sales_admin')", [SALES_ADMIN]);
+    expect((await db.query<any>("select manager_id from public.hall_requests where id = $1", [id])).rows[0].manager_id).toBeNull();
+    await db.exec(`insert into public.user_role_assignments (user_id, role_key) values ('${SALES_ADMIN}', 'sales_admin')`);
+  });
+  it("a deactivated account is banned at the auth layer and unbanned when reactivated", async () => {
+    await q(SA, "select public.admin_set_user_status($1,'inactive','left the company')", [AGENT2]);
+    const banned = (await db.query<any>("select banned_until from auth.users where id = $1", [AGENT2])).rows[0].banned_until;
+    expect(new Date(banned).getTime()).toBeGreaterThan(Date.now() + 365 * 86_400_000);
+    await q(SA, "select public.admin_set_user_status($1,'active','back')", [AGENT2]);
+    expect((await db.query<any>("select banned_until from auth.users where id = $1", [AGENT2])).rows[0].banned_until).toBeNull();
+  });
   it("lists the employees for a manager and the sold halls with who sold them", async () => {
     expect((await q(SALES_ADMIN, "select * from public.list_sales_agents()")).map((r) => r.email)).toEqual(
       expect.arrayContaining(["agent.two@example.test"]),

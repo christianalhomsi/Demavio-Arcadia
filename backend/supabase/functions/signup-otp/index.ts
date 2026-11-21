@@ -122,6 +122,9 @@ Deno.serve(async (req) => {
         password,
         email_confirm: true,
         user_metadata: { full_name: claimed.data, username: claimed.data },
+        // Only the service role can set app_metadata. The database refuses email accounts without this
+        // marker (migration 0052), so Supabase's open /auth/v1/signup cannot create accounts.
+        app_metadata: { arcadia_signup: "trusted" },
       });
       if (created.error) {
         // Someone may have taken the username since the code was sent: say so instead of "failed".

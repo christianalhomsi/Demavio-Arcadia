@@ -9,10 +9,13 @@ const D = {
   h3pc: "44444444-0000-0000-0000-000000000004", // H3 (EUR), no rules -> rate 0
 };
 const CUSTOMER_EMAIL = "customer.only@example.test";
+// Staff open wallets by username (the email lookup is closed to clients since migration 0052).
+const CUSTOMER_USERNAME = "customer_only";
 
 let db: PGlite;
 beforeAll(async () => {
   db = await createDb();
+  await db.exec("update public.profiles set username = 'customer_only' where email = 'customer.only@example.test'");
 }, 60_000);
 afterAll(async () => {
   await db.close();
@@ -76,8 +79,8 @@ const payCash = (user: string, invoice: string, amount: number, k = key()) =>
   q(user, "select public.record_cash_payment($1,$2,$3) as id", [invoice, amount, k]).then((r) => r[0].id as string);
 const invoiceRow = async (id: string) => (await db.query<any>("select * from public.invoices where id = $1", [id])).rows[0];
 
-async function wallet(email = CUSTOMER_EMAIL, hall = IDS.h1) {
-  return (await q(IDS.employeeH1, "select public.open_wallet($1,$2) as id", [hall, email]))[0].id as string;
+async function wallet(username = CUSTOMER_USERNAME, hall = IDS.h1) {
+  return (await q(IDS.employeeH1, "select public.open_wallet_by_username($1,$2) as id", [hall, username]))[0].id as string;
 }
 const topUp = (user: string, w: string, amount: number, k = key()) =>
   q(user, "select public.wallet_top_up($1,$2,$3) as id", [w, amount, k]).then((r) => r[0].id as string);
@@ -338,13 +341,13 @@ describe("wallets and ledger", () => {
     const w1 = await wallet();
     expect(await wallet()).toBe(w1);
     expect((await db.query<any>("select currency, balance_minor from public.wallets where id = $1", [w1])).rows[0]).toMatchObject({ currency: "USD" });
-    expect((await err(q(IDS.employeeH1, "select public.open_wallet($1,'nobody@example.test')", [IDS.h1]))).message).toBe("NOT_FOUND");
-    expect((await err(q(IDS.ownerH3, "select public.open_wallet($1,$2)", [IDS.h1, CUSTOMER_EMAIL]))).message).toBe("PERMISSION_DENIED");
+    expect((await err(q(IDS.employeeH1, "select public.open_wallet_by_username($1,'nobody_here')", [IDS.h1]))).message).toBe("NOT_FOUND");
+    expect((await err(q(IDS.ownerH3, "select public.open_wallet_by_username($1,$2)", [IDS.h1, CUSTOMER_USERNAME]))).message).toBe("PERMISSION_DENIED");
     expect((await audit("wallet.open")).length).toBe(1);
   });
   it("wallets are isolated per hall", async () => {
     const w1 = await wallet();
-    const w3 = (await q(IDS.ownerH3, "select public.open_wallet($1,$2) as id", [IDS.h3, CUSTOMER_EMAIL]))[0].id;
+    const w3 = (await q(IDS.ownerH3, "select public.open_wallet_by_username($1,$2) as id", [IDS.h3, CUSTOMER_USERNAME]))[0].id;
     expect(w3).not.toBe(w1);
     expect((await db.query<any>("select currency from public.wallets where id = $1", [w3])).rows[0].currency).toBe("EUR");
     expect((await q(IDS.ownerH3, "select * from public.wallets")).map((w) => w.id)).toEqual([w3]);
@@ -442,7 +445,7 @@ describe("paying from a wallet", () => {
     const w = await wallet();
     await topUp(IDS.employeeH1, w, 5000);
     const a = await invoiceFor(D.pc1, 30);
-    const w3 = (await q(IDS.ownerH3, "select public.open_wallet($1,$2) as id", [IDS.h3, CUSTOMER_EMAIL]))[0].id;
+    const w3 = (await q(IDS.ownerH3, "select public.open_wallet_by_username($1,$2) as id", [IDS.h3, CUSTOMER_USERNAME]))[0].id;
     expect((await err(payWallet(IDS.employeeH1, a.invoiceId, w3, a.total))).message).toBe("NOT_FOUND");
     await db.exec(`update public.wallets set status = 'frozen' where id = '${w}'`);
     expect((await err(payWallet(IDS.employeeH1, a.invoiceId, w, a.total))).detail).toBe("wallet_frozen");

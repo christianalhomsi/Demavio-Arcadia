@@ -65,7 +65,7 @@ export async function getDeviceBillAction(
           const rows = (await listWallets(hallId, { limit: 100, offset: 0 }))?.rows ?? [];
           wallets = rows.map((w) => ({
             id: w.id,
-            label: `${w.customerName ?? w.customerEmail ?? w.id.slice(0, 8)} · ${formatMoney(w.balanceMinor, w.currency)}`,
+            label: `${w.customerName ?? (w.username ? `@${w.username}` : w.id.slice(0, 8))} · ${formatMoney(w.balanceMinor, w.currency)}`,
             balanceMinor: w.balanceMinor,
             currency: w.currency,
             frozen: w.status === "frozen",

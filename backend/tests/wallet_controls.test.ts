@@ -4,11 +4,14 @@ import { IDS, createDb } from "./harness";
 
 const D = { pc1: "44444444-0000-0000-0000-000000000001" };
 const CUSTOMER_EMAIL = "customer.only@example.test";
+// Staff open wallets by username (the email lookup is closed to clients since migration 0052).
+const CUSTOMER_USERNAME = "customer_only";
 const OWNER = IDS.ownerH1H2;
 
 let db: PGlite;
 beforeAll(async () => {
   db = await createDb();
+  await db.exec("update public.profiles set username = 'customer_only' where email = 'customer.only@example.test'");
 }, 60_000);
 afterAll(async () => {
   await db.close();
@@ -54,7 +57,7 @@ const n = (v: unknown) => Number(v);
 const audit = async (action: string) => (await db.query<any>("select * from public.audit_logs where action = $1", [action])).rows;
 
 async function walletWith(balance: number) {
-  const [{ id }] = await q(IDS.employeeH1, "select public.open_wallet($1,$2) as id", [IDS.h1, CUSTOMER_EMAIL]);
+  const [{ id }] = await q(IDS.employeeH1, "select public.open_wallet_by_username($1,$2) as id", [IDS.h1, CUSTOMER_USERNAME]);
   if (balance > 0) await q(IDS.employeeH1, "select public.wallet_top_up($1,$2,$3)", [id, balance, key()]);
   return id as string;
 }

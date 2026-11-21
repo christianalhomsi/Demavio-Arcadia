@@ -14,10 +14,8 @@ export const GRANTABLE_PERMISSIONS = PERMISSIONS.filter((p) => p !== "platform.t
 
 export const memberUpdateSchema = z.object({
   role: z.enum(HALL_ROLES),
-  discountLimit: z
-    .string()
-    .trim()
-    .regex(/^(\d+(\.\d{1,2})?)?$/, "Enter an amount like 10.50 or leave empty"),
+  // Checked against the hall's currency in the action (Arabic digits are accepted there).
+  discountLimit: z.string().trim().max(20, "Enter a valid amount."),
   grants: z.array(z.enum(GRANTABLE_PERMISSIONS as [string, ...string[]])),
 });
 export type MemberUpdateInput = z.infer<typeof memberUpdateSchema>;

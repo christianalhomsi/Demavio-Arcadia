@@ -4,10 +4,13 @@ import { IDS, createDb } from "./harness";
 
 const PC = "44444444-0000-0000-0000-000000000001"; // H1, hall rate 600/h
 const CUSTOMER_EMAIL = "customer.only@example.test";
+// Staff open wallets by username (the email lookup is closed to clients since migration 0052).
+const CUSTOMER_USERNAME = "customer_only";
 
 let db: PGlite;
 beforeAll(async () => {
   db = await createDb();
+  await db.exec("update public.profiles set username = 'customer_only' where email = 'customer.only@example.test'");
 }, 60_000);
 afterAll(async () => {
   await db.close();
@@ -70,7 +73,7 @@ async function invoiceFor(minutes = 30) {
 const payCash = (user: string, invoice: string, amount: number, k = key()) =>
   q(user, "select public.record_cash_payment($1,$2,$3) as id", [invoice, amount, k]).then((r) => r[0].id as string);
 async function wallet() {
-  return (await q(IDS.employeeH1, "select public.open_wallet($1,$2) as id", [IDS.h1, CUSTOMER_EMAIL]))[0].id as string;
+  return (await q(IDS.employeeH1, "select public.open_wallet_by_username($1,$2) as id", [IDS.h1, CUSTOMER_USERNAME]))[0].id as string;
 }
 const topUp = (user: string, w: string, amount: number, k = key()) =>
   q(user, "select public.wallet_top_up($1,$2,$3) as id", [w, amount, k]).then((r) => r[0].id as string);

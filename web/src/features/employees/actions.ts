@@ -5,7 +5,8 @@ import { callRpc } from "@/lib/actions/rpc";
 import { fail, type ActionResult } from "@/lib/actions/result";
 import { withPermission } from "@/lib/actions/withPermission";
 import { getMyContext } from "@/lib/auth/session";
-import { parseMoneyInput } from "@/lib/money";
+import { parseMoneyForCurrency } from "@/lib/money";
+import { getHallCurrency } from "@/features/invoices/queries";
 import {
   deactivateSchema,
   inviteSchema,
@@ -58,9 +59,14 @@ export async function updateMemberAction(
     if (!parsed.success) {
       return invalid("discountLimit", parsed.error.issues[0]?.message ?? "Invalid input");
     }
-    // The input is decimal text; convert to integer minor units (no fractional math anywhere else).
-    const limit =
-      parsed.data.discountLimit === "" ? null : parseMoneyInput(parsed.data.discountLimit);
+    // Decimal text in the HALL's currency -> integer minor units (SYP has none, so "50" is 50, not 5000).
+    let limit: number | null = null;
+    if (parsed.data.discountLimit !== "") {
+      const currency = await getHallCurrency(hallId);
+      if (!currency) return fail("NOT_FOUND", "That hall could not be found.");
+      limit = parseMoneyForCurrency(parsed.data.discountLimit, currency);
+      if (limit === null) return invalid("discountLimit", "Enter a valid amount.");
+    }
     const r = await callRpc<null>("update_member", {
       p_membership_id: membershipId,
       p_role: parsed.data.role,

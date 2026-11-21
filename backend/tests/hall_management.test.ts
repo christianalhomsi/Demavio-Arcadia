@@ -206,8 +206,9 @@ describe("member management", () => {
     const mgr = await membershipId(IDS.employeeH1, IDS.h2);
     await db.exec(`insert into public.hall_membership_grants values ('${mgr}', 'employee.manage')`);
     const soleOwner = await membershipId(IDS.ownerH1H2, IDS.h2);
-    expect(await contractError(q(IDS.employeeH1, "select public.set_member_status($1, 'inactive', 'x')", [soleOwner]))).toBe("PRECONDITION_FAILED");
-    expect(await contractError(q(IDS.employeeH1, "select public.update_member($1, 'employee', null, '{}')", [soleOwner]))).toBe("PRECONDITION_FAILED");
+    // A non-owner manager may not touch an owner at all (migration 0052: this was a hall-takeover path).
+    expect(await contractError(q(IDS.employeeH1, "select public.set_member_status($1, 'inactive', 'x')", [soleOwner]))).toBe("PERMISSION_DENIED");
+    expect(await contractError(q(IDS.employeeH1, "select public.update_member($1, 'employee', null, '{}')", [soleOwner]))).toBe("PERMISSION_DENIED");
     // With a second owner present, demotion is allowed.
     await db.exec(`update public.hall_memberships set role_key = 'owner' where id = '${mgr}'`);
     expect(await contractError(q(IDS.employeeH1, "select public.update_member($1, 'employee', null, '{}')", [soleOwner]))).toBe("NO_ERROR");
@@ -308,7 +309,7 @@ describe("function exposure", () => {
         "create_reservation", "cancel_reservation", "check_in_reservation", "start_walk_in", "end_session",
         "extend_session", "convert_session_to_open", "list_reservations", "list_sessions", "server_now",
         "set_pricing_rate", "set_hall_cover", "delete_pricing_rate", "update_billing_rules", "list_pricing", "list_invoices",
-        "record_cash_payment", "void_invoice", "open_wallet", "wallet_top_up", "pay_invoice_from_wallet",
+        "record_cash_payment", "void_invoice", "wallet_top_up", "pay_invoice_from_wallet",
         "list_wallets", "list_wallet_ledger", "request_refund", "decide_refund", "list_refunds",
         "open_shift", "get_shift_unpaid_summary", "close_shift", "record_cash_movement", "list_shifts",
         "list_cash_movements", "list_registers", "report_financial_summary",
@@ -320,7 +321,7 @@ describe("function exposure", () => {
         "create_player_reservation", "list_my_reservations", "cancel_my_reservation", "confirm_reservation", "reject_reservation",
         // guest wallets, payer matching, invoice time, agent bridge (migrations 44-49); each checks a hall permission
         "adjust_invoice_time", "invoice_time_options", "invoice_payer", "set_invoice_payer", "resolve_player",
-        "open_guest_wallet", "link_guest_wallet", "link_guest_wallet_by_username", "open_wallet_by_username",
+        "open_guest_wallet", "link_guest_wallet_by_username", "open_wallet_by_username",
         "create_pairing_code", "revoke_hall_server",
         // products (migration 16)
         "upsert_product", "list_products", "add_session_item", "remove_session_item", "list_session_items",

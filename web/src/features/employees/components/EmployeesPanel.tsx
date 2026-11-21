@@ -16,6 +16,7 @@ import {
 } from "../actions";
 import { useI18n } from "@/lib/i18n/client";
 import { tpl } from "@/lib/i18n/messages";
+import { minorToInput } from "@/lib/money";
 import type { HallMember, PendingInvitation } from "../queries";
 import { GRANTABLE_PERMISSIONS, HALL_ROLES, inviteSchema } from "../schemas";
 
@@ -25,11 +26,17 @@ const selectCls =
 export function EmployeesPanel({
   hallId,
   currentUserId,
+  isOwner,
+  currency,
   members,
   invitations,
 }: {
   hallId: string;
   currentUserId: string;
+  /** Only owners may create or change owners and set discount limits (the database enforces it too). */
+  isOwner: boolean;
+  /** The hall's currency, for the discount limit. */
+  currency: string;
   members: HallMember[];
   invitations: PendingInvitation[];
 }) {
@@ -62,7 +69,7 @@ export function EmployeesPanel({
     <div className="space-y-8">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-2xl font-semibold">{t.emTitle}</h1>
-        <InviteDialog hallId={hallId} onDone={() => router.refresh()} />
+        <InviteDialog hallId={hallId} isOwner={isOwner} onDone={() => router.refresh()} />
       </div>
       <FormStatus state={message} />
 
@@ -107,6 +114,8 @@ export function EmployeesPanel({
                   <td className="px-4 py-2 text-end">
                     {m.userId === currentUserId ? (
                       <span className="text-xs text-muted">{t.emYou}</span>
+                    ) : m.role === "owner" && !isOwner ? (
+                      <span className="text-xs text-muted">{t.emOwnerOnly}</span>
                     ) : (
                       <span className="flex justify-end gap-2">
                         <Button size="sm" variant="secondary" onClick={() => setEditing(m)}>
@@ -169,6 +178,8 @@ export function EmployeesPanel({
           key={editing.membershipId}
           hallId={hallId}
           member={editing}
+          isOwner={isOwner}
+          currency={currency}
           onClose={() => setEditing(null)}
           onSaved={() => {
             setEditing(null);
@@ -193,7 +204,16 @@ export function EmployeesPanel({
   );
 }
 
-function InviteDialog({ hallId, onDone }: { hallId: string; onDone: () => void }) {
+function InviteDialog({
+  hallId,
+  isOwner,
+  onDone,
+}: {
+  hallId: string;
+  isOwner: boolean;
+  onDone: () => void;
+}) {
+  const roles = isOwner ? HALL_ROLES : HALL_ROLES.filter((r) => r !== "owner");
   const { t } = useI18n();
   const [open, setOpen] = React.useState(false);
   const [email, setEmail] = React.useState("");
@@ -267,7 +287,7 @@ function InviteDialog({ hallId, onDone }: { hallId: string; onDone: () => void }
                   value={role}
                   onChange={(e) => setRole(e.target.value as typeof role)}
                 >
-                  {HALL_ROLES.map((r) => (
+                  {roles.map((r) => (
                     <option key={r} value={r}>
                       {r === "owner" ? t.emRoleOwner : t.emRoleEmployee}
                     </option>
@@ -295,20 +315,25 @@ function InviteDialog({ hallId, onDone }: { hallId: string; onDone: () => void }
 function EditMemberDialog({
   hallId,
   member,
+  isOwner,
+  currency,
   onClose,
   onSaved,
 }: {
   hallId: string;
   member: HallMember;
+  isOwner: boolean;
+  currency: string;
   onClose: () => void;
   onSaved: () => void;
 }) {
   const { t } = useI18n();
   const [role, setRole] = React.useState<"employee" | "owner">(member.role);
   const [limit, setLimit] = React.useState(
-    member.discountLimitMinor === null ? "" : (member.discountLimitMinor / 100).toFixed(2),
+    member.discountLimitMinor === null ? "" : minorToInput(member.discountLimitMinor, currency),
   );
   const [grants, setGrants] = React.useState<string[]>(member.grants);
+  const roles = isOwner ? HALL_ROLES : HALL_ROLES.filter((r) => r !== "owner");
   const [error, setError] = React.useState<string | undefined>();
   const [pending, setPending] = React.useState(false);
 
@@ -343,7 +368,7 @@ function EditMemberDialog({
                 value={role}
                 onChange={(e) => setRole(e.target.value as typeof role)}
               >
-                {HALL_ROLES.map((r) => (
+                {roles.map((r) => (
                   <option key={r} value={r}>
                     {r === "owner" ? t.emRoleOwner : t.emRoleEmployee}
                   </option>
@@ -356,6 +381,7 @@ function EditMemberDialog({
               <Input
                 {...p}
                 inputMode="decimal"
+                disabled={!isOwner}
                 value={limit}
                 onChange={(e) => setLimit(e.target.value)}
               />

@@ -7,6 +7,8 @@ const getCtx = vi.fn();
 vi.mock("@/lib/auth/session", () => ({ getMyContext: () => getCtx() }));
 vi.mock("@/lib/actions/rpc", () => ({ callRpc: (...a: unknown[]) => rpc(...a) }));
 vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
+const currency = vi.fn(async () => "USD");
+vi.mock("@/features/invoices/queries", () => ({ getHallCurrency: () => currency() }));
 
 import {
   acceptInvitationAction,
@@ -89,6 +91,16 @@ describe("updateMemberAction", () => {
     });
     expect(bad).toMatchObject({ code: "VALIDATION" });
     expect(rpc).not.toHaveBeenCalled();
+  });
+  it("reads the limit in the hall's own currency (SYP has no decimals)", async () => {
+    getCtx.mockResolvedValue(PERSONAS.ownerH1H2);
+    rpc.mockResolvedValue({ ok: true, data: null });
+    currency.mockResolvedValueOnce("SYP");
+    await updateMemberAction(HALLS.h1, "m1", { role: "employee", discountLimit: "٥٠", grants: [] });
+    expect(rpc).toHaveBeenCalledWith(
+      "update_member",
+      expect.objectContaining({ p_discount_limit_minor: 50 }),
+    );
   });
   it("does not accept platform permissions as grants", async () => {
     getCtx.mockResolvedValue(PERSONAS.ownerH1H2);
