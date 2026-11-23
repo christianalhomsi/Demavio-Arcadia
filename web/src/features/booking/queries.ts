@@ -1,4 +1,7 @@
 import "server-only";
+import { cacheLife } from "next/cache";
+import { createClient as createAnonClient } from "@supabase/supabase-js";
+import { supabasePublicEnv } from "@/lib/supabase/env";
 import { createClient } from "@/lib/supabase/server";
 import type { Interval, WorkingRange } from "./slots";
 
@@ -49,10 +52,24 @@ export interface MyReservation {
 }
 
 /** Public reads: these RPCs are granted to `anon` and return only non-sensitive columns. */
-export async function listPublicHalls(): Promise<PublicHall[] | null> {
-  const supabase = await createClient();
-  const { data, error } = await supabase.rpc("list_public_halls");
-  if (error) return null;
+/**
+ * Public, user-independent reads (no auth.uid() inside these RPCs) are cached for a few seconds so a burst
+ * of visitors costs one database call per window instead of one per page view. A cookie-less anon client is
+ * used because cached functions cannot read request cookies. Errors throw so they are never cached; the
+ * exported wrappers turn them into null as before. Busy slots and price quotes are NOT cached.
+ */
+function anonClient() {
+  const { url, anonKey } = supabasePublicEnv();
+  return createAnonClient(url, anonKey, {
+    auth: { persistSession: false, autoRefreshToken: false },
+  });
+}
+
+async function cachedPublicHalls(): Promise<PublicHall[]> {
+  "use cache";
+  cacheLife({ stale: 30, revalidate: 30, expire: 300 });
+  const { data, error } = await anonClient().rpc("list_public_halls");
+  if (error) throw new Error("list_public_halls failed");
   return ((data ?? []) as Record<string, unknown>[]).map((r) => ({
     id: r.id as string,
     name: r.name as string,
@@ -64,11 +81,21 @@ export async function listPublicHalls(): Promise<PublicHall[] | null> {
   }));
 }
 
-export async function getPublicHall(hallId: string): Promise<PublicHallDetail | null> {
-  const supabase = await createClient();
-  const { data, error } = await supabase.rpc("get_public_hall", { p_hall_id: hallId });
+export async function listPublicHalls(): Promise<PublicHall[] | null> {
+  try {
+    return await cachedPublicHalls();
+  } catch {
+    return null;
+  }
+}
+
+async function cachedPublicHall(hallId: string): Promise<PublicHallDetail | null> {
+  "use cache";
+  cacheLife({ stale: 30, revalidate: 30, expire: 300 });
+  const { data, error } = await anonClient().rpc("get_public_hall", { p_hall_id: hallId });
+  if (error) throw new Error("get_public_hall failed");
   const r = (data as Record<string, unknown>[] | null)?.[0];
-  if (error || !r) return null;
+  if (!r) return null;
   return {
     id: r.id as string,
     name: r.name as string,
@@ -82,10 +109,19 @@ export async function getPublicHall(hallId: string): Promise<PublicHallDetail | 
   };
 }
 
-export async function listPublicDevices(hallId: string): Promise<PublicDevice[] | null> {
-  const supabase = await createClient();
-  const { data, error } = await supabase.rpc("list_public_devices", { p_hall_id: hallId });
-  if (error) return null;
+export async function getPublicHall(hallId: string): Promise<PublicHallDetail | null> {
+  try {
+    return await cachedPublicHall(hallId);
+  } catch {
+    return null;
+  }
+}
+
+async function cachedPublicDevices(hallId: string): Promise<PublicDevice[]> {
+  "use cache";
+  cacheLife({ stale: 30, revalidate: 30, expire: 300 });
+  const { data, error } = await anonClient().rpc("list_public_devices", { p_hall_id: hallId });
+  if (error) throw new Error("list_public_devices failed");
   return ((data ?? []) as Record<string, unknown>[]).map((r) => ({
     id: r.id as string,
     name: r.name as string,
@@ -93,6 +129,14 @@ export async function listPublicDevices(hallId: string): Promise<PublicDevice[] 
     category: (r.category as string | null) ?? null,
     playerOptions: ((r.player_options as number[] | null) ?? []).map(Number),
   }));
+}
+
+export async function listPublicDevices(hallId: string): Promise<PublicDevice[] | null> {
+  try {
+    return await cachedPublicDevices(hallId);
+  } catch {
+    return null;
+  }
 }
 
 export async function listDeviceBusy(
