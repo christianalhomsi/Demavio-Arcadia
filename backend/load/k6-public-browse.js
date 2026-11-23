@@ -16,7 +16,10 @@ export const options = {
     { duration: "5m", target: STAGE },
     { duration: "1m", target: 0 },
   ],
-  thresholds: { http_req_failed: ["rate<0.01"], http_req_duration: ["p(95)<800", "p(99)<2000"] },
+  thresholds: {
+    // Any failed check (including "hall has devices") fails the run.
+    checks: ["rate>0.99"],
+    http_req_failed: ["rate<0.01"], http_req_duration: ["p(95)<800", "p(99)<2000"] },
 };
 
 // Fail fast on bad input instead of running a meaningless test.
@@ -24,6 +27,11 @@ export function setup() {
   if (!Number.isInteger(STAGE) || STAGE < 1) throw new Error("STAGE must be a positive integer");
   if (!__ENV.SUPABASE_URL || !__ENV.ANON_KEY) throw new Error("SUPABASE_URL and ANON_KEY are required");
   if (!UUID.test(__ENV.HALL_ID || "")) throw new Error("HALL_ID must be a hall uuid");
+  // Abort before load starts if the hall has no devices: the busy-slot step could not be exercised.
+  const res = http.post(`${__ENV.SUPABASE_URL}/rest/v1/rpc/list_public_devices`, JSON.stringify({ p_hall_id: __ENV.HALL_ID }), {
+    headers: { apikey: __ENV.ANON_KEY, Authorization: `Bearer ${__ENV.ANON_KEY}`, "Content-Type": "application/json" },
+  });
+  if (res.status !== 200 || res.json().length === 0) throw new Error("HALL_ID has no active devices (or the call failed)");
 }
 
 const base = __ENV.SUPABASE_URL;
