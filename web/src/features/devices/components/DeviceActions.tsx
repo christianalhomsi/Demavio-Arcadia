@@ -37,7 +37,8 @@ export function DeviceActions({
   // One idempotency key per command intent: retries reuse it, a new intent gets a new key.
   const keyRef = React.useRef<string>("");
 
-  const commands = availableCommands(device.capabilities);
+  const isPc = device.deviceType === "pc";
+  const commands = isPc ? availableCommands(device.capabilities) : [];
   const canCommand = device.agentStatus !== "none" && device.operationalStatus === "active";
 
   function chooseCommand(c: StaffCommand) {
@@ -100,12 +101,12 @@ export function DeviceActions({
             </Button>
           ))}
         </div>
-        {!canCommand && (
+        {isPc && !canCommand && (
           <p className="text-sm text-muted">
             {device.agentStatus === "none" ? t.dvCmdNeedsAgent : t.dvCmdDisabled}
           </p>
         )}
-        {device.agentStatus === "offline" && canCommand && (
+        {isPc && device.agentStatus === "offline" && canCommand && (
           <p className="text-sm text-warning">{t.dvAgentOfflineNote}</p>
         )}
         <FormStatus state={msg} />

@@ -130,6 +130,14 @@ function AccountPanel({
           )}
         </div>
         <div className="my-2 h-px bg-border" />
+        <Link
+          href="/account"
+          onClick={onClose}
+          className="flex h-12 w-full items-center gap-3 rounded-xl px-3 text-sm font-medium transition-colors hover:bg-neutral-bg active:bg-neutral-bg"
+        >
+          <UserRound className="h-[18px] w-[18px]" aria-hidden />
+          {labels.account}
+        </Link>
         <form action="/auth/signout" method="post">
           <input type="hidden" name="next" value="/" />
           <button

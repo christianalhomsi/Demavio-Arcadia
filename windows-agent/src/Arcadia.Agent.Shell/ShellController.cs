@@ -24,7 +24,7 @@ public sealed class ShellController(Dispatcher ui)
             case "Show_Timer":
                 HideLock();
                 _timer ??= new TimerWindow();
-                _timer.Update(m.HallName, m.DeviceName, m.RemainingMs);
+                _timer.Update(m.ElapsedMs);
                 _timer.Show();
                 Ack(m.MsgId);
                 break;

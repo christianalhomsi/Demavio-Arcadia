@@ -13,6 +13,7 @@ import {
   LayoutDashboard,
   LogOut,
   MoreHorizontal,
+  UserRound,
   ScrollText,
   UserCog,
   Users,
@@ -85,6 +86,14 @@ export function PlatformShell({
         <Logo size={32} />
         <span className="min-w-0 flex-1 truncate text-base font-semibold">{title}</span>
         <LanguageToggle />
+        <Link
+          href="/account"
+          aria-label={t.navAccount}
+          className="inline-flex h-9 items-center gap-2 rounded-xl px-2 text-sm hover:bg-neutral-bg"
+        >
+          <UserRound className="h-4 w-4" aria-hidden />
+          <span className="hidden sm:inline">{t.navAccount}</span>
+        </Link>
         <form action="/auth/signout" method="post">
           <Button variant="ghost" size="sm" type="submit">
             <LogOut className="h-4 w-4 rtl:-scale-x-100" aria-hidden />

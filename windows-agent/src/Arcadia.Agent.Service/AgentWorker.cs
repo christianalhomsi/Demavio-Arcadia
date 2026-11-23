@@ -248,7 +248,7 @@ public sealed class AgentWorker : BackgroundService, Arcadia.Agent.Link.ICommand
                 SendToUi(new ServiceToUi("Show_Lock", _opt.HallName, _opt.DeviceName, StatusFor(_state), MsgId: NextMsg()), LockState.Locking, now);
                 break;
             case LockAction.Unlock when t is { } tt:
-                SendToUi(new ServiceToUi("Show_Timer", _opt.HallName, _opt.DeviceName, RemainingMs: tt.RemainingMs, Revision: _state.Session!.Revision, MsgId: NextMsg()), LockState.Unlocking, now);
+                SendToUi(new ServiceToUi("Show_Timer", _opt.HallName, _opt.DeviceName, RemainingMs: tt.RemainingMs, ElapsedMs: tt.ElapsedMs, Revision: _state.Session!.Revision, MsgId: NextMsg()), LockState.Unlocking, now);
                 break;
             case LockAction.Unlock: // staff unlock with no session
                 SendToUi(new ServiceToUi("Hide", MsgId: NextMsg()), LockState.Unlocking, now);
@@ -257,7 +257,7 @@ public sealed class AgentWorker : BackgroundService, Arcadia.Agent.Link.ICommand
 
         if (_actual == LockState.Unlocked && t is { } time)
         {
-            _ui.Send(new ServiceToUi("Show_Timer", _opt.HallName, _opt.DeviceName, RemainingMs: time.RemainingMs, Revision: _state.Session!.Revision));
+            _ui.Send(new ServiceToUi("Show_Timer", _opt.HallName, _opt.DeviceName, RemainingMs: time.RemainingMs, ElapsedMs: time.ElapsedMs, Revision: _state.Session!.Revision));
             Warn(time);
         }
         else if (_actual == LockState.Locked)

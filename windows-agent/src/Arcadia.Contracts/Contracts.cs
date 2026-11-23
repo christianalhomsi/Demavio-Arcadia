@@ -87,7 +87,8 @@ public sealed record ServiceToUi(
     long Revision = 0,
     string? WarnKind = null,
     int WarnSeconds = 0,
-    long MsgId = 0);
+    long MsgId = 0,
+    long ElapsedMs = 0);
 
 /// <summary>UI -> Service. Kind is one of Hello, Ack, UiHeartbeat, TechUnlockRequest.</summary>
 public sealed record UiToService(string Kind, string? Nonce = null, string? Pin = null, long MsgId = 0);

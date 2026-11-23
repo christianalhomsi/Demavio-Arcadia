@@ -3,10 +3,23 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         WindowStyle="None" ResizeMode="NoResize" Topmost="True" ShowInTaskbar="False" ShowActivated="False"
         AllowsTransparency="True" Background="Transparent" SizeToContent="WidthAndHeight" Focusable="False">
-    <Border Background="#E6050A24" CornerRadius="14" Padding="14,8" BorderBrush="#FF1A2A7A" BorderThickness="1">
-        <StackPanel>
-            <TextBlock x:Name="Time" Foreground="White" FontSize="26" FontWeight="Bold" FontFamily="Consolas" HorizontalAlignment="Center"/>
-            <TextBlock x:Name="Note" Foreground="#FFFFC857" FontSize="13" HorizontalAlignment="Center" Visibility="Collapsed"/>
-        </StackPanel>
-    </Border>
+    <Grid>
+        <!-- Expanded: elapsed session time with a minimize button. -->
+        <Border x:Name="Panel" Background="#E6050A24" CornerRadius="12" Padding="12,4,4,4" BorderBrush="#FF1A2A7A" BorderThickness="1">
+            <StackPanel>
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock x:Name="Time" Foreground="White" FontSize="20" FontWeight="Bold" FontFamily="Consolas" VerticalAlignment="Center"/>
+                    <Button x:Name="MinimizeButton" Content="&#x2013;" Click="OnMinimize" Focusable="False" Cursor="Hand"
+                            Margin="10,0,0,0" Width="26" Height="26" Foreground="#FFB8C0E8" Background="Transparent"
+                            BorderThickness="0" FontSize="16" ToolTip="Minimize"/>
+                </StackPanel>
+                <TextBlock x:Name="Note" Foreground="#FFFFC857" FontSize="12" Visibility="Collapsed"/>
+            </StackPanel>
+        </Border>
+        <!-- Minimized: small circle tab on the screen edge; click to bring the timer back. -->
+        <Border x:Name="Dot" Visibility="Collapsed" Width="36" Height="36" CornerRadius="18" Background="#E6050A24"
+                BorderBrush="#FF1A2A7A" BorderThickness="1" Cursor="Hand" ToolTip="Show timer" MouseLeftButtonUp="OnRestore">
+            <TextBlock Text="&#x23F1;" Foreground="White" FontSize="16" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+        </Border>
+    </Grid>
 </Window>

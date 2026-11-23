@@ -1,3 +1,5 @@
+import { notFound } from "next/navigation";
+import { hallHasPcDevices } from "@/features/devices/queries";
 import Link from "next/link";
 import { Suspense } from "react";
 import { EmptyState } from "@/components/data/EmptyState";
@@ -19,6 +21,7 @@ export const metadata = { title: "Agents" };
 async function Agents({ params }: { params: Promise<{ hallId: string }> }) {
   const { hallId } = await params;
   const { membership } = await requireHallPermission(hallId, permissionForPath("/agents"));
+  if (!(await hallHasPcDevices(hallId))) notFound();
   const canPair = membership.permissions.includes("hall.settings.manage");
   const { t } = await getT();
   const [devices, tz, servers] = await Promise.all([

@@ -78,7 +78,7 @@ export function DeviceGrid({
           className="h-11 w-full rounded-xl border border-border bg-surface px-3.5 text-base sm:h-10 sm:w-64 sm:text-sm"
         />
         <div role="group" aria-label={t.dvFilter} className="flex flex-wrap gap-2">
-          {FILTERS.map((f) => (
+          {FILTERS.filter((f) => f.value !== "offline" || devices.some((d) => d.deviceType === "pc")).map((f) => (
             <button
               key={f.value}
               type="button"
@@ -122,7 +122,7 @@ export function DeviceGrid({
                 <AvailabilityBadge value={d.effectiveAvailability} />
               </div>
               <div className="mt-3 flex flex-wrap gap-2">
-                <AgentBadge value={d.agentStatus} />
+                {d.deviceType === "pc" && <AgentBadge value={d.agentStatus} />}
               </div>
               {d.maintenanceReason && (
                 <p className="mt-2 text-xs text-muted">

@@ -1,3 +1,4 @@
+import { cache } from "react";
 import "server-only";
 import { createClient } from "@/lib/supabase/server";
 
@@ -70,6 +71,17 @@ export async function listDeviceStatus(hallId: string): Promise<DeviceStatus[] |
     .order("name");
   return error ? null : (data ?? []).map(toDeviceStatus);
 }
+
+/** True when the hall has at least one PC; the Agent areas only make sense then. */
+export const hallHasPcDevices = cache(async (hallId: string): Promise<boolean> => {
+  const supabase = await createClient();
+  const { count } = await supabase
+    .from("v_device_live_status")
+    .select("device_id", { count: "exact", head: true })
+    .eq("hall_id", hallId)
+    .eq("device_type", "pc");
+  return (count ?? 0) > 0;
+});
 
 export async function getDeviceStatus(
   hallId: string,

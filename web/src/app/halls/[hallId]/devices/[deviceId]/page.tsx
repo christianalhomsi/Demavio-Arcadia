@@ -62,6 +62,8 @@ async function Device({ params }: { params: Promise<{ hallId: string; deviceId: 
               <AvailabilityBadge value={device.effectiveAvailability} />
             </dd>
           </div>
+          {device.deviceType === "pc" && (
+            <>
           <div>
             <dt className="text-muted">{t.dvAgent}</dt>
             <dd className="mt-1 flex flex-wrap items-center gap-2">
@@ -90,6 +92,8 @@ async function Device({ params }: { params: Promise<{ hallId: string; deviceId: 
               <dt className="text-muted">{t.dvLastError}</dt>
               <dd className="mt-1">{device.agentLastError}</dd>
             </div>
+          )}
+            </>
           )}
           {device.maintenanceReason && (
             <div className="sm:col-span-2">

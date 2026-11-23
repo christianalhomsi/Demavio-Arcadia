@@ -6,22 +6,24 @@
  Usage: .\build.ps1 [-Version 0.1.0] [-CloudUrl https://<ref>.supabase.co/functions/v1/agent-bridge]
  -CloudUrl is baked into the Hall Server package so the technician does not have to type it.
 #>
-param([string]$Version = '0.1.0', [string]$CloudUrl = '')
+param([string]$Version = '0.1.0', [string]$CloudUrl = '', [string]$RuntimeVersion = '')
 $ErrorActionPreference = 'Stop'
+# -RuntimeVersion pins the bundled .NET runtime (e.g. 10.0.14) when the newest pack cannot be downloaded.
+$rt = if ($RuntimeVersion) { "-p:RuntimeFrameworkVersion=$RuntimeVersion" } else { '-p:_Unused=1' }
 $root = Split-Path -Parent $PSScriptRoot
 $out = Join-Path $PSScriptRoot 'out'
 Remove-Item $out -Recurse -Force -ErrorAction SilentlyContinue
 New-Item -ItemType Directory -Force "$out\hallserver", "$out\agent" | Out-Null
 
 Write-Host '== publish Hall Server' -ForegroundColor Cyan
-dotnet publish "$root\src\Arcadia.HallServer\Arcadia.HallServer.csproj" -c Release -r win-x64 --self-contained -p:Version=$Version -o "$out\hallserver" | Out-Host
+dotnet publish "$root\src\Arcadia.HallServer\Arcadia.HallServer.csproj" -c Release -r win-x64 --self-contained $rt -p:Version=$Version -o "$out\hallserver" | Out-Host
 if ($LASTEXITCODE) { throw 'publish failed' }
 Copy-Item "$PSScriptRoot\HallServer\Setup-HallServer.ps1" "$out\hallserver\"
 if ($CloudUrl) { Set-Content "$out\hallserver\cloud-url.txt" $CloudUrl -NoNewline }
 
 Write-Host '== publish Agent (service + lock screen)' -ForegroundColor Cyan
 foreach ($p in 'Arcadia.Agent.Service', 'Arcadia.Agent.Shell') {
-    dotnet publish "$root\src\$p\$p.csproj" -c Release -r win-x64 --self-contained -p:Version=$Version -o "$out\agent" | Out-Host
+    dotnet publish "$root\src\$p\$p.csproj" -c Release -r win-x64 --self-contained $rt -p:Version=$Version -o "$out\agent" | Out-Host
     if ($LASTEXITCODE) { throw "publish $p failed" }
 }
 Copy-Item "$PSScriptRoot\Agent\Setup-Agent.ps1" "$out\agent\"

@@ -1,6 +1,7 @@
 "use client";
 
-import { Ellipsis, LogOut, Menu } from "lucide-react";
+import { Ellipsis, LogOut, Menu, UserRound } from "lucide-react";
+import Link from "next/link";
 import { usePathname } from "next/navigation";
 import * as React from "react";
 import { Logo } from "@/components/brand/Brand";
@@ -15,6 +16,7 @@ import { SlidingPillNav } from "./SlidingPillNav";
 import { NAV_ICONS, Sidebar, isActive } from "./Sidebar";
 
 /** Frequent destinations shown in the phone tab bar (max 4 + More, per mobile navigation guidance). */
+const AGENT_PATHS = ["/agents", "/commands"];
 const PRIMARY_TABS = ["Overview", "Sessions", "Invoices", "Shifts"];
 
 /**
@@ -27,17 +29,23 @@ export function AppShell({
   hallId,
   hallName,
   permissions,
+  hasPc = true,
   children,
 }: {
   hallId: string;
   hallName: string;
   permissions: readonly Permission[];
+  /** False hides the Agent pages (Agents, Commands): a hall without PCs has no agents. */
+  hasPc?: boolean;
   children: React.ReactNode;
 }) {
   const { t: tr } = useI18n();
   const [more, setMore] = React.useState(false);
   const pathname = usePathname();
-  const groups = filterNav(HALL_NAV, permissions);
+  const groups = filterNav(HALL_NAV, permissions).map((g) => ({
+    ...g,
+    items: hasPc ? g.items : g.items.filter((i) => !AGENT_PATHS.includes(i.path)),
+  }));
   const base = `/halls/${hallId}`;
   const allItems = groups.flatMap((g) => g.items);
   const tabs = PRIMARY_TABS.map((l) => allItems.find((i) => i.label === l)).filter(
@@ -67,6 +75,14 @@ export function AppShell({
         <Logo size={32} />
         <span className="min-w-0 flex-1 truncate text-base font-semibold">{hallName}</span>
         <LanguageToggle />
+        <Link
+          href="/account"
+          aria-label={tr.navAccount}
+          className="inline-flex h-9 items-center gap-2 rounded-xl px-2 text-sm hover:bg-neutral-bg"
+        >
+          <UserRound className="h-4 w-4" aria-hidden />
+          <span className="hidden sm:inline">{tr.navAccount}</span>
+        </Link>
         <form action="/auth/signout" method="post">
           <Button variant="ghost" size="sm" type="submit">
             <LogOut className="h-4 w-4 rtl:-scale-x-100" aria-hidden />

@@ -67,6 +67,11 @@ const EXEMPT = new Set([
   // Sets only the caller's own username, once: set_my_username works on auth.uid() and refuses a
   // second change, a name that is taken, or one that is just their account name.
   "setMyUsernameAction",
+  // Account page, any role: updates only the caller's own username/name (update_my_account works on
+  // auth.uid() with the same checks as above) and changes only their own password after re-verifying
+  // the current one.
+  "updateMyAccountAction",
+  "changeMyPasswordAction",
 ]);
 
 describe("every Server Action authorizes on the server (SEC-005)", () => {

@@ -1,3 +1,5 @@
+import { notFound } from "next/navigation";
+import { hallHasPcDevices } from "@/features/devices/queries";
 import Link from "next/link";
 import { Suspense } from "react";
 import { EmptyState } from "@/components/data/EmptyState";
@@ -39,6 +41,7 @@ async function Commands({
 }) {
   const { hallId } = await params;
   await requireHallPermission(hallId, permissionForPath("/commands"));
+  if (!(await hallHasPcDevices(hallId))) notFound();
 
   const list = parseListParams(await searchParams, { pageSize: 25 });
   const status = STATUSES.includes(list.filters.status ?? "") ? list.filters.status : undefined;

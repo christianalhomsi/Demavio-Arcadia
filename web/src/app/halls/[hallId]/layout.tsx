@@ -3,6 +3,7 @@ import { LocaleFrame } from "@/components/i18n/LocaleFrame";
 import { PermissionProvider } from "@/components/domain/PermissionGate";
 import { AppShell } from "@/components/shell/AppShell";
 import { Skeleton } from "@/components/ui/skeleton";
+import { hallHasPcDevices } from "@/features/devices/queries";
 import { requireHallMembership } from "@/lib/auth/guards";
 
 async function HallFrame({
@@ -15,6 +16,7 @@ async function HallFrame({
   const { hallId } = await params;
   // Authorization happens here on the server for every request. Non-members get a 404.
   const { membership } = await requireHallMembership(hallId);
+  const hasPc = await hallHasPcDevices(hallId);
 
   return (
     <LocaleFrame>
@@ -23,6 +25,7 @@ async function HallFrame({
           hallId={hallId}
           hallName={membership.hall_name}
           permissions={membership.permissions}
+          hasPc={hasPc}
         >
           {children}
         </AppShell>
