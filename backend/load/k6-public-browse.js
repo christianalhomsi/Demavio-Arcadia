@@ -9,6 +9,7 @@ import http from "k6/http";
 import { check, sleep } from "k6";
 
 const STAGE = Number(__ENV.STAGE || 100);
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 export const options = {
   stages: [
     { duration: "2m", target: STAGE },
@@ -17,6 +18,13 @@ export const options = {
   ],
   thresholds: { http_req_failed: ["rate<0.01"], http_req_duration: ["p(95)<800", "p(99)<2000"] },
 };
+
+// Fail fast on bad input instead of running a meaningless test.
+export function setup() {
+  if (!Number.isInteger(STAGE) || STAGE < 1) throw new Error("STAGE must be a positive integer");
+  if (!__ENV.SUPABASE_URL || !__ENV.ANON_KEY) throw new Error("SUPABASE_URL and ANON_KEY are required");
+  if (!UUID.test(__ENV.HALL_ID || "")) throw new Error("HALL_ID must be a hall uuid");
+}
 
 const base = __ENV.SUPABASE_URL;
 const headers = { apikey: __ENV.ANON_KEY, Authorization: `Bearer ${__ENV.ANON_KEY}`, "Content-Type": "application/json" };
@@ -30,6 +38,8 @@ export default function () {
   check(devices, { "devices 200": (r) => r.status === 200 });
   sleep(1 + Math.random() * 3);
   const list = devices.status === 200 ? devices.json() : [];
+  // A hall with no devices must fail the run, not silently skip the busy-slot step.
+  check(list, { "hall has devices": (l) => l.length > 0 });
   if (list.length > 0) {
     const from = new Date();
     const to = new Date(from.getTime() + 24 * 3600 * 1000);
