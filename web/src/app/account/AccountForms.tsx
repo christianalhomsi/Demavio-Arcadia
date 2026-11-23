@@ -46,7 +46,12 @@ export function AccountForms({
   const [cur, setCur] = React.useState("");
   const [pw, setPw] = React.useState("");
   const [conf, setConf] = React.useState("");
-  const [wErr, setWErr] = React.useState<{ cur?: string; pw?: string; conf?: string; form?: string }>({});
+  const [wErr, setWErr] = React.useState<{
+    cur?: string;
+    pw?: string;
+    conf?: string;
+    form?: string;
+  }>({});
   const [wOk, setWOk] = React.useState(false);
   const [wPending, setWPending] = React.useState(false);
 
@@ -71,7 +76,11 @@ export function AccountForms({
 
   return (
     <>
-      <form onSubmit={saveProfile} className="space-y-3 rounded-2xl border border-border bg-surface p-4" noValidate>
+      <form
+        onSubmit={saveProfile}
+        className="space-y-3 rounded-2xl border border-border bg-surface p-4"
+        noValidate
+      >
         <h2 className="font-semibold">{t.acProfile}</h2>
         <p dir="ltr" className="text-sm text-muted rtl:text-end">
           {t.acEmail}: {email}
@@ -98,34 +107,72 @@ export function AccountForms({
             />
           )}
         </Field>
-        {pErr.form && <p role="alert" className="text-sm text-danger">{pErr.form}</p>}
-        {pOk && <p role="status" className="text-sm text-success">{t.acSaved}</p>}
+        {pErr.form && (
+          <p role="alert" className="text-sm text-danger">
+            {pErr.form}
+          </p>
+        )}
+        {pOk && (
+          <p role="status" className="text-sm text-success">
+            {t.acSaved}
+          </p>
+        )}
         <Button type="submit" pending={pPending} className="w-full">
           {t.acSaveProfile}
         </Button>
       </form>
 
-      <form onSubmit={savePassword} className="space-y-3 rounded-2xl border border-border bg-surface p-4" noValidate>
+      <form
+        onSubmit={savePassword}
+        className="space-y-3 rounded-2xl border border-border bg-surface p-4"
+        noValidate
+      >
         <h2 className="font-semibold">{t.acPassword}</h2>
         {hasPassword ? (
           <>
             <Field id="ac-cur" label={t.acCurrentPw} error={wErr.cur}>
               {(p) => (
-                <Input {...p} type="password" autoComplete="current-password" value={cur} onChange={(e) => setCur(e.target.value)} />
+                <Input
+                  {...p}
+                  type="password"
+                  autoComplete="current-password"
+                  value={cur}
+                  onChange={(e) => setCur(e.target.value)}
+                />
               )}
             </Field>
             <Field id="ac-pw" label={t.acNewPw} error={wErr.pw}>
               {(p) => (
-                <Input {...p} type="password" autoComplete="new-password" value={pw} onChange={(e) => setPw(e.target.value)} />
+                <Input
+                  {...p}
+                  type="password"
+                  autoComplete="new-password"
+                  value={pw}
+                  onChange={(e) => setPw(e.target.value)}
+                />
               )}
             </Field>
             <Field id="ac-conf" label={t.acConfirmPw} error={wErr.conf}>
               {(p) => (
-                <Input {...p} type="password" autoComplete="new-password" value={conf} onChange={(e) => setConf(e.target.value)} />
+                <Input
+                  {...p}
+                  type="password"
+                  autoComplete="new-password"
+                  value={conf}
+                  onChange={(e) => setConf(e.target.value)}
+                />
               )}
             </Field>
-            {wErr.form && <p role="alert" className="text-sm text-danger">{wErr.form}</p>}
-            {wOk && <p role="status" className="text-sm text-success">{t.acPwSaved}</p>}
+            {wErr.form && (
+              <p role="alert" className="text-sm text-danger">
+                {wErr.form}
+              </p>
+            )}
+            {wOk && (
+              <p role="status" className="text-sm text-success">
+                {t.acPwSaved}
+              </p>
+            )}
             <Button type="submit" pending={wPending} className="w-full">
               {t.acSavePw}
             </Button>

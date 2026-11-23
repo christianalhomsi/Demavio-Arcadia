@@ -317,7 +317,7 @@ describe("function exposure", () => {
         "admin_assign_platform_role", "admin_revoke_platform_role", "admin_set_user_status", "admin_list_audit",
         "admin_list_halls_sold", "admin_list_sales_team", "admin_create_sales_account", "admin_create_hall_with_owner", "admin_delete_hall", "admin_delete_user", "list_my_activity", "record_report_export", "admin_monitoring", "list_sales_agents",
         // public player booking (migration 15): the first five are also callable by anon
-        "list_public_halls", "get_public_hall", "list_public_devices", "list_public_device_busy", "quote_public_price", "username_available", "set_my_username",
+        "list_public_halls", "get_public_hall", "list_public_devices", "list_public_device_busy", "quote_public_price", "username_available", "set_my_username", "update_my_account",
         "create_player_reservation", "list_my_reservations", "cancel_my_reservation", "confirm_reservation", "reject_reservation",
         // guest wallets, payer matching, invoice time, agent bridge (migrations 44-49); each checks a hall permission
         "adjust_invoice_time", "invoice_time_options", "invoice_payer", "set_invoice_payer", "resolve_player",

@@ -78,7 +78,9 @@ export function DeviceGrid({
           className="h-11 w-full rounded-xl border border-border bg-surface px-3.5 text-base sm:h-10 sm:w-64 sm:text-sm"
         />
         <div role="group" aria-label={t.dvFilter} className="flex flex-wrap gap-2">
-          {FILTERS.filter((f) => f.value !== "offline" || devices.some((d) => d.deviceType === "pc")).map((f) => (
+          {FILTERS.filter(
+            (f) => f.value !== "offline" || devices.some((d) => d.deviceType === "pc"),
+          ).map((f) => (
             <button
               key={f.value}
               type="button"

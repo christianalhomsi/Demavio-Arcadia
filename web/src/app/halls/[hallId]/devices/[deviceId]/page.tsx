@@ -64,35 +64,37 @@ async function Device({ params }: { params: Promise<{ hallId: string; deviceId: 
           </div>
           {device.deviceType === "pc" && (
             <>
-          <div>
-            <dt className="text-muted">{t.dvAgent}</dt>
-            <dd className="mt-1 flex flex-wrap items-center gap-2">
-              <AgentBadge value={device.agentStatus} />
-              {device.agentVersion && (
-                <span className="text-xs text-muted">v{device.agentVersion}</span>
+              <div>
+                <dt className="text-muted">{t.dvAgent}</dt>
+                <dd className="mt-1 flex flex-wrap items-center gap-2">
+                  <AgentBadge value={device.agentStatus} />
+                  {device.agentVersion && (
+                    <span className="text-xs text-muted">v{device.agentVersion}</span>
+                  )}
+                </dd>
+              </div>
+              <div>
+                <dt className="text-muted">{t.dvLastHeartbeat}</dt>
+                <dd className="mt-1">
+                  {device.lastHeartbeatAt ? (
+                    <HallTime value={device.lastHeartbeatAt} timeZone={tz} showZone />
+                  ) : (
+                    t.cmNever
+                  )}
+                </dd>
+              </div>
+              <div>
+                <dt className="text-muted">{t.dvSyncState}</dt>
+                <dd className="mt-1 capitalize">
+                  {device.agentSyncState?.replace("_", " ") ?? "—"}
+                </dd>
+              </div>
+              {device.agentLastError && (
+                <div className="sm:col-span-2">
+                  <dt className="text-muted">{t.dvLastError}</dt>
+                  <dd className="mt-1">{device.agentLastError}</dd>
+                </div>
               )}
-            </dd>
-          </div>
-          <div>
-            <dt className="text-muted">{t.dvLastHeartbeat}</dt>
-            <dd className="mt-1">
-              {device.lastHeartbeatAt ? (
-                <HallTime value={device.lastHeartbeatAt} timeZone={tz} showZone />
-              ) : (
-                t.cmNever
-              )}
-            </dd>
-          </div>
-          <div>
-            <dt className="text-muted">{t.dvSyncState}</dt>
-            <dd className="mt-1 capitalize">{device.agentSyncState?.replace("_", " ") ?? "—"}</dd>
-          </div>
-          {device.agentLastError && (
-            <div className="sm:col-span-2">
-              <dt className="text-muted">{t.dvLastError}</dt>
-              <dd className="mt-1">{device.agentLastError}</dd>
-            </div>
-          )}
             </>
           )}
           {device.maintenanceReason && (
