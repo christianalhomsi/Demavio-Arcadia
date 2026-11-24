@@ -1,0 +1,56 @@
+name: Load test (manual, staging only)
+
+# Runs the k6 public-browse script from a GitHub-hosted runner (no VPN, no laptop network in the way).
+# Manual only. It refuses to run against anything but the staging project listed below.
+on:
+  workflow_dispatch:
+    inputs:
+      stage:
+        description: Peak virtual users (e.g. 100, 500, 1000)
+        required: true
+        default: "100"
+      hall_id:
+        description: Synthetic hall uuid in staging
+        required: true
+      supabase_url:
+        description: Staging project URL
+        required: true
+        default: https://eojzkikvlviignmjxkhn.supabase.co
+      anon_key:
+        description: Staging public anon key (public by design, never use a service-role key)
+        required: true
+
+permissions:
+  contents: read
+
+jobs:
+  k6:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      # The only project this workflow may hit. Change deliberately if staging ever moves.
+      STAGING_REF: eojzkikvlviignmjxkhn
+    steps:
+      - uses: actions/checkout@v4
+      - name: Refuse anything but staging
+        run: |
+          case "${{ inputs.supabase_url }}" in
+            "https://${STAGING_REF}.supabase.co") ;;
+            *) echo "Refusing: URL is not the staging project"; exit 1 ;;
+          esac
+      - uses: grafana/setup-k6-action@v1
+      - name: Run k6
+        env:
+          STAGE: ${{ inputs.stage }}
+          HALL_ID: ${{ inputs.hall_id }}
+          SUPABASE_URL: ${{ inputs.supabase_url }}
+          ANON_KEY: ${{ inputs.anon_key }}
+        run: |
+          k6 run --quiet --summary-export=summary.json \
+            -e SUPABASE_URL="$SUPABASE_URL" -e ANON_KEY="$ANON_KEY" -e HALL_ID="$HALL_ID" -e STAGE="$STAGE" \
+            backend/load/k6-public-browse.js
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: k6-summary-${{ inputs.stage }}
+          path: summary.json
