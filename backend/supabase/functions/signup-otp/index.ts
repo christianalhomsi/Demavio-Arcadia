@@ -23,8 +23,8 @@ const env = (name: string) => {
   return value;
 };
 
-/** Bound to the email, so the same code for two people never gives the same hash. */
-async function hashCode(email: string, code: string): Promise<string> {
+/** HMAC-SHA-256 keyed with OTP_SECRET, as 64 hex characters. */
+async function hmacHex(text: string): Promise<string> {
   const data = new TextEncoder();
   const key = await crypto.subtle.importKey(
     "raw",
@@ -33,8 +33,20 @@ async function hashCode(email: string, code: string): Promise<string> {
     false,
     ["sign"],
   );
-  const signature = await crypto.subtle.sign("HMAC", key, data.encode(`${email}:${code}`));
+  const signature = await crypto.subtle.sign("HMAC", key, data.encode(text));
   return Array.from(new Uint8Array(signature), (b) => b.toString(16).padStart(2, "0")).join("");
+}
+
+/** Bound to the email, so the same code for two people never gives the same hash. */
+function hashCode(email: string, code: string): Promise<string> {
+  return hmacHex(`${email}:${code}`);
+}
+
+/** The caller's IP as Supabase's gateway reports it (first x-forwarded-for entry), or null. */
+function clientIp(req: Request): string | null {
+  const forwarded = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim();
+  const ip = forwarded || req.headers.get("cf-connecting-ip")?.trim() || "";
+  return ip && ip.length <= 64 ? ip : null;
 }
 
 function generateCode(): string {
@@ -83,6 +95,17 @@ Deno.serve(async (req) => {
     if (body?.action === "request") {
       const username = String(body?.username ?? "").trim().toLowerCase();
       if (!USERNAME.test(username)) return reply("invalid");
+
+      // Per-IP limit (migration 0055), checked before any lookup so it also slows username probing and
+      // mail flooding across many addresses. Only a keyed hash of the IP reaches the database. Without a
+      // client IP the per-email limits still apply.
+      const ip = clientIp(req);
+      if (ip) {
+        const allowed = await admin.rpc("signup_ip_allow", { p_ip_hash: await hmacHex(`ip:${ip}`) });
+        if (allowed.error) throw allowed.error;
+        if (allowed.data === false) return reply("wait");
+      }
+
       const free = await admin.rpc("username_available", { p_username: username });
       if (free.error) throw free.error;
       if (free.data === false) return reply("username_taken");
