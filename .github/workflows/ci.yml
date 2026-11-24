@@ -1,11 +1,14 @@
 name: CI
 
-# Written but NOT yet run on GitHub (this folder is not a git repository yet). Mirrors the commands that
-# pass locally: web typecheck / lint / format / tests / build, backend PGlite tests, dependency audit.
+# Mirrors the commands that pass locally: web typecheck / lint / format / tests / build, backend PGlite tests
+# (they apply every migration and run the schema audit), Windows agent tests, dependency audit.
 on:
   pull_request:
   push:
     branches: [main]
+
+permissions:
+  contents: read
 
 concurrency:
   group: ci-${{ github.ref }}
@@ -14,6 +17,7 @@ concurrency:
 jobs:
   web:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     defaults:
       run:
         working-directory: web
@@ -41,6 +45,7 @@ jobs:
 
   backend:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     defaults:
       run:
         working-directory: backend
@@ -54,3 +59,16 @@ jobs:
       - run: npm ci
       - run: npm test
       - run: npm audit --omit=dev --audit-level=high
+
+  windows-agent:
+    runs-on: windows-latest
+    timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: windows-agent
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+      - run: dotnet test Arcadia.sln --configuration Release
